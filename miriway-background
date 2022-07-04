@@ -1,0 +1,2 @@
+#!/bin/sh -e
+exec swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png
