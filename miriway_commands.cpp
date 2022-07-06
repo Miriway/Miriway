@@ -50,42 +50,56 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
     if (mir_keyboard_event_action(kev) == mir_keyboard_action_up)
         return false;
 
-    MirInputEventModifiers mods = mir_keyboard_event_modifiers(kev);
-    if (!(mods & mir_input_event_modifier_alt) || !(mods & mir_input_event_modifier_ctrl))
-        return false;
-
+    auto const mods = mir_keyboard_event_modifiers(kev);
     auto const key_code = mir_keyboard_event_key_code(kev);
 
-    if (key_code == XKB_KEY_Delete && mir_keyboard_event_action(kev) == mir_keyboard_action_down)
+    auto const ctrl_alt = mir_input_event_modifier_alt | mir_input_event_modifier_ctrl;
+
+    if ((mods & ctrl_alt) == ctrl_alt)
     {
-        shell_commands_active = !shell_commands_active;
-        return true;
+        if (key_code == XKB_KEY_Delete && mir_keyboard_event_action(kev) == mir_keyboard_action_down)
+        {
+            shell_commands_active = !shell_commands_active;
+            return true;
+        }
     }
 
     if (!shell_commands_active)
         return false;
 
+    if ((mods & ctrl_alt) == ctrl_alt)
+    {
+        switch (key_code)
+        {
+        case XKB_KEY_BackSpace:
+            if (mir_keyboard_event_action(kev) == mir_keyboard_action_down)
+            {
+                std::lock_guard<decltype(mutex)> lock{mutex};
+                if (app_windows > 0)
+                {
+                    return false;
+                }
+            }
+            runner.stop();
+            return true;
+
+        case XKB_KEY_T:
+        case XKB_KEY_t:
+            if (mir_keyboard_event_action(kev) != mir_keyboard_action_down)
+                return false;
+            launcher.launch({terminal_cmd});
+            return true;
+
+        default:
+            return false;
+        }
+    }
+
+    if (!(mods & mir_input_event_modifier_meta) || (mods & ctrl_alt))
+        return false;
+
     switch (key_code)
     {
-    case XKB_KEY_BackSpace:
-        if (mir_keyboard_event_action(kev) == mir_keyboard_action_down)
-        {
-            std::lock_guard<decltype(mutex)> lock{mutex};
-            if (app_windows > 0)
-            {
-                return false;
-            }
-        }
-        runner.stop();
-        return true;
-
-    case XKB_KEY_T:
-    case XKB_KEY_t:
-        if (mir_keyboard_event_action(kev) != mir_keyboard_action_down)
-            return false;
-        launcher.launch({terminal_cmd});
-        return true;
-
     case XKB_KEY_Left:
         wm->dock_active_window_left();
         return true;
@@ -98,28 +112,12 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
         wm->toggle_maximized_restored();
         return true;
 
-    case XKB_KEY_Up:
+    case XKB_KEY_Page_Up:
         wm->workspace_up(mods & mir_input_event_modifier_shift);
         return true;
 
-    case XKB_KEY_Down:
+    case XKB_KEY_Page_Down:
         wm->workspace_down(mods & mir_input_event_modifier_shift);
-        return true;
-
-    case XKB_KEY_bracketright:
-        wm->focus_next_application();
-        return true;
-
-    case XKB_KEY_bracketleft:
-        wm->focus_prev_application();
-        return true;
-
-    case XKB_KEY_braceright:
-        wm->focus_next_within_application();
-        return true;
-
-    case XKB_KEY_braceleft:
-        wm->focus_prev_within_application();
         return true;
 
     default:
