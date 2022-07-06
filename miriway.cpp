@@ -91,9 +91,12 @@ int main(int argc, char const* argv[])
             });
     }
 
-    auto const terminal_cmd = std::string{argv[0]} + "-terminal";
-    auto const background_cmd = std::string{argv[0]} + "-background";
-    auto const panel_cmd = std::string{argv[0]} + "-panel";
+    std::string const miriway_path{argv[0]};
+    std::string const miriway_root = miriway_path.substr(0, miriway_path.size() - 6);
+    std::string const terminal_cmd = miriway_root + "-terminal";
+    std::string const background_cmd = miriway_root + "-background";
+    std::string const panel_cmd = miriway_root + "-panel";
+
     ShellCommands commands{runner, external_client_launcher, terminal_cmd};
 
     int no_of_workspaces = 1;
