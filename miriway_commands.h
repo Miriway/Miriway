@@ -40,7 +40,7 @@ class WindowManagerPolicy;
 class ShellCommands
 {
 public:
-    ShellCommands(MirRunner& runner, ExternalClientLauncher& launcher, std::string terminal_cmd);
+    ShellCommands(MirRunner& runner, std::function<void()> start_launcher, std::function<void()> start_terminal);
 
     void init_window_manager(WindowManagerPolicy* wm);
 
@@ -56,8 +56,8 @@ private:
     auto touch_shortcuts(MirTouchEvent const* tev) -> bool;
 
     MirRunner& runner;
-    ExternalClientLauncher& launcher;
-    std::string const terminal_cmd;
+    std::function<void()> start_launcher;
+    std::function<void()> start_terminal;
     WindowManagerPolicy* wm = nullptr;
     std::atomic<bool> shell_commands_active = true;
 

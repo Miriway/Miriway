@@ -75,6 +75,8 @@ int main(int argc, char const* argv[])
         }
         };
 
+    std::atomic<pid_t> launcher_pid{-1};
+
     // Protocols we're reserving for shell components
     for (auto const& protocol : {
         WaylandExtensions::zwlr_layer_shell_v1,
@@ -86,8 +88,10 @@ int main(int argc, char const* argv[])
     {
         extensions.conditionally_enable(protocol, [&](WaylandExtensions::EnableInfo const& info)
             {
-                return shell_component_pids.find(pid_of(info.app())) != end(shell_component_pids) ||
-                    info.user_preference().value_or(false);
+                pid_t const pid = pid_of(info.app());
+                return  launcher_pid == pid ||
+                        shell_component_pids.find(pid) != end(shell_component_pids) ||
+                        info.user_preference().value_or(false);
             });
     }
 
@@ -97,7 +101,12 @@ int main(int argc, char const* argv[])
     std::string const background_cmd = miriway_root + "-background";
     std::string const panel_cmd = miriway_root + "-panel";
 
-    ShellCommands commands{runner, external_client_launcher, terminal_cmd};
+    std::string launcher_cmd = miriway_root + "-launcher";
+
+    ShellCommands commands{runner,
+           [&]() { launcher_pid = external_client_launcher.launch({launcher_cmd}); },
+           [&]() { external_client_launcher.launch({terminal_cmd}); }
+        };
 
     int no_of_workspaces = 1;
     auto const update_workspaces = [&](int option)
@@ -116,7 +125,8 @@ int main(int argc, char const* argv[])
             external_client_launcher,
             CommandLineOption{run_apps, "shell-components", "Colon separated shell components to launch on startup",
                               (background_cmd + ":" + panel_cmd).c_str()},
-//            CommandLineOption{app_launcher, "shell-app-launcher", "External app launcher command"},
+            CommandLineOption{[&launcher_cmd](auto new_launcher) {launcher_cmd=new_launcher;},
+                              "shell-start_launcher", "External app start_launcher command", launcher_cmd.c_str()},
             Keymap{},
             AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
             set_window_management_policy<WindowManagerPolicy>(commands, no_of_workspaces)

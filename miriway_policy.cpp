@@ -417,7 +417,7 @@ void miriway::WindowManagerPolicy::focus_prev_within_application()
     tools.invoke_under_lock([this] { tools.focus_prev_within_application(); });
 }
 
-auto miriway::WindowManagerPolicy::active_output() -> Rectangle const
+auto miriway::WindowManagerPolicy::active_output() -> Rectangle
 {
     Rectangle result;
     tools.invoke_under_lock([&result, this] { result = tools.active_output(); });

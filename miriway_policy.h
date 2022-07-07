@@ -47,7 +47,7 @@ public:
     void focus_prev_application();
     void focus_next_within_application();
     void focus_prev_within_application();
-    auto active_output() -> mir::geometry::Rectangle const;
+    auto active_output() -> mir::geometry::Rectangle;
 
 private:
     auto place_new_window(ApplicationInfo const& app_info, WindowSpecification const& request_parameters)

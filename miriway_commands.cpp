@@ -20,14 +20,14 @@
 #include "miriway_policy.h"
 
 #include <miral/runner.h>
-#include <miral/external_client.h>
 
 #include <xkbcommon/xkbcommon-keysyms.h>
 
 #include <utility>
 
-miriway::ShellCommands::ShellCommands(MirRunner& runner, ExternalClientLauncher& launcher, std::string  terminal_cmd) :
-    runner{runner}, launcher{launcher}, terminal_cmd{std::move(terminal_cmd)}
+miriway::ShellCommands::ShellCommands(
+    MirRunner& runner, std::function<void()> start_launcher, std::function<void()> start_terminal) :
+    runner{runner}, start_launcher{std::move(start_launcher)}, start_terminal{std::move(start_terminal)}
 {
 }
 
@@ -67,10 +67,19 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
     if (!shell_commands_active)
         return false;
 
+    // Actions on "Ctrl+Alt" keys
     if ((mods & ctrl_alt) == ctrl_alt)
     {
         switch (key_code)
         {
+        case XKB_KEY_A:
+        case XKB_KEY_a:
+            if (mir_keyboard_event_action(kev) != mir_keyboard_action_down)
+                return false;
+
+            start_launcher();
+            return true;
+
         case XKB_KEY_BackSpace:
             if (mir_keyboard_event_action(kev) == mir_keyboard_action_down)
             {
@@ -87,7 +96,7 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
         case XKB_KEY_t:
             if (mir_keyboard_event_action(kev) != mir_keyboard_action_down)
                 return false;
-            launcher.launch({terminal_cmd});
+            start_terminal();
             return true;
 
         default:
@@ -98,8 +107,17 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
     if (!(mods & mir_input_event_modifier_meta) || (mods & ctrl_alt))
         return false;
 
+    // Actions on "Meta" key
     switch (key_code)
     {
+    case XKB_KEY_A:
+    case XKB_KEY_a:
+        if (mir_keyboard_event_action(kev) != mir_keyboard_action_down)
+            return false;
+
+        start_launcher();
+        return true;
+
     case XKB_KEY_Left:
         wm->dock_active_window_left();
         return true;

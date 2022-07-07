@@ -1,0 +1,2 @@
+#!/bin/sh -e
+exec wofi --show drun,run --location top_left
