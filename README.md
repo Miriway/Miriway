@@ -11,7 +11,7 @@ sudo apt install libmirclient-dev libxkb-common-dev
 
 Runtime dependencies:
 ```plain
-sudo apt install wofi swaybg waybar
+sudo apt install mir-graphics-drivers-desktop wofi swaybg waybar
 ```
 
 ## Building
@@ -20,14 +20,24 @@ sudo apt install wofi swaybg waybar
 mkdir build
 cd build
 cmake ..
-cmake --build
+cmake --build .
+```
+
+## Running
+
+Running (without installing):
+
+```plain
+./miriway
 ```
 
 ## Installing
 
 ```plain
-sudo cmake --build install
+sudo cmake --build . -- install
 ```
+
+Now you can run with `miriway`, or select "Miriway" from the login screen.
 
 ## Keyboard shortcuts
 
