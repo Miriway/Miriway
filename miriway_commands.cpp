@@ -130,6 +130,14 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
         wm->toggle_maximized_restored();
         return true;
 
+    case XKB_KEY_Home:
+        wm->workspace_begin(mods & mir_input_event_modifier_shift);
+        return true;
+
+    case XKB_KEY_End:
+        wm->workspace_end(mods & mir_input_event_modifier_shift);
+        return true;
+
     case XKB_KEY_Page_Up:
         wm->workspace_up(mods & mir_input_event_modifier_shift);
         return true;

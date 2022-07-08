@@ -57,17 +57,13 @@ inline bool is_application(MirDepthLayer layer)
 }
 }
 
-miriway::WindowManagerPolicy::WindowManagerPolicy(
-    WindowManagerTools const& tools,
-    ShellCommands& commands,
-    int const& no_of_workspaces) :
+miriway::WindowManagerPolicy::WindowManagerPolicy(WindowManagerTools const& tools, ShellCommands& commands) :
     MinimalWindowManager{tools},
     commands{&commands}
 {
     commands.init_window_manager(this);
 
-    for (auto i = 0; i != no_of_workspaces; ++i)
-        workspaces.push_back(this->tools.create_workspace());
+    workspaces.push_back(this->tools.create_workspace());
 
     active_workspace = workspaces.begin();
 }
@@ -115,16 +111,53 @@ void miriway::WindowManagerPolicy::advise_delete_app(miral::ApplicationInfo cons
     WindowManagementPolicy::advise_delete_app(application);
 }
 
+void miriway::WindowManagerPolicy::workspace_begin(bool take_active)
+{
+    tools.invoke_under_lock(
+        [this, take_active]
+            {
+            if (active_workspace != workspaces.begin())
+            {
+                auto const old_workspace = active_workspace;
+                auto const& window = take_active ? tools.active_window() : Window{};
+                auto const& old_active = *active_workspace;
+                auto const& new_active = *(active_workspace = workspaces.begin());
+                change_active_workspace(new_active, old_active, window);
+                erase_if_empty(old_workspace);
+            }
+        });
+}
+
+void miriway::WindowManagerPolicy::workspace_end(bool take_active)
+{
+    tools.invoke_under_lock(
+        [this, take_active]
+            {
+            auto const old_workspace = active_workspace;
+            auto const& window = take_active ? tools.active_window() : Window{};
+            auto const& old_active = *active_workspace;
+            workspaces.push_back(tools.create_workspace());
+            active_workspace = --workspaces.end();
+            auto const& new_active = *active_workspace;
+            change_active_workspace(new_active, old_active, window);
+            erase_if_empty(old_workspace);
+        });
+}
+
 void miriway::WindowManagerPolicy::workspace_up(bool take_active)
 {
     tools.invoke_under_lock(
         [this, take_active]
         {
-            auto const& window = take_active ? tools.active_window() : Window{};
-            auto const& old_active = *active_workspace;
-            auto const& new_active = *((active_workspace != workspaces.begin()) ? --active_workspace
-                                                                                : (active_workspace = --workspaces.end()));
-            change_active_workspace(new_active, old_active, window);
+            if (active_workspace != workspaces.begin())
+            {
+                auto const old_workspace = active_workspace;
+                auto const& window = take_active ? tools.active_window() : Window{};
+                auto const& old_active = *active_workspace;
+                auto const& new_active = *--active_workspace;
+                change_active_workspace(new_active, old_active, window);
+                erase_if_empty(old_workspace);
+            }
         });
 }
 
@@ -133,11 +166,33 @@ void miriway::WindowManagerPolicy::workspace_down(bool take_active)
     tools.invoke_under_lock(
         [this, take_active]
         {
+            auto const old_workspace = active_workspace;
             auto const& window = take_active ? tools.active_window() : Window{};
             auto const& old_active = *active_workspace;
-            auto const& new_active = *((++active_workspace != workspaces.end()) ? active_workspace : (active_workspace = workspaces.begin()));
+            if (++active_workspace == workspaces.end())
+            {
+                workspaces.push_back(tools.create_workspace());
+                active_workspace = --workspaces.end();
+            }
+            auto const& new_active = *active_workspace;
             change_active_workspace(new_active, old_active, window);
+            erase_if_empty(old_workspace);
         });
+}
+
+void miriway::WindowManagerPolicy::erase_if_empty(workspace_list::iterator const& old_workspace)
+{
+    bool empty = true;
+    tools.for_each_window_in_workspace(*old_workspace, [&](auto ww)
+        {
+        if (is_application(tools.info_for(ww).depth_layer()))
+            empty = false;
+        });
+    if (empty)
+    {
+        workspace_to_active.erase(*old_workspace);
+        workspaces.erase(old_workspace);
+    }
 }
 
 void miriway::WindowManagerPolicy::dock_active_window_left()

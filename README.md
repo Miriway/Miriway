@@ -49,6 +49,10 @@ Meta-A|Open launcher
 Meta-Left|Dock left
 Meta-Right|Dock right
 Meta-PkUp|Previous workspace
-Meta-PkDn|Next workspace
 Meta-Shift-PkUp|Move window to previous workspace
+Meta-PkDn|Next workspace
 Meta-Shift-PkDn|Move window to next workspace
+Meta-Home|First workspace
+Meta-Home-PkUp|Move window to first workspace
+Meta-End|Last workspace
+Meta-End-PkDn|Move window to last workspace

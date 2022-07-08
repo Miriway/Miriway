@@ -28,7 +28,6 @@ config_file=$config_dir/miriway-shell.config
 if [ ! -e "${config_file}" ]
 then
   echo "x11-window-title=Miriway" >> "${config_file}"
-  echo "no-of-workspaces=4" >> "${config_file}"
 
   if command -v Xwayland > /dev/null
   then

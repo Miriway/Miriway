@@ -108,20 +108,11 @@ int main(int argc, char const* argv[])
            [&]() { external_client_launcher.launch({terminal_cmd}); }
         };
 
-    int no_of_workspaces = 1;
-    auto const update_workspaces = [&](int option)
-        {
-            // clamp no_of_workspaces to [1..32]
-            no_of_workspaces = std::min(std::max(option, 1), 32);
-        };
-
     return runner.run_with(
         {
             X11Support{},
             extensions,
             display_configuration_options,
-            pre_init(CommandLineOption{update_workspaces,
-                              "no-of-workspaces", "Number of workspaces [1..32]", no_of_workspaces}),
             external_client_launcher,
             CommandLineOption{run_apps, "shell-components", "Colon separated shell components to launch on startup",
                               (background_cmd + ":" + panel_cmd).c_str()},
@@ -129,6 +120,6 @@ int main(int argc, char const* argv[])
                               "shell-start_launcher", "External app start_launcher command", launcher_cmd.c_str()},
             Keymap{},
             AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
-            set_window_management_policy<WindowManagerPolicy>(commands, no_of_workspaces)
+            set_window_management_policy<WindowManagerPolicy>(commands)
         });
 }
