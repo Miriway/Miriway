@@ -27,15 +27,9 @@
 #include <miral/keymap.h>
 #include <miral/runner.h>
 #include <miral/set_window_management_policy.h>
-#include <miral/version.h>
 #include <miral/wayland_extensions.h>
 #include <miral/x11_support.h>
-#include <mir/fatal.h>
 #include <mir/log.h>
-
-#include <boost/filesystem.hpp>
-#include <linux/input.h>
-#include <csignal>
 
 using namespace miral;
 using namespace miriway;
@@ -83,7 +77,6 @@ int main(int argc, char const* argv[])
         WaylandExtensions::zxdg_output_manager_v1,
         WaylandExtensions::zwlr_foreign_toplevel_manager_v1,
         WaylandExtensions::zwp_virtual_keyboard_manager_v1,
-        WaylandExtensions::zwlr_screencopy_manager_v1,
         WaylandExtensions::zwp_input_method_manager_v2})
     {
         extensions.conditionally_enable(protocol, [&](WaylandExtensions::EnableInfo const& info)

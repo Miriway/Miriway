@@ -34,7 +34,6 @@ namespace miriway
 {
 using namespace miral;
 
-class Launcher;
 class WindowManagerPolicy;
 
 class ShellCommands
@@ -63,7 +62,6 @@ private:
 
     std::mutex mutex;
     int app_windows = 0;
-    bool in_touch_gesture = false;
 };
 }
 

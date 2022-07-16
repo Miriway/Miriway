@@ -21,7 +21,6 @@ add_executable(miriway-shell
     miriway_policy.cpp   miriway_policy.h
 )
 
-set_source_files_properties(miriway.cpp PROPERTIES COMPILE_DEFINITIONS EGMDE_WALLPAPER_BOTTOM="${EGMDE_WALLPAPER_BOTTOM}")
 target_include_directories(miriway-shell PUBLIC SYSTEM ${MIRAL_INCLUDE_DIRS})
 target_link_libraries(     miriway-shell               ${MIRAL_LDFLAGS})
 target_link_libraries(     miriway-shell               ${XKBCOMMON_LIBRARIES})

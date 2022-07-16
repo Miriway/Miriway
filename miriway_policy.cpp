@@ -24,8 +24,6 @@
 #include <miral/window_manager_tools.h>
 #include <miral/zone.h>
 
-#include <linux/input.h>
-
 using namespace mir::geometry;
 using namespace miral;
 
@@ -450,32 +448,5 @@ void miriway::WindowManagerPolicy::advise_adding_to_workspace(std::shared_ptr<Wo
 bool miriway::WindowManagerPolicy::handle_keyboard_event(MirKeyboardEvent const* event)
 {
     return commands->shell_keyboard_enabled() && MinimalWindowManager::handle_keyboard_event(event);
-}
-
-void miriway::WindowManagerPolicy::focus_next_application()
-{
-    tools.invoke_under_lock([this] { tools.focus_next_application(); });
-}
-
-void miriway::WindowManagerPolicy::focus_prev_application()
-{
-    tools.invoke_under_lock([this] { tools.focus_prev_application(); });
-}
-
-void miriway::WindowManagerPolicy::focus_next_within_application()
-{
-    tools.invoke_under_lock([this] { tools.focus_next_within_application(); });
-}
-
-void miriway::WindowManagerPolicy::focus_prev_within_application()
-{
-    tools.invoke_under_lock([this] { tools.focus_prev_within_application(); });
-}
-
-auto miriway::WindowManagerPolicy::active_output() -> Rectangle
-{
-    Rectangle result;
-    tools.invoke_under_lock([&result, this] { result = tools.active_output(); });
-    return result;
 }
 
