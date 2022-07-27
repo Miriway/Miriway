@@ -90,11 +90,11 @@ int main(int argc, char const* argv[])
 
     std::string const miriway_path{argv[0]};
     std::string const miriway_root = miriway_path.substr(0, miriway_path.size() - 6);
-    std::string const terminal_cmd = miriway_root + "-terminal";
     std::string const background_cmd = miriway_root + "-background";
     std::string const panel_cmd = miriway_root + "-panel";
 
     std::string launcher_cmd = miriway_root + "-launcher";
+    std::string terminal_cmd = miriway_root + "-terminal";
 
     ShellCommands commands{runner,
            [&]() { launcher_pid = external_client_launcher.launch({launcher_cmd}); },
@@ -110,7 +110,9 @@ int main(int argc, char const* argv[])
             CommandLineOption{run_apps, "shell-components", "Colon separated shell components to launch on startup",
                               (background_cmd + ":" + panel_cmd).c_str()},
             CommandLineOption{[&launcher_cmd](auto new_launcher) {launcher_cmd=new_launcher;},
-                              "shell-start_launcher", "External app start_launcher command", launcher_cmd.c_str()},
+                              "shell-meta-a", "app launcher", launcher_cmd},
+            CommandLineOption{[&terminal_cmd](auto new_launcher) {terminal_cmd=new_launcher;},
+                              "shell-ctrl-alt-t", "terminal emulator", terminal_cmd},
             Keymap{},
             AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
             set_window_management_policy<WindowManagerPolicy>(commands)
