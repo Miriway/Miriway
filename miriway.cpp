@@ -34,6 +34,84 @@
 using namespace miral;
 using namespace miriway;
 
+namespace
+{
+// Split out the tokens of a (possibly escaped) command
+auto parse_cmd(std::string const& command, std::vector<std::string>& target)
+{
+    std::vector<std::string> split_command;
+
+    {
+        std::string token;
+        char in_quote = '\0';
+        bool escaping = false;
+
+        auto push_token = [&]()
+            {
+                if (!token.empty())
+                {
+                    split_command.push_back(std::move(token));
+                    token.clear();
+                }
+            };
+
+        for (auto c : command)
+        {
+            if (escaping)
+            {
+                // end escape
+                escaping = false;
+                token += c;
+                continue;
+            }
+
+            switch (c)
+            {
+            case '\\':
+                // start escape
+                escaping = true;
+                continue;
+
+            case '\'':
+            case '\"':
+                if (in_quote == '\0')
+                {
+                    // start quoted sequence
+                    in_quote = c;
+                    continue;
+                }
+                else if (c == in_quote)
+                {
+                    // end quoted sequence
+                    in_quote = '\0';
+                    continue;
+                }
+                else
+                {
+                    break;
+                }
+
+            default:
+                break;
+            }
+
+            if (!isspace(c) || in_quote)
+            {
+                token += c;
+            }
+            else
+            {
+                push_token();
+            }
+        }
+
+        push_token();
+    }
+
+    return split_command.swap(target);
+}
+}
+
 int main(int argc, char const* argv[])
 {
     MirRunner runner{argc, argv};
@@ -93,12 +171,12 @@ int main(int argc, char const* argv[])
     std::string const background_cmd = miriway_root + "-background";
     std::string const panel_cmd = miriway_root + "-panel";
 
-    std::string launcher_cmd = miriway_root + "-launcher";
-    std::string terminal_cmd = miriway_root + "-terminal";
+    std::vector<std::string> launcher_cmd{miriway_root + "-launcher"};
+    std::vector<std::string> terminal_cmd{miriway_root + "-terminal"};
 
     ShellCommands commands{runner,
-           [&]() { launcher_pid = external_client_launcher.launch({launcher_cmd}); },
-           [&]() { external_client_launcher.launch({terminal_cmd}); }
+           [&]() { launcher_pid = external_client_launcher.launch(launcher_cmd); },
+           [&]() { external_client_launcher.launch(terminal_cmd); }
         };
 
     return runner.run_with(
@@ -109,10 +187,10 @@ int main(int argc, char const* argv[])
             external_client_launcher,
             CommandLineOption{run_apps, "shell-components", "Colon separated shell components to launch on startup",
                               (background_cmd + ":" + panel_cmd).c_str()},
-            CommandLineOption{[&launcher_cmd](auto new_launcher) {launcher_cmd=new_launcher;},
-                              "shell-meta-a", "app launcher", launcher_cmd},
-            CommandLineOption{[&terminal_cmd](auto new_launcher) {terminal_cmd=new_launcher;},
-                              "shell-ctrl-alt-t", "terminal emulator", terminal_cmd},
+            CommandLineOption{[&launcher_cmd](std::string const& new_cmd) { parse_cmd(new_cmd, launcher_cmd); },
+                              "shell-meta-a", "app launcher", launcher_cmd[0]},
+            CommandLineOption{[&terminal_cmd](std::string const& new_cmd) { parse_cmd(new_cmd, terminal_cmd); },
+                              "shell-ctrl-alt-t", "terminal emulator", terminal_cmd[0]},
             Keymap{},
             AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
             set_window_management_policy<WindowManagerPolicy>(commands)
