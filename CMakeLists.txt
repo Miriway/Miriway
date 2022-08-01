@@ -34,18 +34,6 @@ add_custom_target(miriway-terminal ALL
     cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-terminal ${CMAKE_BINARY_DIR}
 )
 
-add_custom_target(miriway-background ALL
-    cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-background ${CMAKE_BINARY_DIR}
-)
-
-add_custom_target(miriway-panel ALL
-    cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-panel ${CMAKE_BINARY_DIR}
-)
-
-add_custom_target(miriway-launcher ALL
-    cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-launcher ${CMAKE_BINARY_DIR}
-)
-
 install(PROGRAMS
     ${CMAKE_BINARY_DIR}/miriway
     ${CMAKE_BINARY_DIR}/miriway-shell

@@ -27,6 +27,7 @@
 #include <miral/keymap.h>
 #include <miral/runner.h>
 #include <miral/set_window_management_policy.h>
+#include <miral/version.h>
 #include <miral/wayland_extensions.h>
 #include <miral/x11_support.h>
 #include <mir/log.h>
@@ -37,7 +38,7 @@ using namespace miriway;
 namespace
 {
 // Split out the tokens of a (possibly escaped) command
-auto parse_cmd(std::string const& command, std::vector<std::string>& target)
+std::vector<std::string> unescape(std::string const& command)
 {
     std::vector<std::string> split_command;
 
@@ -108,7 +109,13 @@ auto parse_cmd(std::string const& command, std::vector<std::string>& target)
         push_token();
     }
 
-    return split_command.swap(target);
+    return split_command;
+}
+
+// Split out the tokens of a (possibly escaped) command
+auto parse_cmd(std::string const& command, std::vector<std::string>& target)
+{
+    return unescape(command).swap(target);
 }
 }
 
@@ -116,40 +123,25 @@ int main(int argc, char const* argv[])
 {
     MirRunner runner{argc, argv};
 
-    // Protocols that are "experimental" in Mir but we want to allow
-    auto const experimental_protocols = {"zwp_pointer_constraints_v1", "zwp_relative_pointer_manager_v1"};
 
     WaylandExtensions extensions;
-    auto const supported_protocols = WaylandExtensions::supported();
 
-    for (auto const& protocol : experimental_protocols)
+    for (auto const& protocol : {
+        WaylandExtensions::zwlr_screencopy_manager_v1,
+        WaylandExtensions::zxdg_output_manager_v1,
+        "zwp_pointer_constraints_v1",
+        "zwp_relative_pointer_manager_v1"})
     {
-        if (supported_protocols.find(protocol) != end(supported_protocols))
-        {
-            extensions.enable(protocol);
-        }
-        else
-        {
-            mir::log_debug("This version of Mir doesn't support the Wayland extension %s", protocol);
-        }
+        extensions.conditionally_enable(protocol, [&](WaylandExtensions::EnableInfo const& info)
+            {
+                return info.user_preference().value_or(true);
+            });
     }
 
     std::set<pid_t> shell_component_pids;
-    ExternalClientLauncher external_client_launcher;
-
-    auto run_apps = [&](std::string const& apps)
-        {
-        for (auto i = begin(apps); i != end(apps); )
-        {
-            auto const j = find(i, end(apps), ':');
-            shell_component_pids.insert(external_client_launcher.launch({std::string{i, j}}));
-            if ((i = j) != end(apps)) ++i;
-        }
-        };
-
     std::atomic<pid_t> launcher_pid{-1};
 
-    // Protocols we're reserving for shell components
+    // Protocols we're reserving for shell components_option
     for (auto const& protocol : {
         WaylandExtensions::zwlr_layer_shell_v1,
         WaylandExtensions::zxdg_output_manager_v1,
@@ -168,16 +160,34 @@ int main(int argc, char const* argv[])
 
     std::string const miriway_path{argv[0]};
     std::string const miriway_root = miriway_path.substr(0, miriway_path.size() - 6);
-    std::string const background_cmd = miriway_root + "-background";
-    std::string const panel_cmd = miriway_root + "-panel";
 
-    std::vector<std::string> launcher_cmd{miriway_root + "-launcher"};
+    std::vector<std::string> launcher_cmd;
     std::vector<std::string> terminal_cmd{miriway_root + "-terminal"};
 
+    ExternalClientLauncher external_client_launcher;
+
     ShellCommands commands{runner,
-           [&]() { launcher_pid = external_client_launcher.launch(launcher_cmd); },
-           [&]() { external_client_launcher.launch(terminal_cmd); }
+           [&]() { if (!launcher_cmd.empty()) launcher_pid = external_client_launcher.launch(launcher_cmd); },
+           [&]() { if (!terminal_cmd.empty()) external_client_launcher.launch(terminal_cmd); }
         };
+
+    CommandLineOption components_option{
+        [&](std::vector<std::string> const& apps)
+        {
+            for (auto const& app : apps)
+            {
+                shell_component_pids.insert(external_client_launcher.launch(unescape(app)));
+            }
+        },
+        "shell-component",
+        "Shell component to launch on startup (may be specified multiple times; multiple components_option are started)"};
+
+    CommandLineOption const launcher_option{
+        [&launcher_cmd](mir::optional_value<std::string> const& new_cmd)
+        {
+            if (new_cmd.is_set()) parse_cmd(new_cmd.value(), launcher_cmd);
+        },
+        "shell-meta-a", "app launcher"};
 
     return runner.run_with(
         {
@@ -185,10 +195,8 @@ int main(int argc, char const* argv[])
             extensions,
             display_configuration_options,
             external_client_launcher,
-            CommandLineOption{run_apps, "shell-components", "Colon separated shell components to launch on startup",
-                              (background_cmd + ":" + panel_cmd).c_str()},
-            CommandLineOption{[&launcher_cmd](std::string const& new_cmd) { parse_cmd(new_cmd, launcher_cmd); },
-                              "shell-meta-a", "app launcher", launcher_cmd[0]},
+            components_option,
+            launcher_option,
             CommandLineOption{[&terminal_cmd](std::string const& new_cmd) { parse_cmd(new_cmd, terminal_cmd); },
                               "shell-ctrl-alt-t", "terminal emulator", terminal_cmd[0]},
             Keymap{},
