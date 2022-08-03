@@ -37,10 +37,7 @@ add_custom_target(miriway-terminal ALL
 install(PROGRAMS
     ${CMAKE_BINARY_DIR}/miriway
     ${CMAKE_BINARY_DIR}/miriway-shell
-    ${CMAKE_BINARY_DIR}/miriway-background
     ${CMAKE_BINARY_DIR}/miriway-terminal
-    ${CMAKE_BINARY_DIR}/miriway-panel
-    ${CMAKE_BINARY_DIR}/miriway-launcher
     DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
 )
 
