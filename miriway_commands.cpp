@@ -24,10 +24,11 @@
 #include <xkbcommon/xkbcommon-keysyms.h>
 
 #include <utility>
+#include <mir/log.h>
 
 miriway::ShellCommands::ShellCommands(
-    MirRunner& runner, std::function<void()> start_launcher, std::function<void()> start_terminal) :
-    runner{runner}, start_launcher{std::move(start_launcher)}, start_terminal{std::move(start_terminal)}
+    MirRunner& runner, std::function<void()> start_launcher, std::function<bool(char)> ctrl_alt_command) :
+    runner{runner}, start_launcher{std::move(start_launcher)}, ctrl_alt_command{std::move(ctrl_alt_command)}
 {
 }
 
@@ -72,14 +73,6 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
     {
         switch (key_code)
         {
-        case XKB_KEY_A:
-        case XKB_KEY_a:
-            if (mir_keyboard_event_action(kev) != mir_keyboard_action_down)
-                return false;
-
-            start_launcher();
-            return true;
-
         case XKB_KEY_BackSpace:
             if (mir_keyboard_event_action(kev) == mir_keyboard_action_down)
             {
@@ -92,15 +85,9 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
             runner.stop();
             return true;
 
-        case XKB_KEY_T:
-        case XKB_KEY_t:
-            if (mir_keyboard_event_action(kev) != mir_keyboard_action_down)
-                return false;
-            start_terminal();
-            return true;
-
         default:
-            return false;
+            return (mir_keyboard_event_action(kev) == mir_keyboard_action_down) &&
+                ctrl_alt_command(key_code);
         }
     }
 

@@ -117,6 +117,35 @@ auto parse_cmd(std::string const& command, std::vector<std::string>& target)
 {
     return unescape(command).swap(target);
 }
+
+struct Commands
+{
+    explicit Commands(ExternalClientLauncher& launcher) : launcher{launcher}{}
+
+    void populate_commands(std::vector<std::string> const& config_cmds)
+    {
+        for (auto const& command : config_cmds)
+        {
+            if (command.size() < 3 || command[1] != ':')
+            {
+                mir::fatal_error("Invalid command option: %s", command.c_str());
+            }
+
+            commands[std::tolower(command[0])] = unescape(command.substr(2));
+        }
+    }
+
+    bool launch_command(char c)
+    {
+        auto const i = commands.find(std::tolower(c));
+        bool const found = i != end(commands);
+        if (found) launcher.launch(i->second);
+        return found;
+    }
+private:
+    ExternalClientLauncher& launcher;
+    std::map<char, std::vector<std::string>> commands;
+};
 }
 
 int main(int argc, char const* argv[])
@@ -162,14 +191,16 @@ int main(int argc, char const* argv[])
     std::string const miriway_root = miriway_path.substr(0, miriway_path.size() - 6);
 
     std::vector<std::string> launcher_cmd;
-    std::vector<std::string> terminal_cmd{miriway_root + "-terminal"};
 
     ExternalClientLauncher external_client_launcher;
 
-    ShellCommands commands{runner,
-           [&]() { if (!launcher_cmd.empty()) launcher_pid = external_client_launcher.launch(launcher_cmd); },
-           [&]() { if (!terminal_cmd.empty()) external_client_launcher.launch(terminal_cmd); }
-        };
+    Commands ctrl_alt{external_client_launcher};
+
+    ShellCommands commands{
+        runner,
+        [&](){ if (!launcher_cmd.empty()) launcher_pid = external_client_launcher.launch(launcher_cmd); },
+        [&] (auto c) { return ctrl_alt.launch_command(c); }
+    };
 
     CommandLineOption components_option{
         [&](std::vector<std::string> const& apps)
@@ -180,14 +211,14 @@ int main(int argc, char const* argv[])
             }
         },
         "shell-component",
-        "Shell component to launch on startup (may be specified multiple times; multiple components_option are started)"};
+        "Shell component to launch_command on startup (may be specified multiple times; multiple components_option are started)"};
 
     CommandLineOption const launcher_option{
         [&launcher_cmd](mir::optional_value<std::string> const& new_cmd)
         {
             if (new_cmd.is_set()) parse_cmd(new_cmd.value(), launcher_cmd);
         },
-        "shell-meta-a", "app launcher"};
+        "shell-meta-a", "app launch_command"};
 
     return runner.run_with(
         {
@@ -197,8 +228,8 @@ int main(int argc, char const* argv[])
             external_client_launcher,
             components_option,
             launcher_option,
-            CommandLineOption{[&terminal_cmd](std::string const& new_cmd) { parse_cmd(new_cmd, terminal_cmd); },
-                              "shell-ctrl-alt-t", "terminal emulator", terminal_cmd[0]},
+            CommandLineOption{[&](std::vector<std::string> const& cmds) { ctrl_alt.populate_commands(cmds); },
+                              "ctrl-alt", "ctrl-alt <key>:<command> shortcut (may be specified multiple times)"},
             Keymap{},
             AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
             set_window_management_policy<WindowManagerPolicy>(commands)
