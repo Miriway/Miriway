@@ -118,11 +118,12 @@ auto parse_cmd(std::string const& command, std::vector<std::string>& target)
     return unescape(command).swap(target);
 }
 
-struct Commands
+struct CommandIndex
 {
-    explicit Commands(ExternalClientLauncher& launcher) : launcher{launcher}{}
+    explicit CommandIndex(std::function<void(std::vector<std::string> const& command_line)> launch) :
+        launch{std::move(launch)}{}
 
-    void populate_commands(std::vector<std::string> const& config_cmds)
+    void populate(std::vector<std::string> const& config_cmds)
     {
         for (auto const& command : config_cmds)
         {
@@ -135,15 +136,15 @@ struct Commands
         }
     }
 
-    bool launch_command(char c)
+    bool try_launch(char c) const
     {
         auto const i = commands.find(std::tolower(c));
         bool const found = i != end(commands);
-        if (found) launcher.launch(i->second);
+        if (found) launch(i->second);
         return found;
     }
 private:
-    ExternalClientLauncher& launcher;
+    std::function<void (std::vector<std::string> const& command_line)> launch;
     std::map<char, std::vector<std::string>> commands;
 };
 }
@@ -192,14 +193,14 @@ int main(int argc, char const* argv[])
 
     std::vector<std::string> launcher_cmd;
 
-    ExternalClientLauncher external_client_launcher;
+    ExternalClientLauncher client_launcher;
 
-    Commands ctrl_alt{external_client_launcher};
+    CommandIndex ctrl_alt{[&](auto cmd){ client_launcher.launch(cmd); }};
 
     ShellCommands commands{
         runner,
-        [&](){ if (!launcher_cmd.empty()) launcher_pid = external_client_launcher.launch(launcher_cmd); },
-        [&] (auto c) { return ctrl_alt.launch_command(c); }
+        [&](){ if (!launcher_cmd.empty()) launcher_pid = client_launcher.launch(launcher_cmd); },
+        [&] (auto c) { return ctrl_alt.try_launch(c); }
     };
 
     CommandLineOption components_option{
@@ -207,28 +208,28 @@ int main(int argc, char const* argv[])
         {
             for (auto const& app : apps)
             {
-                shell_component_pids.insert(external_client_launcher.launch(unescape(app)));
+                shell_component_pids.insert(client_launcher.launch(unescape(app)));
             }
         },
         "shell-component",
-        "Shell component to launch_command on startup (may be specified multiple times; multiple components_option are started)"};
+        "Shell component to try_launch on startup (may be specified multiple times)"};
 
     CommandLineOption const launcher_option{
         [&launcher_cmd](mir::optional_value<std::string> const& new_cmd)
         {
             if (new_cmd.is_set()) parse_cmd(new_cmd.value(), launcher_cmd);
         },
-        "shell-meta-a", "app launch_command"};
+        "shell-meta-a", "app try_launch"};
 
     return runner.run_with(
         {
             X11Support{},
             extensions,
             display_configuration_options,
-            external_client_launcher,
+            client_launcher,
             components_option,
             launcher_option,
-            CommandLineOption{[&](std::vector<std::string> const& cmds) { ctrl_alt.populate_commands(cmds); },
+            CommandLineOption{[&](std::vector<std::string> const& cmds) { ctrl_alt.populate(cmds); },
                               "ctrl-alt", "ctrl-alt <key>:<command> shortcut (may be specified multiple times)"},
             Keymap{},
             AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
