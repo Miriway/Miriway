@@ -195,11 +195,23 @@ int main(int argc, char const* argv[])
 
     ExternalClientLauncher client_launcher;
 
+    CommandIndex meta{[&](auto cmd){ client_launcher.launch(cmd); }};
     CommandIndex ctrl_alt{[&](auto cmd){ client_launcher.launch(cmd); }};
 
     ShellCommands commands{
         runner,
-        [&](){ if (!launcher_cmd.empty()) launcher_pid = client_launcher.launch(launcher_cmd); },
+        [&] (auto c)
+            {
+                if (tolower(c) == 'a' && !launcher_cmd.empty())
+                {
+                    launcher_pid = client_launcher.launch(launcher_cmd);
+                    return true;
+                }
+                else
+                {
+                    return meta.try_launch(c);
+                }
+            },
         [&] (auto c) { return ctrl_alt.try_launch(c); }
     };
 
@@ -231,6 +243,8 @@ int main(int argc, char const* argv[])
             launcher_option,
             CommandLineOption{[&](std::vector<std::string> const& cmds) { ctrl_alt.populate(cmds); },
                               "ctrl-alt", "ctrl-alt <key>:<command> shortcut (may be specified multiple times)"},
+            CommandLineOption{[&](std::vector<std::string> const& cmds) { meta.populate(cmds); },
+                              "meta", "meta <key>:<command> shortcut (may be specified multiple times)"},
             Keymap{},
             AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
             set_window_management_policy<WindowManagerPolicy>(commands)
