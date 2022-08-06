@@ -58,7 +58,7 @@ then
     echo "shell-component=waybar" >> "${config_file}"
   fi
 
-  echo "shell-meta-a=wofi --show drun --location top_left" >> "${config_file}"
+  echo "shell-meta=a:wofi --show drun --location top_left" >> "${config_file}"
   echo "ctrl-alt=t:miriway-terminal" >> "${config_file}"
 fi
 
