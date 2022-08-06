@@ -31,13 +31,15 @@
 #include <miral/x11_support.h>
 #include <mir/log.h>
 
+#include <sys/wait.h>
+
 using namespace miral;
 using namespace miriway;
 
 namespace
 {
 // Split out the tokens of a (possibly escaped) command
-auto parse_cmd(std::string const& command, std::vector<std::string>& target)
+std::vector<std::string> unescape(std::string const& command)
 {
     std::vector<std::string> split_command;
 
@@ -108,48 +110,96 @@ auto parse_cmd(std::string const& command, std::vector<std::string>& target)
         push_token();
     }
 
-    return split_command.swap(target);
+    return split_command;
 }
+
+struct CommandIndex
+{
+    explicit CommandIndex(std::function<void(std::vector<std::string> const& command_line)> launch) :
+        launch{std::move(launch)}{}
+
+    void populate(std::vector<std::string> const& config_cmds)
+    {
+        for (auto const& command : config_cmds)
+        {
+            if (command.size() < 3 || command[1] != ':')
+            {
+                mir::fatal_error("Invalid command option: %s", command.c_str());
+            }
+
+            commands[std::tolower(command[0])] = unescape(command.substr(2));
+        }
+    }
+
+    bool try_launch(char c) const
+    {
+        auto const i = commands.find(std::tolower(c));
+        bool const found = i != end(commands);
+        if (found) launch(i->second);
+        return found;
+    }
+private:
+    std::function<void (std::vector<std::string> const& command_line)> launch;
+    std::map<char, std::vector<std::string>> commands;
+};
+
+struct ShellPids
+{
+    void insert(pid_t pid)
+    {
+        std::lock_guard lock{shell_component_mutex};
+        shell_component_pids.insert(pid);
+    };
+
+    void reap()
+    {
+        int status;
+        while (true)
+        {
+            auto const pid = waitpid(-1, &status, WNOHANG);
+            if (pid > 0)
+            {
+                std::lock_guard lock{shell_component_mutex};
+                shell_component_pids.erase(pid);
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
+    bool is_found(pid_t pid) const
+    {
+        std::lock_guard lock{shell_component_mutex};
+        return shell_component_pids.find(pid) != end(shell_component_pids);
+    }
+private:
+    std::mutex mutable shell_component_mutex;
+    std::set<pid_t> shell_component_pids;
+};
 }
 
 int main(int argc, char const* argv[])
 {
     MirRunner runner{argc, argv};
-
-    // Protocols that are "experimental" in Mir but we want to allow
-    auto const experimental_protocols = {"zwp_pointer_constraints_v1", "zwp_relative_pointer_manager_v1"};
-
+    ExternalClientLauncher client_launcher;
     WaylandExtensions extensions;
-    auto const supported_protocols = WaylandExtensions::supported();
+    ShellPids shell_pids;
 
-    for (auto const& protocol : experimental_protocols)
+    for (auto const& protocol : {
+        WaylandExtensions::zwlr_screencopy_manager_v1,
+        WaylandExtensions::zxdg_output_manager_v1,
+        "zwp_pointer_constraints_v1",
+        "zwp_relative_pointer_manager_v1"})
     {
-        if (supported_protocols.find(protocol) != end(supported_protocols))
-        {
-            extensions.enable(protocol);
-        }
-        else
-        {
-            mir::log_debug("This version of Mir doesn't support the Wayland extension %s", protocol);
-        }
+        extensions.conditionally_enable(protocol, [&](WaylandExtensions::EnableInfo const& info)
+            {
+                return info.user_preference().value_or(true);
+            });
     }
 
-    std::set<pid_t> shell_component_pids;
-    ExternalClientLauncher external_client_launcher;
-
-    auto run_apps = [&](std::string const& apps)
-        {
-        for (auto i = begin(apps); i != end(apps); )
-        {
-            auto const j = find(i, end(apps), ':');
-            shell_component_pids.insert(external_client_launcher.launch({std::string{i, j}}));
-            if ((i = j) != end(apps)) ++i;
-        }
-        };
-
-    std::atomic<pid_t> launcher_pid{-1};
-
-    // Protocols we're reserving for shell components
+    // Protocols we're reserving for shell components_option
     for (auto const& protocol : {
         WaylandExtensions::zwlr_layer_shell_v1,
         WaylandExtensions::zxdg_output_manager_v1,
@@ -160,39 +210,51 @@ int main(int argc, char const* argv[])
         extensions.conditionally_enable(protocol, [&](WaylandExtensions::EnableInfo const& info)
             {
                 pid_t const pid = pid_of(info.app());
-                return  launcher_pid == pid ||
-                        shell_component_pids.find(pid) != end(shell_component_pids) ||
-                        info.user_preference().value_or(false);
+                return shell_pids.is_found(pid) || info.user_preference().value_or(false);
             });
     }
 
-    std::string const miriway_path{argv[0]};
-    std::string const miriway_root = miriway_path.substr(0, miriway_path.size() - 6);
-    std::string const background_cmd = miriway_root + "-background";
-    std::string const panel_cmd = miriway_root + "-panel";
+    CommandIndex shell_meta{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd)); }};
+    CommandIndex shell_ctrl_alt{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd)); }};
+    CommandIndex meta{[&](auto cmd){ client_launcher.launch(cmd); }};
+    CommandIndex ctrl_alt{[&](auto cmd){ client_launcher.launch(cmd); }};
 
-    std::vector<std::string> launcher_cmd{miriway_root + "-launcher"};
-    std::vector<std::string> terminal_cmd{miriway_root + "-terminal"};
+    ShellCommands commands{
+        runner,
+        [&] (auto c) { return shell_meta.try_launch(c) || meta.try_launch(c); },
+        [&] (auto c) { return shell_ctrl_alt.try_launch(c) || ctrl_alt.try_launch(c); }
+    };
 
-    ShellCommands commands{runner,
-           [&]() { launcher_pid = external_client_launcher.launch(launcher_cmd); },
-           [&]() { external_client_launcher.launch(terminal_cmd); }
-        };
+    CommandLineOption components_option{
+        [&](std::vector<std::string> const& apps)
+        {
+            for (auto const& app : apps)
+            {
+                shell_pids.insert(client_launcher.launch(unescape(app)));
+            }
+        },
+        "shell-component",
+        "Shell component to launch on startup (may be specified multiple times)"};
 
     return runner.run_with(
         {
             X11Support{},
             extensions,
             display_configuration_options,
-            external_client_launcher,
-            CommandLineOption{run_apps, "shell-components", "Colon separated shell components to launch on startup",
-                              (background_cmd + ":" + panel_cmd).c_str()},
-            CommandLineOption{[&launcher_cmd](std::string const& new_cmd) { parse_cmd(new_cmd, launcher_cmd); },
-                              "shell-meta-a", "app launcher", launcher_cmd[0]},
-            CommandLineOption{[&terminal_cmd](std::string const& new_cmd) { parse_cmd(new_cmd, terminal_cmd); },
-                              "shell-ctrl-alt-t", "terminal emulator", terminal_cmd[0]},
+            client_launcher,
+            components_option,
+            CommandLineOption{[&](std::vector<std::string> const& cmds) { shell_ctrl_alt.populate(cmds); },
+                "shell-ctrl-alt",
+                "ctrl-alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)"},
+            CommandLineOption{[&](std::vector<std::string> const& cmds) { shell_meta.populate(cmds); },
+                "shell-meta",
+                "meta <key>:<command> shortcut with shell priviledges (may be specified multiple times)"},
+            CommandLineOption{[&](std::vector<std::string> const& cmds) { ctrl_alt.populate(cmds); },
+                "ctrl-alt", "ctrl-alt <key>:<command> shortcut (may be specified multiple times)"},
+            CommandLineOption{[&](std::vector<std::string> const& cmds) { meta.populate(cmds); },
+                "meta", "meta <key>:<command> shortcut (may be specified multiple times)"},
             Keymap{},
-            AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
+            AppendEventFilter{[&](MirEvent const* e) { shell_pids.reap(); return commands.input_event(e); }},
             set_window_management_policy<WindowManagerPolicy>(commands)
         });
 }

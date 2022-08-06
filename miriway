@@ -28,10 +28,11 @@ config_file=$config_dir/miriway-shell.config
 if [ ! -e "${config_file}" ]
 then
   echo "x11-window-title=Miriway" >> "${config_file}"
+  echo "idle-timeout=600" >> "${config_file}"
 
   if command -v Xwayland > /dev/null
   then
-    echo "enable-x11=1" >> "${config_file}"
+    echo "enable-x11=" >> "${config_file}"
   fi
 
   if command -v gsettings > /dev/null
@@ -41,8 +42,24 @@ then
     echo "keymap=${keymap}" >> "${config_file}"
   fi
 
-  echo "idle-timeout=600" >> "${config_file}"
-  echo "add-wayland-extensions=zwlr_screencopy_manager_v1:zxdg_output_manager_v1" >> "${config_file}"
+  if command -v swaybg > /dev/null; then
+    # Try copying GNOME background
+    if command -v gsettings > /dev/null; then
+      background=$(gsettings get org.gnome.desktop.background picture-uri | sed -Ee "s|[^:]*://(.*\.png)'$|\1|")
+      if [ ! -e "${background}" ]; then
+        unset background
+      fi
+    fi
+
+    echo "shell-component=swaybg -i \"${background:-/usr/share/backgrounds/warty-final-ubuntu.png}\"" >> "${config_file}"
+  fi
+
+  if command -v waybar > /dev/null; then
+    echo "shell-component=waybar" >> "${config_file}"
+  fi
+
+  echo "shell-meta=a:wofi --show drun --location top_left" >> "${config_file}"
+  echo "ctrl-alt=t:miriway-terminal" >> "${config_file}"
 fi
 
 exec "${bindir}"miriway-shell "$@"

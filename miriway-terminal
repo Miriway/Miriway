@@ -23,19 +23,10 @@ case $(realpath "$terminal_command") in
       if [ -x "$terminal_server" ];  then break; fi
     done
 
-    if ! gdbus introspect --session --dest io.mirserver.egmdeTerminal --object-path /io/mirserver/Terminal > /dev/null 2>&1
+    if ! gdbus introspect --session --dest io.mirserver.miriwayTerminal --object-path /io/mirserver/Terminal > /dev/null 2>&1
     then
-       $terminal_server --app-id io.mirserver.egmdeTerminal&
-
-      if (gdbus help | grep wait > /dev/null)
-      then
-        gdbus wait       --session io.mirserver.egmdeTerminal
-      else
-        while ! gdbus introspect --session --dest io.mirserver.egmdeTerminal --object-path /io/mirserver/Terminal > /dev/null 2>&1
-        do
-          sleep 0.2
-        done
-      fi
+      $terminal_server --app-id  io.mirserver.miriwayTerminal&
+      gdbus wait       --session io.mirserver.miriwayTerminal
     fi
 
     if command -v gnome-terminal.real > /dev/null 2>&1
@@ -43,7 +34,7 @@ case $(realpath "$terminal_command") in
     else terminal=gnome-terminal
     fi
 
-    exec $terminal --app-id io.mirserver.egmdeTerminal "$@";;
+    exec $terminal --app-id io.mirserver.miriwayTerminal "$@";;
 
   *)
     # Other terminals default to running as a separate process, which suits us.
