@@ -11,8 +11,14 @@ sudo apt install libmirclient-dev libxkb-common-dev
 
 Runtime dependencies:
 ```plain
-sudo apt install mir-graphics-drivers-desktop wofi swaybg waybar
+sudo apt install mir-graphics-drivers-desktop
 ```
+
+In addition the default configuration expects the following programs:
+```plain
+sudo apt install wofi swaybg waybar
+```
+These provide a launcher, background and panel but alernatives can be used.
 
 ## Building
 
@@ -44,7 +50,6 @@ Now you can run with `miriway`, or select "Miriway" from the login screen.
 Keys|Action
 --|--
 Ctrl-Alt-BkSp|Exit (long press to force if apps are open)
-Meta-A|Open launcher
 Meta-Left|Dock left
 Meta-Right|Dock right
 Meta-PkUp|Previous workspace
@@ -56,11 +61,21 @@ Meta-Home-PkUp|Move window to first workspace
 Meta-End|Last workspace
 Meta-End-PkDn|Move window to last workspace
 
-### Keyboard shortcuts using `Ctrl-Alt` can be added or amended
+### Keyboard shortcuts using `Meta` and `Ctrl-Alt` can be added or amended
 
 These are specified in `~/.config/miriway.config`
 
 This is the default:
 ```plain
-shell-ctrl-alt=t:miriway-terminal
+shell-meta=a:wofi --show drun --location top_left
+ctrl-alt=t:miriway-terminal
 ```
+
+There are four similar options that can be specified zero or more times: 
+`shell-meta`, `shell-ctrl-alt`, `meta` and `ctrl-alt`. The modifier keys
+`meta` and `ctrl-alt` should be self-explanatory. These options starting 
+with a `shell` prefix will start the application with access to "shell"
+related Wayland extensions.
+
+There is a similar `shell-component` option for programs to be started 
+with access to "shell" related Wayland extensions.
