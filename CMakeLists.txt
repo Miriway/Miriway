@@ -45,3 +45,7 @@ install(FILES ${CMAKE_SOURCE_DIR}/miriway.desktop
     DESTINATION /usr/share/wayland-sessions/
 )
 
+install(FILES ${CMAKE_SOURCE_DIR}/miriway-shell.config
+    DESTINATION /etc/xdg/xdg-miriway
+)
+

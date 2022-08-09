@@ -27,7 +27,7 @@ In addition the default configuration expects the following programs:
 ```plain
 sudo apt install wofi swaybg waybar
 ```
-These provide a launcher, background and panel but alernatives can be used.
+These provide a launcher, background and panel but alternatives can be used.
 
 ## Building
 
@@ -72,19 +72,10 @@ Meta-End-PkDn|Move window to last workspace
 
 ### Keyboard shortcuts using `Meta` and `Ctrl-Alt` can be added or amended
 
-These are specified in `~/.config/miriway.config`
+These (and other) defaults are specified in `/etc/xdg/xdg-miriway/miriway-shell.config` but can be overridden 
+in `~/.config/miriway-shell.config`. You should typically copy and edit the default config file.
 
-This is the default:
-```plain
-shell-meta=a:wofi --show drun --location top_left
-ctrl-alt=t:miriway-terminal
-```
-
-There are four similar options that can be specified zero or more times: 
-`shell-meta`, `shell-ctrl-alt`, `meta` and `ctrl-alt`. The modifier keys
-`meta` and `ctrl-alt` should be self-explanatory. These options starting 
-with a `shell` prefix will start the application with access to "shell"
-related Wayland extensions.
-
-There is a similar `shell-component` option for programs to be started 
-with access to "shell" related Wayland extensions.
+Keys|Action
+--|--
+Ctrl-Alt-T|Terminal emulator
+Meta-A|App launcher
