@@ -2,6 +2,15 @@
 
 Miriway is a simple Wayland desktop based on Mir
 
+## In development
+
+Miriway uses an updated version of the Mir API. This will be released in 
+Mir 2.9, and, until then, is available from the mir-team "development" PPA:
+
+```plain
+sudo apt-add-repository ppa:mir-team/dev
+```
+
 ## Dependencies
 
 Build dependencies:
