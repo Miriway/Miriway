@@ -17,4 +17,9 @@ then
   unset WAYLAND_DISPLAY
 fi
 
+if [ "${XDG_CONFIG_DIRS#*/etc/xdg/xdg-miriway}" = "${XDG_CONFIG_DIRS}" ]
+then
+  export XDG_CONFIG_DIRS="/etc/xdg/xdg-miriway${XDG_CONFIG_DIRS:+:$XDG_CONFIG_DIRS}"
+fi
+
 exec "${bindir}"miriway-shell "$@"
