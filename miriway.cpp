@@ -38,81 +38,6 @@ using namespace miriway;
 
 namespace
 {
-// Split out the tokens of a (possibly escaped) command
-std::vector<std::string> unescape(std::string const& command)
-{
-    std::vector<std::string> split_command;
-
-    {
-        std::string token;
-        char in_quote = '\0';
-        bool escaping = false;
-
-        auto push_token = [&]()
-            {
-                if (!token.empty())
-                {
-                    split_command.push_back(std::move(token));
-                    token.clear();
-                }
-            };
-
-        for (auto c : command)
-        {
-            if (escaping)
-            {
-                // end escape
-                escaping = false;
-                token += c;
-                continue;
-            }
-
-            switch (c)
-            {
-            case '\\':
-                // start escape
-                escaping = true;
-                continue;
-
-            case '\'':
-            case '\"':
-                if (in_quote == '\0')
-                {
-                    // start quoted sequence
-                    in_quote = c;
-                    continue;
-                }
-                else if (c == in_quote)
-                {
-                    // end quoted sequence
-                    in_quote = '\0';
-                    continue;
-                }
-                else
-                {
-                    break;
-                }
-
-            default:
-                break;
-            }
-
-            if (!isspace(c) || in_quote)
-            {
-                token += c;
-            }
-            else
-            {
-                push_token();
-            }
-        }
-
-        push_token();
-    }
-
-    return split_command;
-}
-
 struct CommandIndex
 {
     explicit CommandIndex(std::function<void(std::vector<std::string> const& command_line)> launch) :
@@ -127,7 +52,7 @@ struct CommandIndex
                 mir::fatal_error("Invalid command option: %s", command.c_str());
             }
 
-            commands[std::tolower(command[0])] = unescape(command.substr(2));
+            commands[std::tolower(command[0])] = ExternalClientLauncher::split_command(command.substr(2));
         }
     }
 
@@ -230,7 +155,7 @@ int main(int argc, char const* argv[])
         {
             for (auto const& app : apps)
             {
-                shell_pids.insert(client_launcher.launch(unescape(app)));
+                shell_pids.insert(client_launcher.launch(ExternalClientLauncher::split_command(app)));
             }
         },
         "shell-component",
