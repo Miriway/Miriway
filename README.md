@@ -23,11 +23,8 @@ Runtime dependencies:
 sudo apt install mir-graphics-drivers-desktop
 ```
 
-In addition the default configuration expects the following programs:
-```plain
-sudo apt install wofi swaybg waybar
-```
-These provide a launcher, background and panel but alternatives can be used.
+The default install is minimal and provides a basic shell and a default `Ctrl-Alt-T` command that
+tries to find a terminal emulator (by using `miriway-terminal`).
 
 ## Building
 
@@ -73,9 +70,9 @@ Meta-End-PkDn|Move window to last workspace
 ### Keyboard shortcuts using `Meta` and `Ctrl-Alt` can be added or amended
 
 These (and other) defaults are specified in `/etc/xdg/xdg-miriway/miriway-shell.config` but can be overridden 
-in `~/.config/miriway-shell.config`. You should typically copy and edit the default config file.
+in `~/.config/miriway-shell.config`. You should typically copy and edit the default config file. It provides
+some examples using components from existing desktop environments. (And the corresponding `apt install` commands)
 
 Keys|Action
 --|--
 Ctrl-Alt-T|Terminal emulator
-Meta-A|App launcher
