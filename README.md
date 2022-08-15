@@ -1,6 +1,24 @@
 # Miriway
 
-Miriway is a simple Wayland desktop based on Mir
+## Introducing Miriway
+Miriway is a starting point for creating a Wayland based desktop environment using Mir.
+
+At the core of Miriway is `miriway-shell`, a Mir based Wayland compositor that provides:
+* A "floating windows" window managament policy;
+* Support for Wayland (and via `Xwayland`) X11 applications; 
+* Dynamic workspaces;
+* Additional Wayland support for "shell components" such as panels and docs; and,
+* Configurable shortcuts for launching standard apps such as launcher and terminal emulator.
+
+In addition to `miriway-shell`, Miriway has:
+
+* A "terminal emulator finder" script `miriway-terminal`, that works with most terminal emulators;
+* A launch script `miriway` to simplify starting Miriway;
+* A default configuration file `miriway-shell.config`; and,
+* A greeter configuration `miriway.desktop` so Miriway can be selected at login
+
+Miriway has been tested with shell components from several desktop environments 
+and there are notes on enabling these in `miriway-shell.config`.
 
 ## In development
 
@@ -15,18 +33,20 @@ sudo apt-add-repository ppa:mir-team/dev
 
 Build dependencies:
 ```plain
-sudo apt install libmirclient-dev libxkb-common-dev
+sudo apt install libmiral-dev
 ```
 
-Runtime dependencies:
+Additional runtime dependencies:
 ```plain
 sudo apt install mir-graphics-drivers-desktop
 ```
 
-The default install is minimal and provides a basic shell and a default `Ctrl-Alt-T` command that
-tries to find a terminal emulator (by using `miriway-terminal`).
+The default install is minimal and provides a basic shell and a default 
+`Ctrl-Alt-T` command that tries to find a terminal emulator (by using 
+`miriway-terminal`). If you don't already have a terminal emulator 
+installed, then `sudo apt install xfce4-terminal` is a simple option.
 
-## Building
+## Building and Installing
 
 ```plain
 mkdir build
@@ -35,15 +55,7 @@ cmake ..
 cmake --build .
 ```
 
-## Running
-
-Running (without installing):
-
-```plain
-./miriway
-```
-
-## Installing
+Installing
 
 ```plain
 sudo cmake --build . -- install
