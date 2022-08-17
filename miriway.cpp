@@ -64,7 +64,7 @@ struct CommandIndex
         return found;
     }
 private:
-    std::function<void (std::vector<std::string> const& command_line)> launch;
+    std::function<void (std::vector<std::string> const& command_line)> const launch;
     std::map<char, std::vector<std::string>> commands;
 };
 
