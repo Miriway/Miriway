@@ -108,10 +108,8 @@ private:
 int main(int argc, char const* argv[])
 {
     MirRunner runner{argc, argv};
-    ExternalClientLauncher client_launcher;
-    WaylandExtensions extensions;
-    ShellPids shell_pids;
 
+    WaylandExtensions extensions;
     for (auto const& protocol : {
         WaylandExtensions::zwlr_screencopy_manager_v1,
         WaylandExtensions::zxdg_output_manager_v1,
@@ -124,6 +122,7 @@ int main(int argc, char const* argv[])
             });
     }
 
+    ShellPids shell_pids;
     // Protocols we're reserving for shell components_option
     for (auto const& protocol : {
         WaylandExtensions::zwlr_layer_shell_v1,
@@ -139,8 +138,22 @@ int main(int argc, char const* argv[])
             });
     }
 
+    ExternalClientLauncher client_launcher;
+
+    CommandLineOption components_option{
+        [&](std::vector<std::string> const& apps)
+            {
+            for (auto const& app : apps)
+            {
+                shell_pids.insert(client_launcher.launch(ExternalClientLauncher::split_command(app)));
+            }
+            },
+        "shell-component",
+        "Shell component to launch on startup (may be specified multiple times)"};
+
     CommandIndex shell_meta{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd)); }};
     CommandIndex shell_ctrl_alt{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd)); }};
+
     CommandIndex meta{[&](auto cmd){ client_launcher.launch(cmd); }};
     CommandIndex ctrl_alt{[&](auto cmd){ client_launcher.launch(cmd); }};
 
@@ -149,17 +162,6 @@ int main(int argc, char const* argv[])
         [&] (auto c) { return shell_meta.try_launch(c) || meta.try_launch(c); },
         [&] (auto c) { return shell_ctrl_alt.try_launch(c) || ctrl_alt.try_launch(c); }
     };
-
-    CommandLineOption components_option{
-        [&](std::vector<std::string> const& apps)
-        {
-            for (auto const& app : apps)
-            {
-                shell_pids.insert(client_launcher.launch(ExternalClientLauncher::split_command(app)));
-            }
-        },
-        "shell-component",
-        "Shell component to launch on startup (may be specified multiple times)"};
 
     return runner.run_with(
         {
