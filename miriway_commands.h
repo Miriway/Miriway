@@ -36,6 +36,8 @@ using namespace miral;
 
 class WindowManagerPolicy;
 
+// Process `input_event()` to identify commands Miriway needs to handle.
+// Commands will be routed to MirRunner, the WindowManagerPolicy, meta_command or ctrl_alt_command as appropriate
 class ShellCommands
 {
 public:

@@ -29,6 +29,8 @@ namespace miriway
 using namespace miral;
 class ShellCommands;
 
+// A window management policy that adds support for docking and workspaces.
+// Co-ordinates with `ShellCommands` for the handling of related commands.
 class WindowManagerPolicy :
     public MinimalWindowManager
 {

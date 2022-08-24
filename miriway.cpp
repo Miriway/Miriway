@@ -20,11 +20,12 @@
 #include "miriway_commands.h"
 
 #include <miral/append_event_filter.h>
-#include <miral/command_line_option.h>
+#include <miral/configuration_option.h>
 #include <miral/display_configuration_option.h>
 #include <miral/external_client.h>
 #include <miral/internal_client.h>
 #include <miral/keymap.h>
+#include <miral/prepend_event_filter.h>
 #include <miral/runner.h>
 #include <miral/set_window_management_policy.h>
 #include <miral/wayland_extensions.h>
@@ -38,6 +39,7 @@ using namespace miriway;
 
 namespace
 {
+// Build an index of commands from "<key>:<commands>" values and launch them by <key> (if found)
 struct CommandIndex
 {
     explicit CommandIndex(std::function<void(std::vector<std::string> const& command_line)> launch) :
@@ -68,6 +70,9 @@ private:
     std::map<char, std::vector<std::string>> commands;
 };
 
+// Keep track of interesting "shell" child processes. Somewhat hacky as `reap()` needs to be called
+// somewhere, and will reap all child processes not just the ones of interest. (But that's actually
+// useful as it avoids "zombie" child processes).
 struct ShellPids
 {
     void insert(pid_t pid)
@@ -109,6 +114,10 @@ int main(int argc, char const* argv[])
 {
     MirRunner runner{argc, argv};
 
+    // Change the default Wayland extensions to:
+    //  1. to enable screen capture; and,
+    //  2. to allow pointer confinement (used by, for example, games)
+    // Because we prioritise `user_preference()` these can be disabled by the configuration
     WaylandExtensions extensions;
     for (auto const& protocol : {
         WaylandExtensions::zwlr_screencopy_manager_v1,
@@ -122,6 +131,10 @@ int main(int argc, char const* argv[])
             });
     }
 
+    // To support docks, onscreen keyboards, launchers and the like; enable a number of protocol extensions,
+    // but, because they have security implications only for those applications found in `shell_pids`.
+    // We'll use `shell_pids` to track "shell-*" processes.
+    // We also check `user_preference()` so these can be enabled by the configuration
     ShellPids shell_pids;
     // Protocols we're reserving for shell components_option
     for (auto const& protocol : {
@@ -140,7 +153,9 @@ int main(int argc, char const* argv[])
 
     ExternalClientLauncher client_launcher;
 
-    CommandLineOption components_option{
+    // A configuration option to start applications when compositor starts and record them in `shell_pids`.
+    // Because of the previous section, this allows them some extra Wayland extensions
+    ConfigurationOption components_option{
         [&](std::vector<std::string> const& apps)
             {
             for (auto const& app : apps)
@@ -151,17 +166,37 @@ int main(int argc, char const* argv[])
         "shell-component",
         "Shell component to launch on startup (may be specified multiple times)"};
 
+    // `shell_meta` and `shell_ctrl_alt` provide a lookup to execute the commands configured by the corresponding
+    // `shell_meta_option` and `shell_ctrl_alt_option` configuration options. These processes are added to `shell_pids`
     CommandIndex shell_meta{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd)); }};
     CommandIndex shell_ctrl_alt{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd)); }};
+    ConfigurationOption shell_meta_option{
+        [&](std::vector<std::string> const& cmds) { shell_meta.populate(cmds); },
+        "shell-meta",
+        "meta <key>:<command> shortcut with shell priviledges (may be specified multiple times)"};
+    ConfigurationOption shell_ctrl_alt_option{
+        [&](std::vector<std::string> const& cmds) { shell_ctrl_alt.populate(cmds); },
+        "shell-ctrl-alt",
+        "ctrl-alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)"};
 
+    // `meta` and `ctrl_alt` provide a lookup to execute the commands configured by the corresponding
+    // `meta_option` and `ctrl_alt_option` configuration options. These processes are NOT added to `shell_pids`
     CommandIndex meta{[&](auto cmd){ client_launcher.launch(cmd); }};
     CommandIndex ctrl_alt{[&](auto cmd){ client_launcher.launch(cmd); }};
+    ConfigurationOption ctrl_alt_option{
+        [&](std::vector<std::string> const& cmds) { ctrl_alt.populate(cmds); },
+        "ctrl-alt",
+        "ctrl-alt <key>:<command> shortcut (may be specified multiple times)"};
+    ConfigurationOption meta_option{
+        [&](std::vector<std::string> const& cmds) { meta.populate(cmds); },
+        "meta",
+        "meta <key>:<command> shortcut (may be specified multiple times)"};
 
+    // Process input events to identifies commands Miriway needs to handle
     ShellCommands commands{
         runner,
         [&] (auto c) { return shell_meta.try_launch(c) || meta.try_launch(c); },
-        [&] (auto c) { return shell_ctrl_alt.try_launch(c) || ctrl_alt.try_launch(c); }
-    };
+        [&] (auto c) { return shell_ctrl_alt.try_launch(c) || ctrl_alt.try_launch(c); }};
 
     return runner.run_with(
         {
@@ -170,18 +205,13 @@ int main(int argc, char const* argv[])
             display_configuration_options,
             client_launcher,
             components_option,
-            CommandLineOption{[&](std::vector<std::string> const& cmds) { shell_ctrl_alt.populate(cmds); },
-                "shell-ctrl-alt",
-                "ctrl-alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)"},
-            CommandLineOption{[&](std::vector<std::string> const& cmds) { shell_meta.populate(cmds); },
-                "shell-meta",
-                "meta <key>:<command> shortcut with shell priviledges (may be specified multiple times)"},
-            CommandLineOption{[&](std::vector<std::string> const& cmds) { ctrl_alt.populate(cmds); },
-                "ctrl-alt", "ctrl-alt <key>:<command> shortcut (may be specified multiple times)"},
-            CommandLineOption{[&](std::vector<std::string> const& cmds) { meta.populate(cmds); },
-                "meta", "meta <key>:<command> shortcut (may be specified multiple times)"},
+            shell_ctrl_alt_option,
+            shell_meta_option,
+            ctrl_alt_option,
+            meta_option,
             Keymap{},
-            AppendEventFilter{[&](MirEvent const* e) { shell_pids.reap(); return commands.input_event(e); }},
+            PrependEventFilter{[&](MirEvent const*) { shell_pids.reap(); return false; }},
+            AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
             set_window_management_policy<WindowManagerPolicy>(commands)
         });
 }
