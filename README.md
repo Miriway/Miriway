@@ -22,11 +22,10 @@ and there are notes on enabling these in `miriway-shell.config`.
 
 ## In development
 
-Miriway uses an updated version of the Mir API. This will be released in 
-Mir 2.9, and, until then, is available from the mir-team "development" PPA:
+Miriway uses the latest version of Mir available from the mir-team "release" PPA:
 
 ```plain
-sudo apt-add-repository ppa:mir-team/dev
+sudo apt-add-repository ppa:mir-team/release
 ```
 
 ## Dependencies
