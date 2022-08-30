@@ -27,17 +27,4 @@ then
   export MIR_SERVER_ENABLE_X11=1
 fi
 
-if ! grep -q "^keymap=" "${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config" 2> /dev/null
-then
-  if command -v gsettings > /dev/null
-  then
-    keymap_index=$(gsettings get org.gnome.desktop.input-sources current | cut -d\  -f 2) || true
-    keymap=$(gsettings get org.gnome.desktop.input-sources sources | grep -Po "'[[:alpha:]+]+'\)" | sed -ne "s/['|)]//g;$((keymap_index+1))p") || true
-    if [ "${keymap}" != "" ]
-    then
-      export MIR_SERVER_KEYMAP="${keymap}"
-    fi
-  fi
-fi
-
 exec "${bindir}"miriway-shell "$@"
