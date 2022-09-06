@@ -39,6 +39,29 @@ using namespace miriway;
 
 namespace
 {
+// Build a list of shell components from "<commands>" values and launch them all after startup
+struct ShellComponents
+{
+    explicit ShellComponents(std::function<void(std::vector<std::string> const& command_line)> launch) :
+        launch{std::move(launch)}{}
+
+    void populate(std::vector<std::string> const& cmds)
+    {
+        std::transform(begin(cmds), end(cmds), back_inserter(commands), ExternalClientLauncher::split_command);
+    }
+
+    void launch_all() const
+    {
+        for (auto const& command : commands)
+        {
+            launch(command);
+        }
+    }
+private:
+    std::function<void (std::vector<std::string> const& command_line)> const launch;
+    std::vector<std::vector<std::string>> commands;
+};
+
 // Build an index of commands from "<key>:<commands>" values and launch them by <key> (if found)
 struct CommandIndex
 {
@@ -155,14 +178,10 @@ int main(int argc, char const* argv[])
 
     // A configuration option to start applications when compositor starts and record them in `shell_pids`.
     // Because of the previous section, this allows them some extra Wayland extensions
+    ShellComponents shell_components{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd)); }};
+    runner.add_start_callback([&]{ shell_components.launch_all(); });
     ConfigurationOption components_option{
-        [&](std::vector<std::string> const& apps)
-            {
-            for (auto const& app : apps)
-            {
-                shell_pids.insert(client_launcher.launch(ExternalClientLauncher::split_command(app)));
-            }
-            },
+        [&](std::vector<std::string> const& apps) { shell_components.populate(apps); },
         "shell-component",
         "Shell component to launch on startup (may be specified multiple times)"};
 
