@@ -164,6 +164,7 @@ int main(int argc, char const* argv[])
         WaylandExtensions::zwlr_layer_shell_v1,
         WaylandExtensions::zwlr_foreign_toplevel_manager_v1,
         WaylandExtensions::zwp_virtual_keyboard_manager_v1,
+        WaylandExtensions::zwlr_virtual_pointer_manager_v1,
         WaylandExtensions::zwp_input_method_manager_v2})
     {
         extensions.conditionally_enable(protocol, [&](WaylandExtensions::EnableInfo const& info)
