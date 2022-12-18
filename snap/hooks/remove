@@ -1,0 +1,3 @@
+#!/bin/sh
+
+rm /usr/share/wayland-sessions/miriway.desktop /etc/xdg/xdg-miriway/miriway-shell.config
