@@ -1,0 +1,13 @@
+#!/bin/sh
+
+mkdir -p /usr/share/wayland-sessions/
+cp "$SNAP"/usr/share/wayland-sessions/miriway.desktop /usr/share/wayland-sessions/miriway.desktop
+
+# fall back to Ubuntu default
+background="/usr/share/backgrounds/warty-final-ubuntu.png"
+if [[ ! -e "${background}" ]]; then
+  background="$(find /usr/share/backgrounds/ -type f | tail -n 1)"
+fi
+
+mkdir -p /etc/xdg/xdg-miriway/
+sed -e "s|%SNAP%|${SNAP}/|g" -e "s|%BACKGROUND%|${background}|g" ${SNAP}/etc/xdg/xdg-miriway/miriway-shell.config-snap > /etc/xdg/xdg-miriway/miriway-shell.config
