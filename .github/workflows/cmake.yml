@@ -20,6 +20,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
+    - name: Add PPA
+      run: sudo apt-add-repository ppa:mir-team/release
+
     - name: Install dependencies
       run: sudo apt-get install libmiral-dev
 
