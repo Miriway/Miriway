@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -g -Werror -Wall -pedantic -Wextra -fPIC -Wnon-virtual-dtor")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,defs")
 
+include(GNUInstallDirs)
 include(FindPkgConfig)
 pkg_check_modules(MIRAL miral REQUIRED)
 pkg_check_modules(XKBCOMMON xkbcommon REQUIRED)
@@ -38,14 +39,14 @@ install(PROGRAMS
     ${CMAKE_BINARY_DIR}/miriway
     ${CMAKE_BINARY_DIR}/miriway-shell
     ${CMAKE_BINARY_DIR}/miriway-terminal
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 install(FILES ${CMAKE_SOURCE_DIR}/miriway.desktop
-    DESTINATION /usr/share/wayland-sessions/
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/wayland-sessions/
 )
 
 install(FILES ${CMAKE_SOURCE_DIR}/miriway-shell.config
-    DESTINATION /etc/xdg/xdg-miriway
+    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/xdg/xdg-miriway
 )
 
