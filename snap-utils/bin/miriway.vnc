@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+vnc_viewer="$(snapctl get vnc-viewer)"
+vnc_display="$(snapctl get vnc-display)"
+
+ssh -T -L "59${vnc_display:-10}:localhost:5900" -f "$@" miriway.vnc-server
+until
+  sleep 3 # wait before check
+  nc -z localhost "59${vnc_display:-10}"
+do :
+done
+"${vnc_viewer:-$SNAP/usr/bin/gvncviewer}" "localhost:${vnc_display:-10}"

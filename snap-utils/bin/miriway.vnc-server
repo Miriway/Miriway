@@ -1,0 +1,11 @@
+#!/bin/bash -lx
+
+miriway_local_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
+if [ -e "${miriway_local_config}" ] && grep -q ^shell-component= "${miriway_local_config}"
+then
+  miriway_config_file="${miriway_local_config}"
+else
+  miriway_config_file=/etc/xdg/xdg-miriway/miriway-shell.config
+fi
+
+grep ^shell-component= "${miriway_config_file}" | sed "s#^shell-component=\(.*\)#--shell-component=\'\1\'#" | exec xargs env -u WAYLAND_DISPLAY $SNAP/usr/bin/xvfb-run "$@" --shell-component=ubuntu-frame-vnc
