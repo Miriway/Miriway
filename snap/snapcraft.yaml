@@ -16,13 +16,19 @@ package-repositories:
 
 apps:
   miriway:
-    command: usr/local/bin/miriway
-    environment:
+    command: &_command usr/local/bin/miriway
+    environment: &_environment
       # Prep for Mir
       MIR_SERVER_PLATFORM_PATH: ${SNAP}/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/mir/server-platform
       __EGL_VENDOR_LIBRARY_DIRS: $SNAP/etc/glvnd/egl_vendor.d:$SNAP/usr/share/glvnd/egl_vendor.d
       LIBGL_DRIVERS_PATH: $SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
       LIBINPUT_QUIRKS_DIR: ${SNAP}/usr/share/libinput
+
+  vnc-server:
+    command-chain:
+      - bin/miriway.vnc-server
+    command: *_command
+    environment: *_environment
 
 parts:
   miriway:
@@ -75,6 +81,7 @@ parts:
     - libtinfo5
     # included in this part because it tries to pull in mesa bits
     - xwayland
+    - xvfb
     - swaybg
     - waybar
     - wofi
