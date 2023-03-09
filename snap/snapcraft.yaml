@@ -31,8 +31,8 @@ apps:
     command: *_command
     environment: *_environment
 
-  vnc-client:
-    command: bin/miriway.vnc-client
+  vnc:
+    command: bin/miriway.vnc
 
 parts:
   miriway:
