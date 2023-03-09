@@ -30,6 +30,9 @@ apps:
     command: *_command
     environment: *_environment
 
+  vnc-client:
+    command: bin/miriway.vnc-client
+
 parts:
   miriway:
     override-pull: |
@@ -80,11 +83,12 @@ parts:
     - libgl1-mesa-dri
     - libtinfo5
     # included in this part because it tries to pull in mesa bits
-    - xwayland
-    - xvfb
+    - gvncviewer
     - swaybg
     - waybar
     - wofi
+    - xvfb
+    - xwayland
     stage:
       # The libraries in .../dri need no-patchelf, so they come from the mesa-unpatched part
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
