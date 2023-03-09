@@ -4,4 +4,4 @@
 #exec $SNAP/xvfb-run "$@" --shell-component=ubuntu-frame-vnc "$(sed -Ene "s!waybar!$SNAP/usr/bin/waybar!g;s!swaybg!$SNAP/usr/bin/swaybg!g;s/^shell-component=([^#]*).*/--shell-component=\"\1\"/p" ~/.config/miriway-shell.config | tr '\n' ' ')"
 
 # This works, but isn't configurable
-exec env -u WAYLAND_DISPLAY $SNAP/usr/bin/xvfb-run "$@" --shell-component=ubuntu-frame-vnc --shell-component="$SNAP/usr/bin/swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png" --shell-component="$SNAP/usr/bin/waybar"
+exec env -u WAYLAND_DISPLAY $SNAP/usr/bin/xvfb-run "$@" --shell-component=ubuntu-frame-vnc --shell-component="$SNAP/usr/bin/swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png" --shell-component="$SNAP/usr/bin/waybar" --ctrl-alt="t:miriway-unsnap miriway-terminal"
