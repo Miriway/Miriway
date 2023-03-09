@@ -6,7 +6,7 @@ vnc_display="$(snapctl get vnc-display)"
 
 ssh -T -L "59${vnc_display:-00}:localhost:5900" -f "$@" miriway.vnc-server
 until
-  sleep 1 # wait a second before check (again)
+  sleep 3 # wait before check
   nc -z localhost "59${vnc_display:-00}"
 do :
 done
