@@ -33,6 +33,7 @@ apps:
 
   vnc:
     command: bin/miriway.vnc
+    environment: *_environment
 
 parts:
   miriway:
