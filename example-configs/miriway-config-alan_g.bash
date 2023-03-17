@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-shell_components="yambar swaybg synapse"
+shell_components="yambar swaybg synapse kgx"
 miriway_config="$HOME/.config/miriway-shell.config"
 yambar_config="$HOME/.config/yambar/config.yml"
 
@@ -32,7 +32,10 @@ for component in $shell_components
 do
   if ! command -v "$component" > /dev/null
   then
-    sudo apt install $component
+    case "$component" in
+      kgx ) sudo apt install gnome-console;;
+      * )   sudo apt install "$component";;
+    esac
   fi
 done
 
@@ -54,8 +57,6 @@ ctrl-alt=t:kgx
 add-wayland-extensions=zwp_idle_inhibit_manager_v1
 EOT
 
-wificard=$(basename "$(ls -d /sys/class/net/w*)")
-
 # Ensure we have a config file with the fixed options
 cat <<EOT > "${yambar_config}"
 awesome: &awesome Font Awesome 6 Free:style=solid:pixelsize=14
@@ -67,19 +68,32 @@ bar:
   background: 282828ff
   font: *ubuntu
 
+  left:
+    - label:
+        content:
+          string:
+            text: " start"
+            margin: 5
+            on-click: synapse
+            deco: &greybg
+              background:
+                color: 3f3f3fff
+
   center:
     - clock:
         content:
           - string:
               margin: 5
               text: "{date} {time}"
-              deco: &greybg
-                background:
-                  color: 3f3f3fff
+              deco: *greybg
 
   right:
+EOT
+
+for wificard in $(ls -d /sys/class/net/wl*)
+do cat <<EOT >> "${yambar_config}"
     - network:
-        name: $wificard
+        name: $(basename "$wificard")
         content:
           map:
             deco: *greybg
@@ -97,8 +111,13 @@ bar:
                     ipv4 == "":
                       - string: {text: , font: *awesome}
 #                      - string: {text: "{ssid} {dl-speed:mb}/{ul-speed:mb} Mb/s"}
+EOT
+done
+
+for battery in $(ls -d /sys/class/power_supply/BAT*)
+do cat <<EOT >> "${yambar_config}"
     - battery:
-        name: BAT0
+        name: $(basename "$battery")
         anchors:
           discharging: &discharging
             list:
@@ -147,22 +166,5 @@ bar:
                       - string: {text:  , foreground: 00ff00ff, font: *awesome}
                       - string: {text:  , foreground: 00ff00ff, font: *awesome}
                 - string: {text: "{capacity}%"}
-
-  left:
-    - label:
-        content:
-          string:
-            text: " start"
-            deco: *greybg
-            margin: 5
-            on-click: synapse
-
-    - foreign-toplevel:
-        content:
-          map:
-            deco: *greybg
-            conditions:
-              ~activated: {empty: {}}
-              activated:
-                - string: {text: "{app-id}: {title}"}
 EOT
+done
