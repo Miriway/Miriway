@@ -53,8 +53,6 @@ shell-component=yambar
 
 meta=a:synapse
 ctrl-alt=t:kgx
-
-add-wayland-extensions=zwp_idle_inhibit_manager_v1
 EOT
 
 # Ensure we have a config file with the fixed options
