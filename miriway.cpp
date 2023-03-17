@@ -145,6 +145,7 @@ int main(int argc, char const* argv[])
     for (auto const& protocol : {
         WaylandExtensions::zwlr_screencopy_manager_v1,
         WaylandExtensions::zxdg_output_manager_v1,
+        "zwp_idle_inhibit_manager_v1",
         "zwp_pointer_constraints_v1",
         "zwp_relative_pointer_manager_v1"})
     {

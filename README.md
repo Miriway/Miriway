@@ -87,3 +87,11 @@ some examples using components from existing desktop environments. (And the corr
 Keys|Action
 --|--
 Ctrl-Alt-T|Terminal emulator
+
+## Example configurations
+
+I've provided an `example-configs` subdirectory to hold scripts to set up example configurations.
+
+In particular, I've added `example-configs/miriway-config-alan_g.bash` which sets up some options I've been trying.
+The script works fine on Ubuntu 23.04, but isn't portable (it uses apt and assumes packages are in the archive).
+If you have an alternative configuration, please share!
