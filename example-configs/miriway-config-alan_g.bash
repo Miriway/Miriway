@@ -61,7 +61,7 @@ do
   fi
 done
 
-mkdir "$(dirname "${yambar_config}")" -m 700
+mkdir "$(dirname "${yambar_config}")" -p -m 700
 
 # Ensure we have a config file with the fixed options
 cat <<EOT > "${miriway_config}"
