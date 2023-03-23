@@ -19,7 +19,7 @@ fi
 
 if [ "${XDG_CONFIG_DIRS#*/etc/xdg/xdg-miriway}" = "${XDG_CONFIG_DIRS}" ]
 then
-  export XDG_CONFIG_DIRS="/etc/xdg/xdg-miriway${XDG_CONFIG_DIRS:+:$XDG_CONFIG_DIRS}"
+  export XDG_CONFIG_DIRS="/etc/xdg/xdg-miriway:${XDG_CONFIG_DIRS:-/etc/xdg}"
 fi
 
 if command -v Xwayland > /dev/null
