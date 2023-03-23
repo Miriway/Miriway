@@ -5,14 +5,6 @@ shell_components="yambar swaybg synapse kgx"
 miriway_config="$HOME/.config/miriway-shell.config"
 yambar_config="$HOME/.config/yambar/config.yml"
 
-if [ -e "${miriway_config}" ]; then
-  echo WARNING Overwriting "${miriway_config}"
-fi
-
-if [ -e "${yambar_config}" ]; then
-  echo WARNING Overwriting "${yambar_config}"
-fi
-
 for component in $shell_components
 do
   if ! command -v "$component" > /dev/null
@@ -21,6 +13,14 @@ do
   fi
 done
 
+if [ -e "${miriway_config}" ]; then
+  echo WARNING Overwriting "${miriway_config}"
+fi
+
+if [ -e "${yambar_config}" ]; then
+  echo WARNING Overwriting "${yambar_config}"
+fi
+
 read -p"OK to proceed? [y/n] " yn
 
 case $yn in
@@ -28,18 +28,40 @@ case $yn in
   [Nn] ) exit 1;;
 esac
 
+install()
+{
+if command -v apt > /dev/null
+then
+    case "$1" in
+      kgx ) sudo apt install gnome-console;;
+      * )   sudo apt install "$1";;
+    esac
+elif command -v dnf > /dev/null
+then
+    case "$1" in
+      kgx ) sudo dnf install gnome-console;;
+      * )   sudo dnf install "$1";;
+    esac
+elif command -v apk > /dev/null
+then
+    case "$1" in
+      kgx ) sudo apk add gnome-console;;
+      * )   sudo apk add "$1";;
+    esac
+else
+  echo ERROR: I cannot find an install tool for this system
+fi
+}
+
 for component in $shell_components
 do
   if ! command -v "$component" > /dev/null
   then
-    case "$component" in
-      kgx ) sudo apt install gnome-console;;
-      * )   sudo apt install "$component";;
-    esac
+    install "$component"
   fi
 done
 
-mkdir -p "$(dirname "${yambar_config}")" -m 700
+mkdir "$(dirname "${yambar_config}")" -p -m 700
 
 # Ensure we have a config file with the fixed options
 cat <<EOT > "${miriway_config}"
@@ -88,7 +110,7 @@ bar:
   right:
 EOT
 
-for wificard in $(ls -d /sys/class/net/wl*)
+for wificard in /sys/class/net/wl*
 do cat <<EOT >> "${yambar_config}"
     - network:
         name: $(basename "$wificard")
@@ -112,7 +134,7 @@ do cat <<EOT >> "${yambar_config}"
 EOT
 done
 
-for battery in $(ls -d /sys/class/power_supply/BAT*)
+for battery in /sys/class/power_supply/BAT*
 do cat <<EOT >> "${yambar_config}"
     - battery:
         name: $(basename "$battery")
