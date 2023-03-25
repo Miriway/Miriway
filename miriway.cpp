@@ -95,44 +95,31 @@ private:
 
 struct WmCommandIndex
 {
+    WmCommandIndex()
+    {
+        commands[XKB_KEY_Left]  = [](WindowManagerPolicy* wm, bool) { wm->dock_active_window_left(); };
+        commands[XKB_KEY_Right] = [](WindowManagerPolicy* wm, bool) { wm->dock_active_window_right(); };
+        commands[XKB_KEY_space] = [](WindowManagerPolicy* wm, bool) { wm->toggle_maximized_restored(); };
+
+        commands[XKB_KEY_Home]      = [](WindowManagerPolicy* wm, bool with_shift) { wm->workspace_begin(with_shift); };
+        commands[XKB_KEY_End]       = [](WindowManagerPolicy* wm, bool with_shift) { wm->workspace_end(with_shift); };
+        commands[XKB_KEY_Page_Up]   = [](WindowManagerPolicy* wm, bool with_shift) { wm->workspace_up(with_shift); };
+        commands[XKB_KEY_Page_Down] = [](WindowManagerPolicy* wm, bool with_shift) { wm->workspace_down(with_shift); };
+    }
     bool try_command_for(xkb_keysym_t key_code, bool with_shift, WindowManagerPolicy* wm) const
     {
-        // Actions on "Meta" key
-        switch (key_code)
+        if (auto i = commands.find(key_code); i != std::end(commands))
         {
-        case XKB_KEY_Left:
-            wm->dock_active_window_left();
+            i->second(wm, with_shift);
             return true;
-
-        case XKB_KEY_Right:
-            wm->dock_active_window_right();
-            return true;
-
-        case XKB_KEY_space:
-            wm->toggle_maximized_restored();
-            return true;
-
-        case XKB_KEY_Home:
-            wm->workspace_begin(with_shift);
-            return true;
-
-        case XKB_KEY_End:
-            wm->workspace_end(with_shift);
-            return true;
-
-        case XKB_KEY_Page_Up:
-            wm->workspace_up(with_shift);
-            return true;
-
-        case XKB_KEY_Page_Down:
-            wm->workspace_down(with_shift);
-            return true;
-
-        default:
+        }
+        else
+        {
             return false;
         }
     }
 private:
+    std::map<xkb_keysym_t, std::function<void(WindowManagerPolicy* wm, bool with_shift)>> commands;
 };
 
 // Keep track of interesting "shell" child processes. Somewhat hacky as `reap()` needs to be called
