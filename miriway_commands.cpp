@@ -128,3 +128,65 @@ void miriway::ShellCommands::init_window_manager(WindowManagerPolicy* wm)
 {
     this->wm = wm;
 }
+
+miriway::WmCommandIndex::WmCommandIndex() = default;
+
+auto miriway::WmCommandIndex::dock_active_window_left() -> WmFunctor
+{
+    return [](WindowManagerPolicy* wm, bool)
+        { wm->dock_active_window_left(); };
+}
+
+auto miriway::WmCommandIndex::dock_active_window_right() -> WmFunctor
+{
+    return [](WindowManagerPolicy* wm, bool)
+        { wm->dock_active_window_right(); };
+}
+
+auto miriway::WmCommandIndex::toggle_maximized_restored() -> WmFunctor
+{
+    return [](WindowManagerPolicy* wm, bool)
+        { wm->toggle_maximized_restored(); };
+}
+
+auto miriway::WmCommandIndex::workspace_begin() -> WmFunctor
+{
+    return [](WindowManagerPolicy* wm, bool with_shift)
+        { wm->workspace_begin(with_shift); };
+}
+
+auto miriway::WmCommandIndex::workspace_end() -> WmFunctor
+{
+    return [](WindowManagerPolicy* wm, bool with_shift)
+        { wm->workspace_end(with_shift); };
+}
+
+auto miriway::WmCommandIndex::workspace_up() -> WmFunctor
+{
+    return [](WindowManagerPolicy* wm, bool with_shift)
+        { wm->workspace_up(with_shift); };
+}
+
+auto miriway::WmCommandIndex::workspace_down() -> WmFunctor
+{
+    return [](WindowManagerPolicy* wm, bool with_shift)
+        { wm->workspace_down(with_shift); };
+}
+
+bool miriway::WmCommandIndex::try_command_for(xkb_keysym_t key_code, bool with_shift, WindowManagerPolicy* wm) const
+{
+    if (auto i = commands.find(key_code); i != std::end(commands))
+    {
+        i->second(wm, with_shift);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void miriway::WmCommandIndex::map_key_to(xkb_keysym_t key_code, miriway::WmCommandIndex::WmFunctor f)
+{
+    commands.emplace(key_code, std::move(f));
+}

@@ -26,6 +26,7 @@
 #include <functional>
 #include <set>
 #include <string>
+#include <map>
 #include <mutex>
 
 using namespace miral::toolkit;
@@ -68,6 +69,28 @@ private:
     std::mutex mutex;
     int app_windows = 0;
 };
+
+struct WmCommandIndex
+{
+    using WmFunctor = std::function<void(WindowManagerPolicy* wm, bool with_shift)>;
+
+    static auto dock_active_window_left() -> WmFunctor;
+    static auto dock_active_window_right() -> WmFunctor;
+    static auto toggle_maximized_restored() -> WmFunctor;
+    static auto workspace_begin() -> WmFunctor;
+    static auto workspace_end() -> WmFunctor;
+    static auto workspace_up() -> WmFunctor;
+    static auto workspace_down() -> WmFunctor;
+
+    WmCommandIndex();
+
+    void map_key_to(xkb_keysym_t key_code, WmFunctor);
+
+    bool try_command_for(xkb_keysym_t key_code, bool with_shift, WindowManagerPolicy* wm) const;
+private:
+    std::map<xkb_keysym_t, WmFunctor> commands;
+};
+
 }
 
 #endif //MIRIWAY_COMMANDS_H

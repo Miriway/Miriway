@@ -31,6 +31,7 @@
 #include <miral/wayland_extensions.h>
 #include <miral/x11_support.h>
 #include <mir/log.h>
+#include <mir/abnormal_exit.h>
 
 #include <sys/wait.h>
 
@@ -39,6 +40,17 @@ using namespace miriway;
 
 namespace
 {
+
+auto to_key(std::string_view as_string) -> xkb_keysym_t
+{
+    if (auto const result = xkb_keysym_from_name(as_string.data(), XKB_KEYSYM_CASE_INSENSITIVE); result != XKB_KEY_NoSymbol)
+    {
+        return result;
+    }
+
+    throw mir::AbnormalExit((std::string{ "Unrecognised key in config: "} + as_string.data()).c_str());
+}
+
 // Build a list of shell components from "<commands>" values and launch them all after startup
 struct ShellComponents
 {
@@ -72,54 +84,27 @@ struct CommandIndex
     {
         for (auto const& command : config_cmds)
         {
-            if (command.size() < 3 || command[1] != ':')
+            if (auto const split = command.find(':'); split >= 1 && split+1 < command.size())
+            {
+                commands[to_key(command.substr(0, split))] = ExternalClientLauncher::split_command(command.substr(split+1));
+            }
+            else
             {
                 mir::fatal_error("Invalid command option: %s", command.c_str());
             }
-
-            commands[std::tolower(command[0])] = ExternalClientLauncher::split_command(command.substr(2));
         }
     }
 
-    bool try_command_for(char c) const
+    bool try_command_for(xkb_keysym_t key_code) const
     {
-        auto const i = commands.find(std::tolower(c));
+        auto const i = commands.find(std::tolower(key_code));
         bool const found = i != end(commands);
         if (found) launch(i->second);
         return found;
     }
 private:
     std::function<void (std::vector<std::string> const& command_line)> const launch;
-    std::map<char, std::vector<std::string>> commands;
-};
-
-struct WmCommandIndex
-{
-    WmCommandIndex()
-    {
-        commands[XKB_KEY_Left]  = [](WindowManagerPolicy* wm, bool) { wm->dock_active_window_left(); };
-        commands[XKB_KEY_Right] = [](WindowManagerPolicy* wm, bool) { wm->dock_active_window_right(); };
-        commands[XKB_KEY_space] = [](WindowManagerPolicy* wm, bool) { wm->toggle_maximized_restored(); };
-
-        commands[XKB_KEY_Home]      = [](WindowManagerPolicy* wm, bool with_shift) { wm->workspace_begin(with_shift); };
-        commands[XKB_KEY_End]       = [](WindowManagerPolicy* wm, bool with_shift) { wm->workspace_end(with_shift); };
-        commands[XKB_KEY_Page_Up]   = [](WindowManagerPolicy* wm, bool with_shift) { wm->workspace_up(with_shift); };
-        commands[XKB_KEY_Page_Down] = [](WindowManagerPolicy* wm, bool with_shift) { wm->workspace_down(with_shift); };
-    }
-    bool try_command_for(xkb_keysym_t key_code, bool with_shift, WindowManagerPolicy* wm) const
-    {
-        if (auto i = commands.find(key_code); i != std::end(commands))
-        {
-            i->second(wm, with_shift);
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-private:
-    std::map<xkb_keysym_t, std::function<void(WindowManagerPolicy* wm, bool with_shift)>> commands;
+    std::map<xkb_keysym_t, std::vector<std::string>> commands;
 };
 
 // Keep track of interesting "shell" child processes. Somewhat hacky as `reap()` needs to be called
@@ -243,6 +228,48 @@ int main(int argc, char const* argv[])
 
     WmCommandIndex meta_wm;
 
+    ConfigurationOption dock_active_window_left{
+        [&](std::string const& key) { meta_wm.map_key_to(to_key(key), WmCommandIndex::dock_active_window_left()); },
+        "meta-dock-active-window-left",
+        "meta-dock-active-window-left=<key>",
+        "Left"};
+
+    ConfigurationOption dock_active_window_right{
+        [&](std::string const& key) { meta_wm.map_key_to(to_key(key), WmCommandIndex::dock_active_window_right()); },
+        "meta-dock-active-window-right",
+        "meta-dock-active-window-right=<key>",
+        "Right"};
+
+    ConfigurationOption toggle_maximized_restored{
+        [&](std::string const& key) { meta_wm.map_key_to(to_key(key), WmCommandIndex::toggle_maximized_restored()); },
+        "meta-toggle-maximized",
+        "meta-toggle-maximized=<key>",
+        "space"};
+
+    ConfigurationOption workspace_begin{
+        [&](std::string const& key) { meta_wm.map_key_to(to_key(key), WmCommandIndex::workspace_begin()); },
+        "meta-workspace-begin",
+        "meta-workspace-begin=<key>",
+        "Home"};
+
+    ConfigurationOption workspace_end{
+        [&](std::string const& key) { meta_wm.map_key_to(to_key(key), WmCommandIndex::workspace_end()); },
+        "meta-workspace-end",
+        "meta-workspace-end=<key>",
+        "End"};
+
+    ConfigurationOption workspace_up{
+        [&](std::string const& key) { meta_wm.map_key_to(to_key(key), WmCommandIndex::workspace_up()); },
+        "meta-workspace-up",
+        "meta-workspace-up=<key>",
+        "Page_Up"};
+
+    ConfigurationOption workspace_down{
+        [&](std::string const& key) { meta_wm.map_key_to(to_key(key), WmCommandIndex::workspace_down()); },
+        "meta-workspace-down",
+        "meta-workspace-down=<key>",
+        "Page_Down"};
+
     // Process input events to identifies commands Miriway needs to handle
     ShellCommands commands{
         runner,
@@ -260,6 +287,13 @@ int main(int argc, char const* argv[])
             shell_meta_option,
             ctrl_alt_option,
             meta_option,
+            dock_active_window_left,
+            dock_active_window_right,
+            toggle_maximized_restored,
+            workspace_begin,
+            workspace_end,
+            workspace_up,
+            workspace_down,
             Keymap{},
             PrependEventFilter{[&](MirEvent const*) { shell_pids.reap(); return false; }},
             AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
