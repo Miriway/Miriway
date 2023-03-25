@@ -27,7 +27,7 @@
 #include <mir/log.h>
 
 miriway::ShellCommands::ShellCommands(
-    MirRunner& runner, std::function<bool(char)> meta_command, std::function<bool(char)> ctrl_alt_command) :
+    MirRunner& runner, std::function<bool(char, WindowManagerPolicy* wm)> meta_command, std::function<bool(char)> ctrl_alt_command) :
     runner{runner}, meta_command{std::move(meta_command)}, ctrl_alt_command{std::move(ctrl_alt_command)}
 {
 }
@@ -127,7 +127,7 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
 
     default:
         return (mir_keyboard_event_action(kev) == mir_keyboard_action_down) &&
-               meta_command(key_code);
+               meta_command(key_code, wm);
     }
 }
 

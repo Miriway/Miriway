@@ -41,7 +41,7 @@ class WindowManagerPolicy;
 class ShellCommands
 {
 public:
-    ShellCommands(MirRunner& runner, std::function<bool(char)> meta_command, std::function<bool(char)> ctrl_alt_command);
+    ShellCommands(MirRunner& runner, std::function<bool(char, WindowManagerPolicy* wm)> meta_command, std::function<bool(char)> ctrl_alt_command);
 
     void init_window_manager(WindowManagerPolicy* wm);
 
@@ -57,7 +57,7 @@ private:
     auto touch_shortcuts(MirTouchEvent const* tev) -> bool;
 
     MirRunner& runner;
-    std::function<bool(char)> meta_command;
+    std::function<bool(char, WindowManagerPolicy* wm)> meta_command;
     std::function<bool(char)> ctrl_alt_command;
     WindowManagerPolicy* wm = nullptr;
     std::atomic<bool> shell_commands_active = true;

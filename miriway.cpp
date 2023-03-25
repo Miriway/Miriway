@@ -215,7 +215,7 @@ int main(int argc, char const* argv[])
     // Process input events to identifies commands Miriway needs to handle
     ShellCommands commands{
         runner,
-        [&] (auto c) { return shell_meta.try_launch(c) || meta.try_launch(c); },
+        [&] (auto c, WindowManagerPolicy* /*wm*/) { return shell_meta.try_launch(c) || meta.try_launch(c); },
         [&] (auto c) { return shell_ctrl_alt.try_launch(c) || ctrl_alt.try_launch(c); }};
 
     return runner.run_with(
