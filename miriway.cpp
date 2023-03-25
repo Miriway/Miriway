@@ -93,6 +93,48 @@ private:
     std::map<char, std::vector<std::string>> commands;
 };
 
+struct WmCommandIndex
+{
+    bool try_command_for(xkb_keysym_t key_code, bool with_shift, WindowManagerPolicy* wm) const
+    {
+        // Actions on "Meta" key
+        switch (key_code)
+        {
+        case XKB_KEY_Left:
+            wm->dock_active_window_left();
+            return true;
+
+        case XKB_KEY_Right:
+            wm->dock_active_window_right();
+            return true;
+
+        case XKB_KEY_space:
+            wm->toggle_maximized_restored();
+            return true;
+
+        case XKB_KEY_Home:
+            wm->workspace_begin(with_shift);
+            return true;
+
+        case XKB_KEY_End:
+            wm->workspace_end(with_shift);
+            return true;
+
+        case XKB_KEY_Page_Up:
+            wm->workspace_up(with_shift);
+            return true;
+
+        case XKB_KEY_Page_Down:
+            wm->workspace_down(with_shift);
+            return true;
+
+        default:
+            return false;
+        }
+    }
+private:
+};
+
 // Keep track of interesting "shell" child processes. Somewhat hacky as `reap()` needs to be called
 // somewhere, and will reap all child processes not just the ones of interest. (But that's actually
 // useful as it avoids "zombie" child processes).
@@ -212,11 +254,13 @@ int main(int argc, char const* argv[])
         "meta",
         "meta <key>:<command> shortcut (may be specified multiple times)"};
 
+    WmCommandIndex meta_wm;
+
     // Process input events to identifies commands Miriway needs to handle
     ShellCommands commands{
         runner,
-        [&] (auto c, WindowManagerPolicy* /*wm*/) { return shell_meta.try_command_for(c) || meta.try_command_for(c); },
-        [&] (auto c) { return shell_ctrl_alt.try_command_for(c) || ctrl_alt.try_command_for(c); }};
+        [&] (xkb_keysym_t c, bool s, WindowManagerPolicy* wm) { return meta_wm.try_command_for(c, s, wm) || shell_meta.try_command_for(c) || meta.try_command_for(c); },
+        [&] (xkb_keysym_t c, bool /*s*/, WindowManagerPolicy* /*wm*/) { return shell_ctrl_alt.try_command_for(c) || ctrl_alt.try_command_for(c); }};
 
     return runner.run_with(
         {

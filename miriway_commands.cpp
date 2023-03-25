@@ -27,7 +27,7 @@
 #include <mir/log.h>
 
 miriway::ShellCommands::ShellCommands(
-    MirRunner& runner, std::function<bool(char, WindowManagerPolicy* wm)> meta_command, std::function<bool(char)> ctrl_alt_command) :
+    MirRunner& runner, CommandFunctor meta_command, CommandFunctor ctrl_alt_command) :
     runner{runner}, meta_command{std::move(meta_command)}, ctrl_alt_command{std::move(ctrl_alt_command)}
 {
 }
@@ -87,7 +87,7 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
 
         default:
             return (mir_keyboard_event_action(kev) == mir_keyboard_action_down) &&
-                ctrl_alt_command(key_code);
+                ctrl_alt_command(key_code, mods & mir_input_event_modifier_shift, wm);
         }
     }
 
@@ -95,40 +95,8 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
         return false;
 
     // Actions on "Meta" key
-    switch (key_code)
-    {
-    case XKB_KEY_Left:
-        wm->dock_active_window_left();
-        return true;
-
-    case XKB_KEY_Right:
-        wm->dock_active_window_right();
-        return true;
-
-    case XKB_KEY_space:
-        wm->toggle_maximized_restored();
-        return true;
-
-    case XKB_KEY_Home:
-        wm->workspace_begin(mods & mir_input_event_modifier_shift);
-        return true;
-
-    case XKB_KEY_End:
-        wm->workspace_end(mods & mir_input_event_modifier_shift);
-        return true;
-
-    case XKB_KEY_Page_Up:
-        wm->workspace_up(mods & mir_input_event_modifier_shift);
-        return true;
-
-    case XKB_KEY_Page_Down:
-        wm->workspace_down(mods & mir_input_event_modifier_shift);
-        return true;
-
-    default:
-        return (mir_keyboard_event_action(kev) == mir_keyboard_action_down) &&
-               meta_command(key_code, wm);
-    }
+    return (mir_keyboard_event_action(kev) == mir_keyboard_action_down) &&
+           meta_command(key_code, mods & mir_input_event_modifier_shift, wm);
 }
 
 auto miriway::ShellCommands::touch_shortcuts(MirTouchEvent const* /*tev*/) -> bool
