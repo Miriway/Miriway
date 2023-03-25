@@ -81,7 +81,7 @@ struct CommandIndex
         }
     }
 
-    bool try_launch(char c) const
+    bool try_command_for(char c) const
     {
         auto const i = commands.find(std::tolower(c));
         bool const found = i != end(commands);
@@ -215,8 +215,8 @@ int main(int argc, char const* argv[])
     // Process input events to identifies commands Miriway needs to handle
     ShellCommands commands{
         runner,
-        [&] (auto c, WindowManagerPolicy* /*wm*/) { return shell_meta.try_launch(c) || meta.try_launch(c); },
-        [&] (auto c) { return shell_ctrl_alt.try_launch(c) || ctrl_alt.try_launch(c); }};
+        [&] (auto c, WindowManagerPolicy* /*wm*/) { return shell_meta.try_command_for(c) || meta.try_command_for(c); },
+        [&] (auto c) { return shell_ctrl_alt.try_command_for(c) || ctrl_alt.try_command_for(c); }};
 
     return runner.run_with(
         {
