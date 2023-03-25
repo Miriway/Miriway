@@ -69,14 +69,14 @@ Keys|Action
 Ctrl-Alt-BkSp|Exit (long press to force if apps are open)
 Meta-Left|Dock left
 Meta-Right|Dock right
-Meta-PkUp|Previous workspace
-Meta-Shift-PkUp|Move window to previous workspace
-Meta-PkDn|Next workspace
-Meta-Shift-PkDn|Move window to next workspace
+Meta-PgUp|Previous workspace
+Meta-Shift-PgUp|Move window to previous workspace
+Meta-PgDn|Next workspace
+Meta-Shift-PgDn|Move window to next workspace
 Meta-Home|First workspace
-Meta-Home-PkUp|Move window to first workspace
+Meta-Home-PgUp|Move window to first workspace
 Meta-End|Last workspace
-Meta-End-PkDn|Move window to last workspace
+Meta-End-PgDn|Move window to last workspace
 
 ### Keyboard shortcuts using `Meta` and `Ctrl-Alt` can be added or amended
 
