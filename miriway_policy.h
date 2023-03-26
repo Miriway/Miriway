@@ -69,6 +69,7 @@ private:
                                  miral::Window const& window);
     using workspace_list = std::list<std::shared_ptr<Workspace>>;
     void erase_if_empty(workspace_list::iterator const& old_workspace);
+    void dock_active_window_under_lock(MirPlacementGravity placement);
 
     ShellCommands* const commands;
 

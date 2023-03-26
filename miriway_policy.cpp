@@ -198,41 +198,8 @@ void miriway::WindowManagerPolicy::dock_active_window_left()
     tools.invoke_under_lock(
         [this]
         {
-            if (auto active_window = tools.active_window())
-            {
-                auto const active_rect = tools.active_application_zone().extents();
-                auto& window_info = tools.info_for(active_window);
-                WindowSpecification modifications;
-
-                modifications.state() = mir_window_state_vertmaximized;
-                modifications.top_left() = active_window.top_left();
-                modifications.size() = active_window.size();
-
-                if (window_info.state() != mir_window_state_vertmaximized ||
-                    active_window.top_left().x != active_rect.top_left.x)
-                {
-                    modifications.size().value().width = active_rect.size.width / 2;
-                }
-                else
-                {
-                    if (modifications.size().value().width == active_rect.size.width / 2)
-                    {
-                        modifications.size().value().width = active_rect.size.width / 3;
-                    }
-                    else if (modifications.size().value().width < active_rect.size.width / 2)
-                    {
-                        modifications.size().value().width = 2 * active_rect.size.width / 3;
-                    }
-                    else
-                    {
-                        modifications.size().value().width = active_rect.size.width / 2;
-                    }
-                }
-
-                tools.place_and_size_for_state(modifications, window_info);
-                modifications.top_left().value().x = active_rect.top_left.x;
-                tools.modify_window(window_info, modifications);
-            }
+            dock_active_window_under_lock(
+                MirPlacementGravity(mir_placement_gravity_northwest | mir_placement_gravity_southwest));
         });
 }
 
@@ -272,42 +239,8 @@ void miriway::WindowManagerPolicy::dock_active_window_right()
     tools.invoke_under_lock(
         [this]
         {
-            if (auto active_window = tools.active_window())
-            {
-                auto const active_rect = tools.active_application_zone().extents();
-                auto& window_info = tools.info_for(active_window);
-                WindowSpecification modifications;
-
-                modifications.state() = mir_window_state_vertmaximized;
-                modifications.top_left() = active_window.top_left();
-                modifications.size() = active_window.size();
-
-                if (window_info.state() != mir_window_state_vertmaximized ||
-                    active_window.top_left().x == active_rect.top_left.x)
-                {
-                    modifications.size().value().width = active_rect.size.width / 2;
-                }
-                else
-                {
-                    if (modifications.size().value().width == active_rect.size.width / 2)
-                    {
-                        modifications.size().value().width = active_rect.size.width / 3;
-                    }
-                    else if (modifications.size().value().width < active_rect.size.width / 2)
-                    {
-                        modifications.size().value().width = 2 * active_rect.size.width / 3;
-                    }
-                    else
-                    {
-                        modifications.size().value().width = active_rect.size.width / 2;
-                    }
-                }
-
-                tools.place_and_size_for_state(modifications, window_info);
-                modifications.top_left().value().x =
-                    active_rect.top_right().x - as_delta(modifications.size().value().width);
-                tools.modify_window(window_info, modifications);
-            }
+            dock_active_window_under_lock(
+                MirPlacementGravity(mir_placement_gravity_northeast | mir_placement_gravity_southeast));
         });
 }
 
@@ -450,3 +383,40 @@ bool miriway::WindowManagerPolicy::handle_keyboard_event(MirKeyboardEvent const*
     return commands->shell_keyboard_enabled() && MinimalWindowManager::handle_keyboard_event(event);
 }
 
+void miriway::WindowManagerPolicy::dock_active_window_under_lock(MirPlacementGravity placement)
+{
+    if (auto active_window = tools.active_window())
+    {
+        auto const active_rect = tools.active_application_zone().extents();
+        auto& window_info = tools.info_for(active_window);
+        WindowSpecification modifications;
+
+        modifications.state() = mir_window_state_attached;
+        modifications.attached_edges() = placement;
+        modifications.size() = active_window.size();
+
+        if (window_info.state() != mir_window_state_attached ||
+            window_info.attached_edges() != placement)
+        {
+            modifications.size().value().width = active_rect.size.width / 2;
+        }
+        else
+        {
+            if (modifications.size().value().width == active_rect.size.width / 2)
+            {
+                modifications.size().value().width = active_rect.size.width / 3;
+            }
+            else if (modifications.size().value().width < active_rect.size.width / 2)
+            {
+                modifications.size().value().width = 2 * active_rect.size.width / 3;
+            }
+            else
+            {
+                modifications.size().value().width = active_rect.size.width / 2;
+            }
+        }
+
+        tools.place_and_size_for_state(modifications, window_info);
+        tools.modify_window(window_info, modifications);
+    }
+}
