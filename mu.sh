@@ -2,7 +2,7 @@
 if [ $(id -u) != "0" ]
 then
 	echo "Please run this script as root"
-	echo "For installation instructions, please refer to readme.txt"
+	echo "For installation instructions, please refer to README.md"
 	exit 1
 fi
 
