@@ -3,7 +3,10 @@ set -e
 
 ### Gtk Theming Tweaks
 gtk30_config="${XDG_CONFIG_HOME:-$HOME/.config}/gtk-3.0/settings.ini"
-#if [ ! -f "$config" ]; then exit 1; fi
+if [ -f "$config" ]; then
+  // parse file
+  // call gsettings
+fi
 
 cursor_theme="$(grep 'gtk-cursor-theme-name' "$config" | sed 's/.*\s*=\s*//')"
 font_name="$(grep 'gtk-font-name' "$config" | sed 's/.*\s*=\s*//')"
