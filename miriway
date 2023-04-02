@@ -3,24 +3,19 @@ set -e
 
 ### Gtk Theming Tweaks
 gtk30_config="${XDG_CONFIG_HOME:-$HOME/.config}/gtk-3.0/settings.ini"
-#if [ -f "$config" ]; then
-  #// parse file
-  #// call gsettings
-#fi
-
-cursor_theme="$(grep 'gtk-cursor-theme-name' "$gtk30_config" | sed 's/.*\s*=\s*//')"
-font_name="$(grep 'gtk-font-name' "$gtk30_config" | sed 's/.*\s*=\s*//')"
-gtk_theme="$(grep 'gtk-theme-name' "$gtk30_config" | sed 's/.*\s*=\s*//')"
-icon_theme="$(grep 'gtk-icon-theme-name' "$gtk30_config" | sed 's/.*\s*=\s*//')"
-
-
-gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme"
-gsettings set org.gnome.desktop.interface icon-theme "$icon_theme"
-gsettings set org.gnome.desktop.interface cursor-theme "$cursor_theme"
-gsettings set org.gnome.desktop.interface font-name "$font_name"
-gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close" #Fixes Window button Absent Issue
-
-
+if [ -f "$gtk30_config" ]; 
+then
+  cursor_theme="$(grep 'gtk-cursor-theme-name' "$gtk30_config" | sed 's/.*\s*=\s*//')"
+  font_name="$(grep 'gtk-font-name' "$gtk30_config" | sed 's/.*\s*=\s*//')"
+  gtk_theme="$(grep 'gtk-theme-name' "$gtk30_config" | sed 's/.*\s*=\s*//')"
+  icon_theme="$(grep 'gtk-icon-theme-name' "$gtk30_config" | sed 's/.*\s*=\s*//')"
+  
+  gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme"
+  gsettings set org.gnome.desktop.interface icon-theme "$icon_theme"
+  gsettings set org.gnome.desktop.interface cursor-theme "$cursor_theme"
+  gsettings set org.gnome.desktop.interface font-name "$font_name"
+  gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close" #Fixes Window button Absent Issue
+fi
 
 bindir=$(dirname "$0")
 if [ "${bindir}" != "" ]; then bindir="${bindir}/"; fi
