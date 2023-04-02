@@ -14,8 +14,10 @@ then
   gsettings set org.gnome.desktop.interface icon-theme "$icon_theme"
   gsettings set org.gnome.desktop.interface cursor-theme "$cursor_theme"
   gsettings set org.gnome.desktop.interface font-name "$font_name"
-  gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close" #Fixes Window button Absent Issue
 fi
+
+### Window Buttons Fix
+gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
 
 bindir=$(dirname "$0")
 if [ "${bindir}" != "" ]; then bindir="${bindir}/"; fi
