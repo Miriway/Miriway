@@ -81,14 +81,6 @@ struct WmCommandIndex
     static auto workspace_end() -> WmFunctor;
     static auto workspace_up() -> WmFunctor;
     static auto workspace_down() -> WmFunctor;
-
-    WmCommandIndex();
-
-    void map_key_to(xkb_keysym_t key_code, WmFunctor);
-
-    bool try_command_for(xkb_keysym_t key_code, bool with_shift, WindowManagerPolicy* wm) const;
-private:
-    std::map<xkb_keysym_t, WmFunctor> commands;
 };
 
 }

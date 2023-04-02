@@ -129,8 +129,6 @@ void miriway::ShellCommands::init_window_manager(WindowManagerPolicy* wm)
     this->wm = wm;
 }
 
-miriway::WmCommandIndex::WmCommandIndex() = default;
-
 auto miriway::WmCommandIndex::dock_active_window_left() -> WmFunctor
 {
     return [](WindowManagerPolicy* wm, bool)
@@ -171,22 +169,4 @@ auto miriway::WmCommandIndex::workspace_down() -> WmFunctor
 {
     return [](WindowManagerPolicy* wm, bool with_shift)
         { wm->workspace_down(with_shift); };
-}
-
-bool miriway::WmCommandIndex::try_command_for(xkb_keysym_t key_code, bool with_shift, WindowManagerPolicy* wm) const
-{
-    if (auto i = commands.find(key_code); i != std::end(commands))
-    {
-        i->second(wm, with_shift);
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-void miriway::WmCommandIndex::map_key_to(xkb_keysym_t key_code, miriway::WmCommandIndex::WmFunctor f)
-{
-    commands.emplace(key_code, std::move(f));
 }
