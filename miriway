@@ -3,6 +3,8 @@ set -e
 
 ### Gtk Theming Tweaks
 if ! command -v gsettings > /dev/null then
+         then
+            exit
         gtk30_config="${XDG_CONFIG_HOME:-$HOME/.config}/gtk-3.0/settings.ini"
         if [ -f "$gtk30_config" ]; then
           cursor_theme="$(grep 'gtk-cursor-theme-name' "$gtk30_config" | sed 's/.*\s*=\s*//')"
