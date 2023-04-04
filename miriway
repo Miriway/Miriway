@@ -15,10 +15,11 @@ if command -v gsettings > /dev/null then
           gsettings set org.gnome.desktop.interface cursor-theme "$cursor_theme"
           gsettings set org.gnome.desktop.interface font-name "$font_name"
         fi
+        ### Window Buttons Fix
+        gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
 fi
 
-### Window Buttons Fix
-gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
+
 
 bindir=$(dirname "$0")
 if [ "${bindir}" != "" ]; then bindir="${bindir}/"; fi
