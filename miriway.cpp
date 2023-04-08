@@ -50,15 +50,16 @@ auto to_key(std::string_view as_string) -> xkb_keysym_t
     throw mir::AbnormalExit((std::string{ "Unrecognised key in config: "} + as_string.data()).c_str());
 }
 
-std::map<std::string, WmCommandIndex::WmFunctor> const wm_command =
+std::map<std::string, ShellCommands::CmdFunctor> const wm_command =
     {
-        { "dock-left", WmCommandIndex::dock_active_window_left() },
-        { "dock-right", WmCommandIndex::dock_active_window_right() },
-        { "toggle-maximized", WmCommandIndex::toggle_maximized_restored() },
-        { "workspace-begin", WmCommandIndex::workspace_begin() },
-        { "workspace-end", WmCommandIndex::workspace_end() },
-        { "workspace-up", WmCommandIndex::workspace_up() },
-        { "workspace-down", WmCommandIndex::workspace_down() }
+        { "dock-left", [](ShellCommands* sc, bool shift) { sc->dock_active_window_left(shift); } },
+        { "dock-right", [](ShellCommands* sc, bool shift) { sc->dock_active_window_right(shift); } },
+        { "toggle-maximized", [](ShellCommands* sc, bool shift) { sc->toggle_maximized_restored(shift); } },
+        { "workspace-begin", [](ShellCommands* sc, bool shift) { sc->workspace_begin(shift); } },
+        { "workspace-end", [](ShellCommands* sc, bool shift) { sc->workspace_end(shift); } },
+        { "workspace-up", [](ShellCommands* sc, bool shift) { sc->workspace_up(shift); } },
+        { "workspace-down", [](ShellCommands* sc, bool shift) { sc->workspace_down(shift); } },
+        { "exit", [](ShellCommands* sc, bool shift) { sc->exit(shift); } },
     };
 
 // Build a list of shell components from "<commands>" values and launch them all after startup
@@ -99,7 +100,7 @@ struct CommandIndex
                 if (command[split+1] != '@')
                 {
                     commands[to_key(command.substr(0, split))] =
-                        [this, argv = ExternalClientLauncher::split_command(command.substr(split+1))](miriway::WindowManagerPolicy*, bool)
+                        [this, argv = ExternalClientLauncher::split_command(command.substr(split+1))](miriway::ShellCommands*, bool)
                         {
                             launch(argv);
                         };
@@ -119,16 +120,16 @@ struct CommandIndex
         }
     }
 
-    bool try_command_for(xkb_keysym_t key_code, bool with_shift, WindowManagerPolicy* wm) const
+    bool try_command_for(xkb_keysym_t key_code, bool with_shift, ShellCommands* cmd) const
     {
         auto const i = commands.find(std::tolower(key_code));
         bool const found = i != end(commands);
-        if (found) i->second(wm, with_shift);
+        if (found) i->second(cmd, with_shift);
         return found;
     }
 private:
     std::function<void (std::vector<std::string> const& command_line)> const launch;
-    std::map<xkb_keysym_t, WmCommandIndex::WmFunctor> commands;
+    std::map<xkb_keysym_t, ShellCommands::CmdFunctor> commands;
 };
 
 // Keep track of interesting "shell" child processes. Somewhat hacky as `reap()` needs to be called
@@ -253,8 +254,8 @@ int main(int argc, char const* argv[])
     // Process input events to identifies commands Miriway needs to handle
     ShellCommands commands{
         runner,
-        [&] (xkb_keysym_t c, bool s, WindowManagerPolicy* wm) { return shell_meta.try_command_for(c, s, wm) || meta.try_command_for(c, s, wm); },
-        [&] (xkb_keysym_t c, bool s, WindowManagerPolicy* wm) { return shell_ctrl_alt.try_command_for(c, s, wm) || ctrl_alt.try_command_for(c, s, wm); }};
+        [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_meta.try_command_for(c, s, cmd) || meta.try_command_for(c, s, cmd); },
+        [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_ctrl_alt.try_command_for(c, s, cmd) || ctrl_alt.try_command_for(c, s, cmd); }};
 
     return runner.run_with(
         {

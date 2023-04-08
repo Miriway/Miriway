@@ -26,7 +26,6 @@
 #include <functional>
 #include <set>
 #include <string>
-#include <map>
 #include <mutex>
 
 using namespace miral::toolkit;
@@ -42,7 +41,7 @@ class WindowManagerPolicy;
 class ShellCommands
 {
 public:
-    using CommandFunctor = std::function<bool(xkb_keysym_t key_code, bool with_shift, WindowManagerPolicy* wm)>;
+    using CommandFunctor = std::function<bool(xkb_keysym_t key_code, bool with_shift, ShellCommands* cmd)>;
 
     ShellCommands(
         MirRunner& runner, CommandFunctor meta_command, CommandFunctor ctrl_alt_command);
@@ -56,6 +55,17 @@ public:
     [[nodiscard]] auto shell_keyboard_enabled() const -> bool
         { return shell_commands_active; }
 
+    using CmdFunctor = std::function<void(ShellCommands* sc, bool with_shift)>;
+
+    void dock_active_window_left(bool shift) const;
+    void dock_active_window_right(bool shift) const;
+    void toggle_maximized_restored(bool shift) const;
+    void workspace_begin(bool shift) const;
+    void workspace_end(bool shift) const;
+    void workspace_up(bool shift) const;
+    void workspace_down(bool shift) const;
+    void exit(bool shift) const;
+
 private:
     auto keyboard_shortcuts(MirKeyboardEvent const* kev) -> bool;
     auto touch_shortcuts(MirTouchEvent const* tev) -> bool;
@@ -66,23 +76,9 @@ private:
     WindowManagerPolicy* wm = nullptr;
     std::atomic<bool> shell_commands_active = true;
 
-    std::mutex mutex;
+    std::mutex mutable mutex;
     int app_windows = 0;
 };
-
-struct WmCommandIndex
-{
-    using WmFunctor = std::function<void(WindowManagerPolicy* wm, bool with_shift)>;
-
-    static auto dock_active_window_left() -> WmFunctor;
-    static auto dock_active_window_right() -> WmFunctor;
-    static auto toggle_maximized_restored() -> WmFunctor;
-    static auto workspace_begin() -> WmFunctor;
-    static auto workspace_end() -> WmFunctor;
-    static auto workspace_up() -> WmFunctor;
-    static auto workspace_down() -> WmFunctor;
-};
-
 }
 
 #endif //MIRIWAY_COMMANDS_H

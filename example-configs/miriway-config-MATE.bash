@@ -76,4 +76,5 @@ meta=Home:@workspace-begin
 meta=End:@workspace-end
 meta=Page_Up:@workspace-up
 meta=Page_Down:@workspace-down
+ctrl-alt=BackSpace:@exit
 EOT

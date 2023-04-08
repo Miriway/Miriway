@@ -71,24 +71,8 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
     // Actions on "Ctrl+Alt" keys
     if ((mods & ctrl_alt) == ctrl_alt)
     {
-        switch (key_code)
-        {
-        case XKB_KEY_BackSpace:
-            if (mir_keyboard_event_action(kev) == mir_keyboard_action_down)
-            {
-                std::lock_guard<decltype(mutex)> lock{mutex};
-                if (app_windows > 0)
-                {
-                    return false;
-                }
-            }
-            runner.stop();
-            return true;
-
-        default:
-            return (mir_keyboard_event_action(kev) == mir_keyboard_action_down) &&
-                ctrl_alt_command(key_code, mods & mir_input_event_modifier_shift, wm);
-        }
+        return (mir_keyboard_event_action(kev) == mir_keyboard_action_down) &&
+            ctrl_alt_command(key_code, mods & mir_input_event_modifier_shift, this);
     }
 
     if (!(mods & mir_input_event_modifier_meta) || (mods & ctrl_alt))
@@ -96,7 +80,7 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
 
     // Actions on "Meta" key
     return (mir_keyboard_event_action(kev) == mir_keyboard_action_down) &&
-           meta_command(key_code, mods & mir_input_event_modifier_shift, wm);
+           meta_command(key_code, mods & mir_input_event_modifier_shift, this);
 }
 
 auto miriway::ShellCommands::touch_shortcuts(MirTouchEvent const* /*tev*/) -> bool
@@ -129,44 +113,46 @@ void miriway::ShellCommands::init_window_manager(WindowManagerPolicy* wm)
     this->wm = wm;
 }
 
-auto miriway::WmCommandIndex::dock_active_window_left() -> WmFunctor
+void miriway::ShellCommands::dock_active_window_left(bool) const
 {
-    return [](WindowManagerPolicy* wm, bool)
-        { wm->dock_active_window_left(); };
+    wm->dock_active_window_left();
 }
 
-auto miriway::WmCommandIndex::dock_active_window_right() -> WmFunctor
+void miriway::ShellCommands::dock_active_window_right(bool) const
 {
-    return [](WindowManagerPolicy* wm, bool)
-        { wm->dock_active_window_right(); };
+    wm->dock_active_window_right();
 }
 
-auto miriway::WmCommandIndex::toggle_maximized_restored() -> WmFunctor
+void miriway::ShellCommands::toggle_maximized_restored(bool) const
 {
-    return [](WindowManagerPolicy* wm, bool)
-        { wm->toggle_maximized_restored(); };
+    wm->toggle_maximized_restored();
 }
 
-auto miriway::WmCommandIndex::workspace_begin() -> WmFunctor
+void miriway::ShellCommands::workspace_begin(bool shift) const
 {
-    return [](WindowManagerPolicy* wm, bool with_shift)
-        { wm->workspace_begin(with_shift); };
+    wm->workspace_begin(shift);
 }
 
-auto miriway::WmCommandIndex::workspace_end() -> WmFunctor
+void miriway::ShellCommands::workspace_end(bool shift) const
 {
-    return [](WindowManagerPolicy* wm, bool with_shift)
-        { wm->workspace_end(with_shift); };
+    wm->workspace_end(shift);
 }
 
-auto miriway::WmCommandIndex::workspace_up() -> WmFunctor
+void miriway::ShellCommands::workspace_up(bool shift) const
 {
-    return [](WindowManagerPolicy* wm, bool with_shift)
-        { wm->workspace_up(with_shift); };
+    wm->workspace_up(shift);
 }
 
-auto miriway::WmCommandIndex::workspace_down() -> WmFunctor
+void miriway::ShellCommands::workspace_down(bool shift) const
 {
-    return [](WindowManagerPolicy* wm, bool with_shift)
-        { wm->workspace_down(with_shift); };
+    wm->workspace_down(shift);
+}
+
+void miriway::ShellCommands::exit(bool shift) const
+{
+    std::lock_guard<decltype(mutex)> lock{mutex};
+    if (app_windows == 0 || shift)
+    {
+        runner.stop();
+    }
 }
