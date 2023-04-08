@@ -75,6 +75,14 @@ shell-component=yambar
 
 meta=a:synapse
 ctrl-alt=t:kgx
+
+meta=Left:@dock-left
+meta=Right:@dock-right
+meta=Space:@toggle-maximized
+meta=Home:@workspace-begin
+meta=End:@workspace-end
+meta=Page_Up:@workspace-up
+meta=Page_Down:@workspace-down
 EOT
 
 # Ensure we have a config file with the fixed options
