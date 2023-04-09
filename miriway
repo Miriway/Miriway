@@ -17,9 +17,14 @@ then
   unset WAYLAND_DISPLAY
 fi
 
-if [ "${XDG_CONFIG_DIRS#*/etc/xdg/xdg-miriway}" = "${XDG_CONFIG_DIRS}" ]
+if [ -e "/etc/xdg/xdg-miriway" ] && [ "${XDG_CONFIG_DIRS#*/etc/xdg/xdg-miriway}" = "${XDG_CONFIG_DIRS}" ]
 then
   export XDG_CONFIG_DIRS="/etc/xdg/xdg-miriway:${XDG_CONFIG_DIRS:-/etc/xdg}"
+fi
+
+if [ -e "/usr/local/etc/xdg/xdg-miriway" ] && [ "${XDG_CONFIG_DIRS#*/usr/local/etc/xdg/xdg-miriway}" = "${XDG_CONFIG_DIRS}" ]
+then
+  export XDG_CONFIG_DIRS="/usr/local/etc/xdg/xdg-miriway:${XDG_CONFIG_DIRS:-/etc/xdg}"
 fi
 
 if command -v Xwayland > /dev/null

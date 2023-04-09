@@ -17,7 +17,7 @@ display layout.
 
 Configuration options are set using one of three mechanisms:
 
-1. As an entry in `~/.config/miriway-shell.config` or `/etc/xdg/xdg-miriway/miriway-shell.config`;
+1. As an entry in `~/.config/miriway-shell.config` or `[/usr/local]/etc/xdg/xdg-miriway/miriway-shell.config`;
 2. As a `MIR_SERVER_*` environment variable; or,
 3. as a command line option.
 
