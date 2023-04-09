@@ -41,7 +41,10 @@ class WindowManagerPolicy;
 class ShellCommands
 {
 public:
-    ShellCommands(MirRunner& runner, std::function<bool(char)> meta_command, std::function<bool(char)> ctrl_alt_command);
+    using CommandFunctor = std::function<bool(xkb_keysym_t key_code, bool with_shift, ShellCommands* cmd)>;
+
+    ShellCommands(
+        MirRunner& runner, CommandFunctor meta_command, CommandFunctor ctrl_alt_command);
 
     void init_window_manager(WindowManagerPolicy* wm);
 
@@ -52,17 +55,28 @@ public:
     [[nodiscard]] auto shell_keyboard_enabled() const -> bool
         { return shell_commands_active; }
 
+    using CmdFunctor = std::function<void(ShellCommands* sc, bool with_shift)>;
+
+    void dock_active_window_left(bool shift) const;
+    void dock_active_window_right(bool shift) const;
+    void toggle_maximized_restored(bool shift) const;
+    void workspace_begin(bool shift) const;
+    void workspace_end(bool shift) const;
+    void workspace_up(bool shift) const;
+    void workspace_down(bool shift) const;
+    void exit(bool shift) const;
+
 private:
     auto keyboard_shortcuts(MirKeyboardEvent const* kev) -> bool;
     auto touch_shortcuts(MirTouchEvent const* tev) -> bool;
 
     MirRunner& runner;
-    std::function<bool(char)> meta_command;
-    std::function<bool(char)> ctrl_alt_command;
+    CommandFunctor meta_command;
+    CommandFunctor ctrl_alt_command;
     WindowManagerPolicy* wm = nullptr;
     std::atomic<bool> shell_commands_active = true;
 
-    std::mutex mutex;
+    std::mutex mutable mutex;
     int app_windows = 0;
 };
 }

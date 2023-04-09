@@ -31,6 +31,7 @@
 #include <miral/wayland_extensions.h>
 #include <miral/x11_support.h>
 #include <mir/log.h>
+#include <mir/abnormal_exit.h>
 
 #include <sys/wait.h>
 
@@ -39,6 +40,28 @@ using namespace miriway;
 
 namespace
 {
+auto to_key(std::string_view as_string) -> xkb_keysym_t
+{
+    if (auto const result = xkb_keysym_from_name(as_string.data(), XKB_KEYSYM_CASE_INSENSITIVE); result != XKB_KEY_NoSymbol)
+    {
+        return result;
+    }
+
+    throw mir::AbnormalExit((std::string{ "Unrecognised key in config: "} + as_string.data()).c_str());
+}
+
+std::map<std::string, ShellCommands::CmdFunctor> const wm_command =
+    {
+        { "dock-left", [](ShellCommands* sc, bool shift) { sc->dock_active_window_left(shift); } },
+        { "dock-right", [](ShellCommands* sc, bool shift) { sc->dock_active_window_right(shift); } },
+        { "toggle-maximized", [](ShellCommands* sc, bool shift) { sc->toggle_maximized_restored(shift); } },
+        { "workspace-begin", [](ShellCommands* sc, bool shift) { sc->workspace_begin(shift); } },
+        { "workspace-end", [](ShellCommands* sc, bool shift) { sc->workspace_end(shift); } },
+        { "workspace-up", [](ShellCommands* sc, bool shift) { sc->workspace_up(shift); } },
+        { "workspace-down", [](ShellCommands* sc, bool shift) { sc->workspace_down(shift); } },
+        { "exit", [](ShellCommands* sc, bool shift) { sc->exit(shift); } },
+    };
+
 // Build a list of shell components from "<commands>" values and launch them all after startup
 struct ShellComponents
 {
@@ -72,25 +95,41 @@ struct CommandIndex
     {
         for (auto const& command : config_cmds)
         {
-            if (command.size() < 3 || command[1] != ':')
+            if (auto const split = command.find(':'); split >= 1 && split+1 < command.size())
+            {
+                if (command[split+1] != '@')
+                {
+                    commands[to_key(command.substr(0, split))] =
+                        [this, argv = ExternalClientLauncher::split_command(command.substr(split+1))](miriway::ShellCommands*, bool)
+                        {
+                            launch(argv);
+                        };
+                }
+                else
+                {
+                    if (auto const lookup = wm_command.find(command.substr(split+2)); lookup != std::end(wm_command))
+                    {
+                        commands[to_key(command.substr(0, split))] = lookup->second;
+                    }
+                }
+            }
+            else
             {
                 mir::fatal_error("Invalid command option: %s", command.c_str());
             }
-
-            commands[std::tolower(command[0])] = ExternalClientLauncher::split_command(command.substr(2));
         }
     }
 
-    bool try_launch(char c) const
+    bool try_command_for(xkb_keysym_t key_code, bool with_shift, ShellCommands* cmd) const
     {
-        auto const i = commands.find(std::tolower(c));
+        auto const i = commands.find(std::tolower(key_code));
         bool const found = i != end(commands);
-        if (found) launch(i->second);
+        if (found) i->second(cmd, with_shift);
         return found;
     }
 private:
     std::function<void (std::vector<std::string> const& command_line)> const launch;
-    std::map<char, std::vector<std::string>> commands;
+    std::map<xkb_keysym_t, ShellCommands::CmdFunctor> commands;
 };
 
 // Keep track of interesting "shell" child processes. Somewhat hacky as `reap()` needs to be called
@@ -215,8 +254,8 @@ int main(int argc, char const* argv[])
     // Process input events to identifies commands Miriway needs to handle
     ShellCommands commands{
         runner,
-        [&] (auto c) { return shell_meta.try_launch(c) || meta.try_launch(c); },
-        [&] (auto c) { return shell_ctrl_alt.try_launch(c) || ctrl_alt.try_launch(c); }};
+        [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_meta.try_command_for(c, s, cmd) || meta.try_command_for(c, s, cmd); },
+        [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_ctrl_alt.try_command_for(c, s, cmd) || ctrl_alt.try_command_for(c, s, cmd); }};
 
     return runner.run_with(
         {

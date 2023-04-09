@@ -27,7 +27,7 @@
 #include <mir/log.h>
 
 miriway::ShellCommands::ShellCommands(
-    MirRunner& runner, std::function<bool(char)> meta_command, std::function<bool(char)> ctrl_alt_command) :
+    MirRunner& runner, CommandFunctor meta_command, CommandFunctor ctrl_alt_command) :
     runner{runner}, meta_command{std::move(meta_command)}, ctrl_alt_command{std::move(ctrl_alt_command)}
 {
 }
@@ -71,64 +71,16 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
     // Actions on "Ctrl+Alt" keys
     if ((mods & ctrl_alt) == ctrl_alt)
     {
-        switch (key_code)
-        {
-        case XKB_KEY_BackSpace:
-            if (mir_keyboard_event_action(kev) == mir_keyboard_action_down)
-            {
-                std::lock_guard<decltype(mutex)> lock{mutex};
-                if (app_windows > 0)
-                {
-                    return false;
-                }
-            }
-            runner.stop();
-            return true;
-
-        default:
-            return (mir_keyboard_event_action(kev) == mir_keyboard_action_down) &&
-                ctrl_alt_command(key_code);
-        }
+        return (mir_keyboard_event_action(kev) == mir_keyboard_action_down) &&
+            ctrl_alt_command(key_code, mods & mir_input_event_modifier_shift, this);
     }
 
     if (!(mods & mir_input_event_modifier_meta) || (mods & ctrl_alt))
         return false;
 
     // Actions on "Meta" key
-    switch (key_code)
-    {
-    case XKB_KEY_Left:
-        wm->dock_active_window_left();
-        return true;
-
-    case XKB_KEY_Right:
-        wm->dock_active_window_right();
-        return true;
-
-    case XKB_KEY_space:
-        wm->toggle_maximized_restored();
-        return true;
-
-    case XKB_KEY_Home:
-        wm->workspace_begin(mods & mir_input_event_modifier_shift);
-        return true;
-
-    case XKB_KEY_End:
-        wm->workspace_end(mods & mir_input_event_modifier_shift);
-        return true;
-
-    case XKB_KEY_Page_Up:
-        wm->workspace_up(mods & mir_input_event_modifier_shift);
-        return true;
-
-    case XKB_KEY_Page_Down:
-        wm->workspace_down(mods & mir_input_event_modifier_shift);
-        return true;
-
-    default:
-        return (mir_keyboard_event_action(kev) == mir_keyboard_action_down) &&
-               meta_command(key_code);
-    }
+    return (mir_keyboard_event_action(kev) == mir_keyboard_action_down) &&
+           meta_command(key_code, mods & mir_input_event_modifier_shift, this);
 }
 
 auto miriway::ShellCommands::touch_shortcuts(MirTouchEvent const* /*tev*/) -> bool
@@ -159,4 +111,48 @@ auto miriway::ShellCommands::input_event(MirEvent const* event) -> bool
 void miriway::ShellCommands::init_window_manager(WindowManagerPolicy* wm)
 {
     this->wm = wm;
+}
+
+void miriway::ShellCommands::dock_active_window_left(bool) const
+{
+    wm->dock_active_window_left();
+}
+
+void miriway::ShellCommands::dock_active_window_right(bool) const
+{
+    wm->dock_active_window_right();
+}
+
+void miriway::ShellCommands::toggle_maximized_restored(bool) const
+{
+    wm->toggle_maximized_restored();
+}
+
+void miriway::ShellCommands::workspace_begin(bool shift) const
+{
+    wm->workspace_begin(shift);
+}
+
+void miriway::ShellCommands::workspace_end(bool shift) const
+{
+    wm->workspace_end(shift);
+}
+
+void miriway::ShellCommands::workspace_up(bool shift) const
+{
+    wm->workspace_up(shift);
+}
+
+void miriway::ShellCommands::workspace_down(bool shift) const
+{
+    wm->workspace_down(shift);
+}
+
+void miriway::ShellCommands::exit(bool shift) const
+{
+    std::lock_guard<decltype(mutex)> lock{mutex};
+    if (app_windows == 0 || shift)
+    {
+        runner.stop();
+    }
 }

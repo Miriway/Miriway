@@ -68,4 +68,13 @@ shell-component=mate-panel
 
 meta=a:sh -c "exec mate-panel --run-dialog --display $DISPLAY"
 ctrl-alt=t:sh -c "exec mate-terminal --display $DISPLAY"
+
+meta=Left:@dock-left
+meta=Right:@dock-right
+meta=Space:@toggle-maximized
+meta=Home:@workspace-begin
+meta=End:@workspace-end
+meta=Page_Up:@workspace-up
+meta=Page_Down:@workspace-down
+ctrl-alt=BackSpace:@exit
 EOT
