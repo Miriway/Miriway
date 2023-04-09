@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-shell_components="mate-panel mate-terminal swaybg"
+shell_components="lxqt-policykit qterminal lxqt-runner swaybg"
 miriway_config="$HOME/.config/miriway-shell.config"
 
 for component in $shell_components
@@ -64,10 +64,9 @@ app-env-amend=XDG_SESSION_TYPE=wayland:GDK_USE_PORTAL=none:XDG_CURRENT_DESKTOP=M
 shell-component=sh -c "dbus-update-activation-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP"
 
 shell-component=swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png
-shell-component=mate-panel
-
-meta=a:sh -c "exec mate-panel --run-dialog --display \$DISPLAY"
-ctrl-alt=t:sh -c "exec mate-terminal --display \$DISPLAY"
+shell-component=lxqt-policykit-agent
+ctrl-alt=t:qterminal
+meta=a:lxqt-runner
 
 meta=Left:@dock-left
 meta=Right:@dock-right

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-shell_components="mate-panel mate-terminal swaybg"
+shell_components="swaybg waybar wofi"
 miriway_config="$HOME/.config/miriway-shell.config"
 
 for component in $shell_components
@@ -28,6 +28,7 @@ install()
 if command -v apt > /dev/null
 then
     case "$1" in
+      wofi ) sudo apt install "$1" fonts-font-awesome;;
       kgx ) sudo apt install gnome-console;;
       * )   sudo apt install "$1";;
     esac
@@ -62,12 +63,11 @@ x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GDK_USE_PORTAL=none:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 shell-component=sh -c "dbus-update-activation-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP"
+ctrl-alt=t:miriway-terminal # Default "terminal emulator finder"
 
-shell-component=swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png
-shell-component=mate-panel
-
-meta=a:sh -c "exec mate-panel --run-dialog --display \$DISPLAY"
-ctrl-alt=t:sh -c "exec mate-terminal --display \$DISPLAY"
+shell-component=swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png # Wallpaper/background
+shell-component=waybar                                                  # Panel(s)
+shell-meta=a:wofi --show drun --location top_left                       # Launcher
 
 meta=Left:@dock-left
 meta=Right:@dock-right

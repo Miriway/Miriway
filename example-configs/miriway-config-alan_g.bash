@@ -33,6 +33,7 @@ install()
 if command -v apt > /dev/null
 then
     case "$1" in
+      yambar ) sudo apt install "$1" fonts-font-awesome;;
       kgx ) sudo apt install gnome-console;;
       * )   sudo apt install "$1";;
     esac

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-shell_components="mate-panel mate-terminal swaybg"
+shell_components="swaybg xfce4-terminal xfce4-appfinder"
 miriway_config="$HOME/.config/miriway-shell.config"
 
 for component in $shell_components
@@ -62,12 +62,11 @@ x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GDK_USE_PORTAL=none:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 shell-component=sh -c "dbus-update-activation-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP"
+ctrl-alt=t:miriway-terminal # Default "terminal emulator finder"
 
-shell-component=swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png
-shell-component=mate-panel
-
-meta=a:sh -c "exec mate-panel --run-dialog --display \$DISPLAY"
-ctrl-alt=t:sh -c "exec mate-terminal --display \$DISPLAY"
+shell-component=swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png # Wallpaper/background
+meta=a:xfce4-appfinder --disable-server # Launcher
+ctrl-alt=t:xfce4-terminal               # Terminal emulator
 
 meta=Left:@dock-left
 meta=Right:@dock-right
