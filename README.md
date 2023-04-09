@@ -62,31 +62,27 @@ sudo cmake --build . -- install
 
 Now you can run with `miriway`, or select "Miriway" from the login screen.
 
-## Keyboard shortcuts
+## Keyboard shortcuts using `Meta` and `Ctrl-Alt` can be added or amended
 
-Keys|Action
---|--
-Ctrl-Alt-BkSp|Exit (long press to force if apps are open)
-Meta-Left|Dock left
-Meta-Right|Dock right
-Meta-PgUp|Previous workspace
-Meta-Shift-PgUp|Move window to previous workspace
-Meta-PgDn|Next workspace
-Meta-Shift-PgDn|Move window to next workspace
-Meta-Home|First workspace
-Meta-Home-PgUp|Move window to first workspace
-Meta-End|Last workspace
-Meta-End-PgDn|Move window to last workspace
+These shortcuts are the defaults provided:
 
-### Keyboard shortcuts using `Meta` and `Ctrl-Alt` can be added or amended
+Modifiers|Key|Function|Action
+--|--|--|--
+Ctrl-Alt|T|miriway-terminal|Terminal emulator
+meta|Left|@dock-left|Dock app left
+meta|Right|@dock-right|Dock app right
+meta|Space|@toggle-maximized|Toggle app maximized
+meta|Home|@workspace-begin|First workspace ("Shift" to bring app)
+meta|End|@workspace-end|Last workspace ("Shift" to bring app)
+meta|Page_Up|@workspace-up|Previous workspace ("Shift" to bring app)
+meta|Page_Down|@workspace-down|Next workspace ("Shift" to bring app)
+ctrl-alt|BackSpace|@exit|Exit ("Shift" to force if apps are open)
 
-These (and other) defaults are specified in `/etc/xdg/xdg-miriway/miriway-shell.config` but can be overridden 
-in `~/.config/miriway-shell.config`. You should typically copy and edit the default config file. It provides
+These (and other) defaults are specified in `(/usr/local/etc/xdg/xdg-miriway/miriway-shell.config` but can be 
+overridden in `~/.config/miriway-shell.config`. You should typically copy and edit the default config file. It provides
 some examples using components from existing desktop environments. (And the corresponding `apt install` commands)
 
-Keys|Action
---|--
-Ctrl-Alt-T|Terminal emulator
+The "@" commands are internal to miriway-shell, others are commands that could be executed from a terminal.
 
 ## Example configurations
 
