@@ -28,6 +28,8 @@ install()
 if command -v apt > /dev/null
 then
     case "$1" in
+      waybar ) sudo apt install "$1" fonts-font-awesome;;
+      yambar ) sudo apt install "$1" fonts-font-awesome;;
       wofi ) sudo apt install "$1" fonts-font-awesome;;
       kgx ) sudo apt install gnome-console;;
       * )   sudo apt install "$1";;
@@ -35,12 +37,16 @@ then
 elif command -v dnf > /dev/null
 then
     case "$1" in
+      waybar ) sudo dnf install "$1" fontawesome-fonts;;
+      yambar ) sudo dnf install "$1" fontawesome-fonts;;
       kgx ) sudo dnf install gnome-console;;
       * )   sudo dnf install "$1";;
     esac
 elif command -v apk > /dev/null
 then
     case "$1" in
+      waybar ) sudo apk install "$1" font-awesome;;
+      yambar ) sudo apk install "$1" font-awesome;;
       kgx ) sudo apk add gnome-console;;
       * )   sudo apk add "$1";;
     esac
