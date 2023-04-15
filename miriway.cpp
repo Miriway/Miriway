@@ -242,6 +242,7 @@ int main(int argc, char const* argv[])
     // `meta_option` and `ctrl_alt_option` configuration options. These processes are NOT added to `shell_pids`
     CommandIndex meta{[&](auto cmd){ client_launcher.launch(cmd); }};
     CommandIndex ctrl_alt{[&](auto cmd){ client_launcher.launch(cmd); }};
+    CommandIndex alt{[&](auto cmd){ client_launcher.launch(cmd); }};
     ConfigurationOption ctrl_alt_option{
         [&](std::vector<std::string> const& cmds) { ctrl_alt.populate(cmds); },
         "ctrl-alt",
@@ -250,12 +251,17 @@ int main(int argc, char const* argv[])
         [&](std::vector<std::string> const& cmds) { meta.populate(cmds); },
         "meta",
         "meta <key>:<command> shortcut (may be specified multiple times)"};
+    ConfigurationOption alt_option{
+        [&](std::vector<std::string> const& cmds) { alt.populate(cmds); },
+        "alt",
+        "alt <key>:<command> shortcut (may be specified multiple times)"};
 
     // Process input events to identifies commands Miriway needs to handle
     ShellCommands commands{
         runner,
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_meta.try_command_for(c, s, cmd) || meta.try_command_for(c, s, cmd); },
-        [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_ctrl_alt.try_command_for(c, s, cmd) || ctrl_alt.try_command_for(c, s, cmd); }};
+        [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_ctrl_alt.try_command_for(c, s, cmd) || ctrl_alt.try_command_for(c, s, cmd); },
+        [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return alt.try_command_for(c, s, cmd); }};
 
     return runner.run_with(
         {
@@ -268,6 +274,7 @@ int main(int argc, char const* argv[])
             shell_meta_option,
             ctrl_alt_option,
             meta_option,
+            alt_option,
             Keymap{},
             PrependEventFilter{[&](MirEvent const*) { shell_pids.reap(); return false; }},
             AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
