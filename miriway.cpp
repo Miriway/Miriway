@@ -229,6 +229,7 @@ int main(int argc, char const* argv[])
     // `shell_meta_option` and `shell_ctrl_alt_option` configuration options. These processes are added to `shell_pids`
     CommandIndex shell_meta{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd)); }};
     CommandIndex shell_ctrl_alt{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd)); }};
+    CommandIndex shell_alt{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd)); }};
     ConfigurationOption shell_meta_option{
         [&](std::vector<std::string> const& cmds) { shell_meta.populate(cmds); },
         "shell-meta",
@@ -237,6 +238,10 @@ int main(int argc, char const* argv[])
         [&](std::vector<std::string> const& cmds) { shell_ctrl_alt.populate(cmds); },
         "shell-ctrl-alt",
         "ctrl-alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)"};
+    ConfigurationOption shell_alt_option{
+        [&](std::vector<std::string> const& cmds) { shell_alt.populate(cmds); },
+        "shell-alt",
+        "alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)"};
 
     // `meta` and `ctrl_alt` provide a lookup to execute the commands configured by the corresponding
     // `meta_option` and `ctrl_alt_option` configuration options. These processes are NOT added to `shell_pids`
@@ -261,7 +266,7 @@ int main(int argc, char const* argv[])
         runner,
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_meta.try_command_for(c, s, cmd) || meta.try_command_for(c, s, cmd); },
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_ctrl_alt.try_command_for(c, s, cmd) || ctrl_alt.try_command_for(c, s, cmd); },
-        [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return alt.try_command_for(c, s, cmd); }};
+        [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_alt.try_command_for(c, s, cmd) || alt.try_command_for(c, s, cmd); }};
 
     return runner.run_with(
         {
@@ -271,6 +276,7 @@ int main(int argc, char const* argv[])
             client_launcher,
             components_option,
             shell_ctrl_alt_option,
+            shell_alt_option,
             shell_meta_option,
             ctrl_alt_option,
             meta_option,
