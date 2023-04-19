@@ -27,8 +27,8 @@
 #include <mir/log.h>
 
 miriway::ShellCommands::ShellCommands(
-    MirRunner& runner, CommandFunctor meta_command, CommandFunctor ctrl_alt_command) :
-    runner{runner}, meta_command{std::move(meta_command)}, ctrl_alt_command{std::move(ctrl_alt_command)}
+    MirRunner& runner, CommandFunctor meta_command, CommandFunctor ctrl_alt_command, CommandFunctor alt_command) :
+    runner{runner}, meta_command{std::move(meta_command)}, ctrl_alt_command{std::move(ctrl_alt_command)}, alt_command{std::move(alt_command)}
 {
 }
 
@@ -68,19 +68,26 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
     if (!shell_commands_active)
         return false;
 
-    // Actions on "Ctrl+Alt" keys
-    if ((mods & ctrl_alt) == ctrl_alt)
+
+    if (mir_keyboard_event_action(kev) == mir_keyboard_action_down)
     {
-        return (mir_keyboard_event_action(kev) == mir_keyboard_action_down) &&
-            ctrl_alt_command(key_code, mods & mir_input_event_modifier_shift, this);
+        if ((mods & ctrl_alt) == ctrl_alt)
+        {
+            return ctrl_alt_command(key_code, mods & mir_input_event_modifier_shift, this);
+        }
+
+        if ((mods & mir_input_event_modifier_meta) == mir_input_event_modifier_meta)
+        {
+            return meta_command(key_code, mods & mir_input_event_modifier_shift, this);
+        }
+
+        if ((mods & mir_input_event_modifier_alt) == mir_input_event_modifier_alt)
+        {
+            return alt_command(key_code, mods & mir_input_event_modifier_shift, this);
+        }
     }
 
-    if (!(mods & mir_input_event_modifier_meta) || (mods & ctrl_alt))
-        return false;
-
-    // Actions on "Meta" key
-    return (mir_keyboard_event_action(kev) == mir_keyboard_action_down) &&
-           meta_command(key_code, mods & mir_input_event_modifier_shift, this);
+    return false;
 }
 
 auto miriway::ShellCommands::touch_shortcuts(MirTouchEvent const* /*tev*/) -> bool

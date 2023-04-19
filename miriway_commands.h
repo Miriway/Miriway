@@ -43,8 +43,7 @@ class ShellCommands
 public:
     using CommandFunctor = std::function<bool(xkb_keysym_t key_code, bool with_shift, ShellCommands* cmd)>;
 
-    ShellCommands(
-        MirRunner& runner, CommandFunctor meta_command, CommandFunctor ctrl_alt_command);
+    ShellCommands(MirRunner& runner, CommandFunctor meta_command, CommandFunctor ctrl_alt_command, CommandFunctor alt_command);
 
     void init_window_manager(WindowManagerPolicy* wm);
 
@@ -73,6 +72,7 @@ private:
     MirRunner& runner;
     CommandFunctor meta_command;
     CommandFunctor ctrl_alt_command;
+    CommandFunctor alt_command;
     WindowManagerPolicy* wm = nullptr;
     std::atomic<bool> shell_commands_active = true;
 
