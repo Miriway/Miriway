@@ -86,10 +86,30 @@ private:
 };
 
 // Build an index of commands from "<key>:<commands>" values and launch them by <key> (if found)
-struct CommandIndex
+class CommandIndex : ConfigurationOption
 {
-    explicit CommandIndex(std::function<void(std::vector<std::string> const& command_line)> launch) :
-        launch{std::move(launch)}{}
+public:
+    CommandIndex(
+        std::string const& option_,
+        std::string const& description,
+        std::function<void(std::vector<std::string> const&)> launch) :
+        ConfigurationOption{[this](std::vector<std::string> const& cmds) { populate(cmds); }, option_, description},
+        launch{std::move(launch)}
+    {
+    }
+
+    bool try_command_for(xkb_keysym_t key_code, bool with_shift, ShellCommands* cmd) const
+    {
+        auto const i = commands.find(std::tolower(key_code));
+        bool const found = i != end(commands);
+        if (found) i->second(cmd, with_shift);
+        return found;
+    }
+
+    using ConfigurationOption::operator();
+private:
+    std::function<void (std::vector<std::string> const& command_line)> const launch;
+    std::map<xkb_keysym_t, ShellCommands::CmdFunctor> commands;
 
     void populate(std::vector<std::string> const& config_cmds)
     {
@@ -119,17 +139,6 @@ struct CommandIndex
             }
         }
     }
-
-    bool try_command_for(xkb_keysym_t key_code, bool with_shift, ShellCommands* cmd) const
-    {
-        auto const i = commands.find(std::tolower(key_code));
-        bool const found = i != end(commands);
-        if (found) i->second(cmd, with_shift);
-        return found;
-    }
-private:
-    std::function<void (std::vector<std::string> const& command_line)> const launch;
-    std::map<xkb_keysym_t, ShellCommands::CmdFunctor> commands;
 };
 
 // Keep track of interesting "shell" child processes. Somewhat hacky as `reap()` needs to be called
@@ -225,41 +234,39 @@ int main(int argc, char const* argv[])
         "shell-component",
         "Shell component to launch on startup (may be specified multiple times)"};
 
-    // `shell_meta` and `shell_ctrl_alt` provide a lookup to execute the commands configured by the corresponding
-    // `shell_meta_option` and `shell_ctrl_alt_option` configuration options. These processes are added to `shell_pids`
-    CommandIndex shell_meta{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd)); }};
-    CommandIndex shell_ctrl_alt{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd)); }};
-    CommandIndex shell_alt{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd)); }};
-    ConfigurationOption shell_meta_option{
-        [&](std::vector<std::string> const& cmds) { shell_meta.populate(cmds); },
+    // `shell_meta`, `shell_ctrl_alt` and `shell_alt` provide a lookup to execute the commands configured by the
+    // corresponding configuration options. These processes are added to `shell_pids`
+    CommandIndex shell_meta{
         "shell-meta",
-        "meta <key>:<command> shortcut with shell priviledges (may be specified multiple times)"};
-    ConfigurationOption shell_ctrl_alt_option{
-        [&](std::vector<std::string> const& cmds) { shell_ctrl_alt.populate(cmds); },
-        "shell-ctrl-alt",
-        "ctrl-alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)"};
-    ConfigurationOption shell_alt_option{
-        [&](std::vector<std::string> const& cmds) { shell_alt.populate(cmds); },
-        "shell-alt",
-        "alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)"};
+        "meta <key>:<command> shortcut with shell priviledges (may be specified multiple times)",
+        [&](auto cmd) { shell_pids.insert(client_launcher.launch(cmd)); }};
 
-    // `meta` and `ctrl_alt` provide a lookup to execute the commands configured by the corresponding
-    // `meta_option` and `ctrl_alt_option` configuration options. These processes are NOT added to `shell_pids`
-    CommandIndex meta{[&](auto cmd){ client_launcher.launch(cmd); }};
-    CommandIndex ctrl_alt{[&](auto cmd){ client_launcher.launch(cmd); }};
-    CommandIndex alt{[&](auto cmd){ client_launcher.launch(cmd); }};
-    ConfigurationOption ctrl_alt_option{
-        [&](std::vector<std::string> const& cmds) { ctrl_alt.populate(cmds); },
-        "ctrl-alt",
-        "ctrl-alt <key>:<command> shortcut (may be specified multiple times)"};
-    ConfigurationOption meta_option{
-        [&](std::vector<std::string> const& cmds) { meta.populate(cmds); },
+    CommandIndex shell_ctrl_alt{
+        "shell-ctrl-alt",
+        "ctrl-alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)",
+        [&](auto cmd) { shell_pids.insert(client_launcher.launch(cmd)); }};
+
+    CommandIndex shell_alt{
+        "shell-alt",
+        "alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)",
+        [&](auto cmd) { shell_pids.insert(client_launcher.launch(cmd)); }};
+
+    // `meta`, `alt` and `ctrl_alt` provide a lookup to execute the commands configured by the corresponding
+    // configuration options. These processes are NOT added to `shell_pids`
+    CommandIndex meta{
         "meta",
-        "meta <key>:<command> shortcut (may be specified multiple times)"};
-    ConfigurationOption alt_option{
-        [&](std::vector<std::string> const& cmds) { alt.populate(cmds); },
+        "meta <key>:<command> shortcut (may be specified multiple times)",
+        [&](auto cmd) { client_launcher.launch(cmd); }};
+
+    CommandIndex ctrl_alt{
+        "ctrl-alt",
+        "ctrl-alt <key>:<command> shortcut (may be specified multiple times)",
+        [&](auto cmd) { client_launcher.launch(cmd); }};
+
+    CommandIndex alt{
         "alt",
-        "alt <key>:<command> shortcut (may be specified multiple times)"};
+        "alt <key>:<command> shortcut (may be specified multiple times)",
+        [&](auto cmd) { client_launcher.launch(cmd); }};
 
     // Process input events to identifies commands Miriway needs to handle
     ShellCommands commands{
@@ -275,12 +282,12 @@ int main(int argc, char const* argv[])
             display_configuration_options,
             client_launcher,
             components_option,
-            shell_ctrl_alt_option,
-            shell_alt_option,
-            shell_meta_option,
-            ctrl_alt_option,
-            meta_option,
-            alt_option,
+            shell_ctrl_alt,
+            shell_alt,
+            shell_meta,
+            ctrl_alt,
+            meta,
+            alt,
             Keymap{},
             PrependEventFilter{[&](MirEvent const*) { shell_pids.reap(); return false; }},
             AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
