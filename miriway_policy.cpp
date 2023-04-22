@@ -77,7 +77,7 @@ miral::WindowSpecification miriway::WindowManagerPolicy::place_new_window(
 
 void miriway::WindowManagerPolicy::advise_new_window(const miral::WindowInfo &window_info)
 {
-    WindowManagementPolicy::advise_new_window(window_info);
+    MinimalWindowManager::advise_new_window(window_info);
 
     if (is_application(window_info.depth_layer()))
     {
@@ -97,7 +97,7 @@ void miriway::WindowManagerPolicy::advise_new_window(const miral::WindowInfo &wi
 
 void miriway::WindowManagerPolicy::advise_delete_window(const miral::WindowInfo &window_info)
 {
-    WindowManagementPolicy::advise_delete_window(window_info);
+    MinimalWindowManager::advise_delete_window(window_info);
     if (is_application(window_info.depth_layer()))
     {
         commands->advise_delete_window_for(window_info.window().application());
@@ -106,7 +106,7 @@ void miriway::WindowManagerPolicy::advise_delete_window(const miral::WindowInfo 
 
 void miriway::WindowManagerPolicy::advise_delete_app(miral::ApplicationInfo const& application)
 {
-    WindowManagementPolicy::advise_delete_app(application);
+    MinimalWindowManager::advise_delete_app(application);
 }
 
 void miriway::WindowManagerPolicy::workspace_begin(bool take_active)
