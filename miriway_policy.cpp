@@ -104,11 +104,6 @@ void miriway::WindowManagerPolicy::advise_delete_window(const miral::WindowInfo 
     }
 }
 
-void miriway::WindowManagerPolicy::advise_delete_app(miral::ApplicationInfo const& application)
-{
-    MinimalWindowManager::advise_delete_app(application);
-}
-
 void miriway::WindowManagerPolicy::workspace_begin(bool take_active)
 {
     tools.invoke_under_lock(

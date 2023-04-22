@@ -51,8 +51,6 @@ private:
 
     void advise_new_window(const WindowInfo &window_info) override;
 
-    void advise_delete_app(ApplicationInfo const& application) override;
-
     void advise_delete_window(const WindowInfo &window_info) override;
 
     void handle_modify_window(WindowInfo& window_info, WindowSpecification const& modifications) override;
