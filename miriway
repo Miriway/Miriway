@@ -15,6 +15,7 @@ then
   echo "Info: wayland endpoint '${WAYLAND_DISPLAY}' already exists, using it as host"
   export MIR_SERVER_WAYLAND_HOST="${WAYLAND_DISPLAY}"
   unset WAYLAND_DISPLAY
+  unset DISPLAY
 fi
 
 if [ -e "/etc/xdg/xdg-miriway" ] && [ "${XDG_CONFIG_DIRS#*/etc/xdg/xdg-miriway}" = "${XDG_CONFIG_DIRS}" ]
