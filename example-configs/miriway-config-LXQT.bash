@@ -2,7 +2,7 @@
 set -e
 
 shell_components="lxqt-policykit qterminal lxqt-runner swaybg"
-miriway_config="$HOME/.config/miriway-shell.config"
+miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 
 for component in $shell_components
 do

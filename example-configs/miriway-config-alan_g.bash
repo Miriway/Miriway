@@ -2,8 +2,8 @@
 set -e
 
 shell_components="yambar swaybg synapse kgx"
-miriway_config="$HOME/.config/miriway-shell.config"
-yambar_config="$HOME/.config/yambar/config.yml"
+miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
+yambar_config="${XDG_CONFIG_HOME:-$HOME/.config}/yambar/config.yml"
 
 for component in $shell_components
 do

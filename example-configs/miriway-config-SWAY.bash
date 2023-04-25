@@ -2,9 +2,9 @@
 set -e
 
 shell_components="swaybg waybar wofi"
-miriway_config="$HOME/.config/miriway-shell.config"
-waybar_config="$HOME/.config/waybar/config"
-waybar_style="$HOME/.config/waybar/style.css"
+miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
+waybar_config="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/config"
+waybar_style="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/style.css"
 
 for component in $shell_components
 do

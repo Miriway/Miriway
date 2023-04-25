@@ -2,7 +2,7 @@
 set -e
 
 shell_components="swaybg xfce4-terminal xfce4-appfinder"
-miriway_config="$HOME/.config/miriway-shell.config"
+miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 
 for component in $shell_components
 do

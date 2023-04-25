@@ -34,7 +34,7 @@ then
 fi
 
 # If there's an existing config missing any shell commands, then add them
-miriway_config="$HOME/.config/miriway-shell.config"
+miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 if [ -e "${miriway_config}" ] && ! grep -q @ "${miriway_config}"
 then
   cat <<EOT >> "${miriway_config}"
