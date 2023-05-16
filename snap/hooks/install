@@ -1,19 +1,23 @@
-#!/bin/sh
+#!/bin/sh -e
 
 mkdir -p /usr/share/wayland-sessions/
 cp "$SNAP"/usr/local/share/wayland-sessions/miriway.desktop /usr/share/wayland-sessions/miriway.desktop
 
-xdg_config=/etc/xdg/xdg-miriway/
+xdg_config=/etc/xdg/xdg-miriway
 
 miriway_config="${xdg_config}/miriway-shell.config"
 yambar_config="${xdg_config}/yambar/config.yml"
 
 ###################################################################
 # Ensure we have a miriway-shell config file with the fixed options
-background=$(gsettings get org.gnome.desktop.background picture-uri | sed -Ee "s|[^:]*://(.*\.png)'$|\1|")
-if [[ ! -e "${background}" ]]; then
+if ! command -v gsettings > /dev/null; then
+  background=$(gsettings get org.gnome.desktop.background picture-uri | sed -Ee "s|[^:]*://(.*\.png)'$|\1|")
+else
   # fall back to Ubuntu default
   background="/usr/share/backgrounds/warty-final-ubuntu.png"
+fi
+if [[ ! -e "${background}" ]]; then
+  background="$(find /usr/share/backgrounds/ -type f | tail -n 1)"
 fi
 
 cat <<EOT > "${miriway_config}"
@@ -21,13 +25,12 @@ x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GDK_USE_PORTAL=none:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
-
-ctrl-alt=t:/snap/${SNAP_INSTANCE_NAME}/current/bin/miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/local/bin/miriway-terminal
 xwayland-path=/snap/${SNAP_INSTANCE_NAME}/current/usr/bin/Xwayland
-shell-component=/snap/${SNAP_INSTANCE_NAME}/current/usr/bin/swaybg -i ${background}
-shell-component=/snap/${SNAP_INSTANCE_NAME}/current/usr/local/bin/yambar --config="${yambar_config}"
-shell-meta=a:/snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse
-shell-ctrl-alt=a:/snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse
+
+ctrl-alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/local/bin/miriway-terminal
+shell-component=swaybg -i ${background}
+shell-component=yambar --config="${yambar_config}"
+shell-meta=a:synapse
 
 meta=Left:@dock-left
 meta=Right:@dock-right
@@ -43,8 +46,7 @@ EOT
 
 ###################################################################
 # Ensure we have a yambar config file with the fixed options
-if [ ! -e "${yambar_config}" ]; then
-mkdir -p -m 777 "$(dirname "${yambar_config}")"
+mkdir -p -m 755 "$(dirname "${yambar_config}")"
 cat <<EOT > "${yambar_config}"
 awesome: &awesome Font Awesome 6 Free:style=solid:pixelsize=14
 ubuntu: &ubuntu Font Ubuntu 6 Free:style=solid:pixelsize=14
@@ -155,6 +157,5 @@ do cat <<EOT >> "${yambar_config}"
                 - string: {text: "{capacity}%"}
 EOT
 done
-fi
 # Ensure we have a yambar config file with the fixed options
 ###################################################################

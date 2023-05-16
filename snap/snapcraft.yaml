@@ -23,6 +23,7 @@ apps:
       __EGL_VENDOR_LIBRARY_DIRS: $SNAP/etc/glvnd/egl_vendor.d:$SNAP/usr/share/glvnd/egl_vendor.d
       LIBGL_DRIVERS_PATH: $SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
       LIBINPUT_QUIRKS_DIR: ${SNAP}/usr/share/libinput
+      PATH: ${SNAP}/usr/local/bin/:${PATH}
 
 parts:
   miriway:
