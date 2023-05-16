@@ -1,9 +1,0 @@
-x11-window-title=Miriway
-idle-timeout=600
-ctrl-alt=t:%SNAP%bin/miriway-unsnap %SNAP%usr/local/bin/miriway-terminal
-xwayland-path=%SNAP%usr/bin/Xwayland
-shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY
-shell-component=%SNAP%usr/bin/swaybg -i %BACKGROUND%
-shell-component=%SNAP%usr/bin/waybar
-shell-meta=a:%SNAP%usr/bin/wofi --show drun --location top_left
-shell-ctrl-alt=a:%SNAP%usr/bin/wofi --show drun --location top_left

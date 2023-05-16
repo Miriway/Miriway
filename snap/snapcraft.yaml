@@ -12,7 +12,7 @@ architectures:
 
 package-repositories:
   - type: apt
-    ppa: mir-team/release
+    ppa: mir-team/dev
 
 apps:
   miriway:
@@ -76,10 +76,52 @@ parts:
     # included in this part because it tries to pull in mesa bits
     - xwayland
     - swaybg
-    - waybar
-    - wofi
+    - synapse
     stage:
       # The libraries in .../dri need no-patchelf, so they come from the mesa-unpatched part
+      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
+
+  yambar:
+    plugin: meson
+    meson-parameters:
+      - -Dbackend-x11=disabled
+      - -Dbackend-wayland=enabled
+    build-packages:
+      - meson
+      - ninja-build
+      - wayland-protocols
+      - libasound2-dev
+      - libfcft-dev
+      - libfontconfig-dev
+      - libharfbuzz-dev
+      - libinotifytools0-dev
+      - libjson-c-dev
+      - libmpdclient-dev
+      - libpixman-1-dev
+      - libtllist-dev
+      - libudev-dev
+      - libwayland-dev
+      - libyaml-dev
+      - scdoc
+      - flex
+      - bison
+    source: https://codeberg.org/dnkl/yambar.git
+    source-tag: 1.9.0
+    source-depth: 1
+    stage-packages:
+      - fonts-font-awesome
+      - fonts-ubuntu
+      - libasound2
+      - libfcft4
+      - libjson-c5
+      - libmpdclient2
+      - libpixman-1-0
+      - libudev1
+      - libwayland-client0
+      - libwayland-cursor0
+      - libyaml-0-2
+    stage:
+      # The libraries in .../dri need no-patchelf, so they must come from the mesa-unpatched part
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
 
   mesa-no-patchelf:
