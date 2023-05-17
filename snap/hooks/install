@@ -1,13 +1,161 @@
-#!/bin/sh
+#!/bin/sh -e
 
 mkdir -p /usr/share/wayland-sessions/
-cp "$SNAP"/usr/share/wayland-sessions/miriway.desktop /usr/share/wayland-sessions/miriway.desktop
+cp "$SNAP"/usr/local/share/wayland-sessions/miriway.desktop /usr/share/wayland-sessions/miriway.desktop
 
-# fall back to Ubuntu default
-background="/usr/share/backgrounds/warty-final-ubuntu.png"
+xdg_config=/etc/xdg/xdg-miriway
+
+miriway_config="${xdg_config}/miriway-shell.config"
+yambar_config="${xdg_config}/yambar/config.yml"
+
+###################################################################
+# Ensure we have a miriway-shell config file with the fixed options
+if ! command -v gsettings > /dev/null; then
+  background=$(gsettings get org.gnome.desktop.background picture-uri | sed -Ee "s|[^:]*://(.*\.png)'$|\1|")
+else
+  # fall back to Ubuntu default
+  background="/usr/share/backgrounds/warty-final-ubuntu.png"
+fi
 if [[ ! -e "${background}" ]]; then
   background="$(find /usr/share/backgrounds/ -type f | tail -n 1)"
 fi
 
-mkdir -p /etc/xdg/xdg-miriway/
-sed -e "s|%SNAP%|${SNAP}/|g" -e "s|%BACKGROUND%|${background}|g" ${SNAP}/etc/xdg/xdg-miriway/miriway-shell.config-snap > /etc/xdg/xdg-miriway/miriway-shell.config
+cat <<EOT > "${miriway_config}"
+x11-window-title=Miriway
+idle-timeout=600
+app-env-amend=XDG_SESSION_TYPE=wayland:GDK_USE_PORTAL=none:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
+shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
+xwayland-path=/snap/${SNAP_INSTANCE_NAME}/current/usr/bin/Xwayland
+
+ctrl-alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/local/bin/miriway-terminal
+shell-component=swaybg -i ${background}
+shell-component=yambar --config="${yambar_config}"
+shell-meta=a:synapse
+
+meta=Left:@dock-left
+meta=Right:@dock-right
+meta=Space:@toggle-maximized
+meta=Home:@workspace-begin
+meta=End:@workspace-end
+meta=Page_Up:@workspace-up
+meta=Page_Down:@workspace-down
+ctrl-alt=BackSpace:@exit
+EOT
+# Ensure we have a miriway-shell config file with the fixed options
+###################################################################
+
+###################################################################
+# Ensure we have a yambar config file with the fixed options
+mkdir -p -m 755 "$(dirname "${yambar_config}")"
+cat <<EOT > "${yambar_config}"
+awesome: &awesome Font Awesome 6 Free:style=solid:pixelsize=14
+ubuntu: &ubuntu Font Ubuntu 6 Free:style=solid:pixelsize=14
+
+bar:
+  location: top
+  height: 21
+  background: 282828ff
+  font: *ubuntu
+
+  left:
+    - label:
+        content:
+          string:
+            text: " start"
+            margin: 5
+            on-click: synapse
+            deco: &greybg
+              background:
+                color: 3f3f3fff
+
+  center:
+    - clock:
+        content:
+          - string:
+              margin: 5
+              text: "{date} {time}"
+              deco: *greybg
+
+  right:
+EOT
+
+for wificard in /sys/class/net/wl*
+do cat <<EOT >> "${yambar_config}"
+    - network:
+        name: $(basename "$wificard")
+        content:
+          map:
+            deco: *greybg
+            margin: 5
+            default: {string: {text: , font: *awesome}}
+            conditions:
+              state == down: {string: {text: , font: *awesome}}
+              state == up:
+                map:
+                  default:
+                    - string: {text: , font: *awesome, deco: *greybg}
+#                    - string: {text: "{ssid} {dl-speed:mb}/{ul-speed:mb} Mb/s" }
+
+                  conditions:
+                    ipv4 == "":
+                      - string: {text: , font: *awesome}
+#                      - string: {text: "{ssid} {dl-speed:mb}/{ul-speed:mb} Mb/s"}
+EOT
+done
+
+for battery in /sys/class/power_supply/BAT*
+do cat <<EOT >> "${yambar_config}"
+    - battery:
+        name: $(basename "$battery")
+        anchors:
+          discharging: &discharging
+            list:
+              items:
+                - ramp:
+                    tag: capacity
+                    items:
+                      - string: {text: , foreground: ff0000ff, font: *awesome}
+                      - string: {text: , foreground: ffa600ff, font: *awesome}
+                      - string: {text: , font: *awesome}
+                      - string: {text: , font: *awesome}
+                      - string: {text: , font: *awesome}
+                      - string: {text: , font: *awesome}
+                      - string: {text: , font: *awesome}
+                      - string: {text: , font: *awesome}
+                      - string: {text: , font: *awesome}
+                      - string: {text: , foreground: 00ff00ff, font: *awesome}
+                - string: {text: "{capacity}% {estimate}"}
+        content:
+          map:
+            deco: *greybg
+            margin: 5
+            conditions:
+              state == unknown:
+                <<: *discharging
+              state == discharging:
+                <<: *discharging
+              state == charging:
+                - string: {text: , foreground: 00ff00ff, font: *awesome}
+                - string: {text: "{capacity}% {estimate}"}
+              state == full:
+                - string: {text: , foreground: 00ff00ff, font: *awesome}
+                - string: {text: "{capacity}% full"}
+              state == "not charging":
+                - ramp:
+                    tag: capacity
+                    items:
+                      - string: {text:  , foreground: ff0000ff, font: *awesome}
+                      - string: {text:  , foreground: ffa600ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                - string: {text: "{capacity}%"}
+EOT
+done
+# Ensure we have a yambar config file with the fixed options
+###################################################################
