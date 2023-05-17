@@ -10,6 +10,8 @@ yambar_config="${xdg_config}/yambar/config.yml"
 
 ###################################################################
 # Ensure we have a miriway-shell config file with the fixed options
+mkdir -p -m 755 "$(dirname "${miriway_config}")"
+
 if ! command -v gsettings > /dev/null; then
   background=$(gsettings get org.gnome.desktop.background picture-uri | sed -Ee "s|[^:]*://(.*\.png)'$|\1|")
 else
