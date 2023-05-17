@@ -27,6 +27,8 @@ apps:
 
 parts:
   miriway:
+    build-attributes:
+      - enable-patchelf
     override-pull: |
       craftctl default
       server_version=`git rev-list --count HEAD`
@@ -70,6 +72,8 @@ parts:
     source: snap-utils
 
   mesa-patchelf:
+    build-attributes:
+      - enable-patchelf
     plugin: nil
     stage-packages:
     - libgl1-mesa-dri
@@ -83,6 +87,8 @@ parts:
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
 
   yambar:
+    build-attributes:
+      - enable-patchelf
     plugin: meson
     meson-parameters:
       - -Dbackend-x11=disabled
