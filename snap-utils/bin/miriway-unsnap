@@ -7,5 +7,4 @@ unset LIBINPUT_QUIRKS_DIR
 
 shopt -s extglob
 export PATH="${PATH##*($SNAP*([^:])?:)}"
-export LD_LIBRARY_PATH="${LD_LIBRARY_PATH##*(/var/lib/snapd/*([^:])?:)*($SNAP*([^:])?:)*($SNAP*([^:]))}"
 exec "$@"

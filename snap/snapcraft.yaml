@@ -24,6 +24,8 @@ apps:
       LIBGL_DRIVERS_PATH: $SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
       LIBINPUT_QUIRKS_DIR: ${SNAP}/usr/share/libinput
       PATH: ${SNAP}/usr/local/bin/:${PATH}
+      # For "reasons" this is being set despite this being a classic snap. This overwrites the nonsense
+      LD_LIBRARY_PATH: ""
 
 parts:
   miriway:
