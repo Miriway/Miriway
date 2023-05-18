@@ -5,5 +5,5 @@ unset __EGL_VENDOR_LIBRARY_DIRS
 unset LIBGL_DRIVERS_PATH
 unset LIBINPUT_QUIRKS_DIR
 
-export PATH="${PATH##*($SNAP*([^:])?:)}"
+PATH="$(echo "$PATH" | sed "s#$SNAP[^:]*:##g")"
 exec "$@"
