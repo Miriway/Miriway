@@ -32,8 +32,8 @@ xwayland-path=/snap/${SNAP_INSTANCE_NAME}/current/usr/bin/Xwayland
 ctrl-alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/local/bin/miriway-terminal
 shell-component=swaybg -i ${background}
 shell-component=yambar --config="${yambar_config}"
-shell-component=miriway-unsnap $SNAP/usr/bin/synapse --startup
-shell-meta=a:miriway-unsnap $SNAP/usr/bin/synapse
+shell-component=miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse --startup
+shell-meta=a:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse
 
 meta=Left:@dock-left
 meta=Right:@dock-right
@@ -66,7 +66,7 @@ bar:
           string:
             text: " start"
             margin: 5
-            on-click: miriway-unsnap $SNAP/usr/bin/synapse
+            on-click: miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse
             deco: &greybg
               background:
                 color: 3f3f3fff
