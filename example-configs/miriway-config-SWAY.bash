@@ -51,7 +51,6 @@ then
       waybar ) sudo dnf install "$1" fontawesome-fonts;;
       yambar ) sudo dnf install "$1" fontawesome-fonts;;
       kgx ) sudo dnf install gnome-console;;
-      swaync ) sudo dnf install sway-notification-center;;
       * )   sudo dnf install "$1";;
     esac
 elif command -v apk > /dev/null
@@ -60,7 +59,6 @@ then
       waybar ) sudo apk add "$1" font-awesome;;
       yambar ) sudo apk add "$1" font-awesome;;
       kgx ) sudo apk add gnome-console;;
-      swaync ) sudo apk add sway-notification-center;;
       * )   sudo apk add "$1";;
     esac
 else
