@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-shell_components="mate-panel mate-terminal swaybg"
+shell_components="mate-panel mate-terminal swaybg /usr/lib/mate-notification-daemon/mate-notification-daemon"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 
 for component in $shell_components
@@ -31,6 +31,7 @@ then
       waybar ) sudo apt install "$1" fonts-font-awesome;;
       yambar ) sudo apt install "$1" fonts-font-awesome;;
       kgx ) sudo apt install gnome-console;;
+      /usr/lib/mate-notification-daemon/mate-notification-daemon ) sudo apt install mate-notification-daemon;;
       * )   sudo apt install "$1";;
     esac
 elif command -v dnf > /dev/null
@@ -39,14 +40,16 @@ then
       waybar ) sudo dnf install "$1" fontawesome-fonts;;
       yambar ) sudo dnf install "$1" fontawesome-fonts;;
       kgx ) sudo dnf install gnome-console;;
+      /usr/lib/mate-notification-daemon/mate-notification-daemon ) sudo dnf install mate-notification-daemon;;
       * )   sudo dnf install "$1";;
     esac
 elif command -v apk > /dev/null
 then
     case "$1" in
-      waybar ) sudo apk install "$1" font-awesome;;
-      yambar ) sudo apk install "$1" font-awesome;;
+      waybar ) sudo apk add "$1" font-awesome;;
+      yambar ) sudo apk add "$1" font-awesome;;
       kgx ) sudo apk add gnome-console;;
+      /usr/lib/mate-notification-daemon/mate-notification-daemon ) sudo apk add mate-notification-daemon;;
       * )   sudo apk add "$1";;
     esac
 else
@@ -67,7 +70,8 @@ cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GDK_USE_PORTAL=none:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
-shell-component=sh -c "dbus-update-activation-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP"
+shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
+shell-component=/usr/lib/mate-notification-daemon/mate-notification-daemon
 
 shell-component=swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png
 shell-component=mate-panel

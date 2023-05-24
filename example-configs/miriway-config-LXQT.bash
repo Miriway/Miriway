@@ -44,8 +44,8 @@ then
 elif command -v apk > /dev/null
 then
     case "$1" in
-      waybar ) sudo apk install "$1" font-awesome;;
-      yambar ) sudo apk install "$1" font-awesome;;
+      waybar ) sudo apk add "$1" font-awesome;;
+      yambar ) sudo apk add "$1" font-awesome;;
       kgx ) sudo apk add gnome-console;;
       * )   sudo apk add "$1";;
     esac
@@ -67,7 +67,7 @@ cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GDK_USE_PORTAL=none:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
-shell-component=sh -c "dbus-update-activation-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP"
+shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
 
 shell-component=swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png
 shell-component=lxqt-policykit-agent
