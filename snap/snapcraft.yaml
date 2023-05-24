@@ -33,7 +33,7 @@ apps:
     command: *_command
     environment: *_environment
 
-  vnc:
+  vnc-over-ssh:
     command: bin/miriway.vnc
     environment: *_environment
 
