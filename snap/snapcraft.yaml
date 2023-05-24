@@ -83,11 +83,6 @@ parts:
     plugin: dump
     source: snap-utils
 
-  wallpaper:
-    plugin: nil
-    stage-packages:
-      - ubuntu-wallpapers
-
   mesa-patchelf:
     build-attributes:
       - enable-patchelf
@@ -96,7 +91,6 @@ parts:
     - libgl1-mesa-dri
     - libtinfo5
     # included in this part because it tries to pull in mesa bits
-    - gnome-console
     - gvncviewer
     - swaybg
     - synapse
