@@ -1,0 +1,8 @@
+#! /bin/bash
+set -e
+
+if [ -e "$1" ]; then
+  exec swaybg -i "$1"
+else
+  exec swaybg -c#3f3f3f
+fi
