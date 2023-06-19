@@ -26,11 +26,6 @@ jobs:
       with:
         fetch-depth: 0  # needed for version determination
 
-    - name: Patch PPA and version
-      run: |
-        sed -i 's@mir-team/release@mir-team/dev@' snap/snapcraft.yaml
-        sed -i 's@rev-list --count@rev-parse --short@' snap/snapcraft.yaml
-
     - name: Build and publish the snap
       uses: canonical/actions/build-snap@release
       with:
@@ -41,3 +36,4 @@ jobs:
         launchpad-accept-public-upload: true
         publish: ${{ github.event_name == 'pull_request' && github.repository == github.event.pull_request.head.repo.full_name }}
         publish-channel: edge/pr${{ github.event.number }}
+        snapcraft-channel: edge
