@@ -12,7 +12,7 @@ architectures:
 
 package-repositories:
   - type: apt
-    ppa: mir-team/dev
+    ppa: mir-team/rc
 
 apps:
   miriway:
