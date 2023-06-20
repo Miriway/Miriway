@@ -40,10 +40,6 @@ parts:
       - enable-patchelf
     stage-snaps:
       - mir-libs/22/edge
-    stage:
-      - -usr/lib/${CRAFT_ARCH_TRIPLET}/libgbm*
-      - -usr/lib/${CRAFT_ARCH_TRIPLET}/libglapi*
-      - -usr/share
     prime:
       - -*.h
       - -*.pc
