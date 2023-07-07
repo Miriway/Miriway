@@ -30,7 +30,7 @@ shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DIS
 xwayland-path=/snap/${SNAP_INSTANCE_NAME}/current/usr/bin/Xwayland
 
 ctrl-alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/local/bin/miriway-terminal
-shell-component=swaybg -i ${background}
+shell-component=miriway-background ${background}
 shell-component=yambar --config="${yambar_config}"
 shell-component=miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse --startup
 shell-meta=a:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse
