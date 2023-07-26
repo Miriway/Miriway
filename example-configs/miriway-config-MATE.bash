@@ -69,7 +69,7 @@ done
 cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
-app-env-amend=XDG_SESSION_TYPE=wayland:GDK_USE_PORTAL=none:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
+app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
 shell-component=/usr/lib/mate-notification-daemon/mate-notification-daemon
 
