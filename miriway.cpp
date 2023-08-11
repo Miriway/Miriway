@@ -215,9 +215,7 @@ int main(int argc, char const* argv[])
         WaylandExtensions::zwlr_foreign_toplevel_manager_v1,
         WaylandExtensions::zwp_virtual_keyboard_manager_v1,
         WaylandExtensions::zwlr_virtual_pointer_manager_v1,
-#if MIRAL_VERSION >= MIR_VERSION_NUMBER(3, 9, 0)
         WaylandExtensions::ext_session_lock_manager_v1,
-#endif
         WaylandExtensions::zwp_input_method_manager_v2})
     {
         extensions.conditionally_enable(protocol, [&](WaylandExtensions::EnableInfo const& info)
