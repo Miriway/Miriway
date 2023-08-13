@@ -209,6 +209,13 @@ int main(int argc, char const* argv[])
     // We'll use `shell_pids` to track "shell-*" processes.
     // We also check `user_preference()` so these can be enabled by the configuration
     ShellPids shell_pids;
+
+    auto const enable_for_shell_pids = [&](WaylandExtensions::EnableInfo const& info)
+        {
+            pid_t const pid = pid_of(info.app());
+            return shell_pids.is_found(pid) || info.user_preference().value_or(false);
+        };
+
     // Protocols we're reserving for shell components_option
     for (auto const& protocol : {
         WaylandExtensions::zwlr_layer_shell_v1,
@@ -220,12 +227,14 @@ int main(int argc, char const* argv[])
 #endif
         WaylandExtensions::zwp_input_method_manager_v2})
     {
-        extensions.conditionally_enable(protocol, [&](WaylandExtensions::EnableInfo const& info)
-            {
-                pid_t const pid = pid_of(info.app());
-                return shell_pids.is_found(pid) || info.user_preference().value_or(false);
-            });
+        extensions.conditionally_enable(protocol, enable_for_shell_pids);
     }
+
+    ConfigurationOption shell_extension{
+        [&](std::vector<std::string> const& protocols)
+            { for (auto const& protocol : protocols) extensions.conditionally_enable(protocol, enable_for_shell_pids); },
+        "shell-add-wayland-extension",
+        "Additional Wayland extension to allow shell processes (may be specified multiple times)"};
 
     ExternalClientLauncher client_launcher;
 
@@ -283,6 +292,7 @@ int main(int argc, char const* argv[])
         {
             X11Support{},
             extensions,
+            shell_extension,
             display_configuration_options,
             client_launcher,
             components_option,
