@@ -291,8 +291,8 @@ int main(int argc, char const* argv[])
     return runner.run_with(
         {
             X11Support{},
+            pre_init(shell_extension),
             extensions,
-            shell_extension,
             display_configuration_options,
             client_launcher,
             components_option,
