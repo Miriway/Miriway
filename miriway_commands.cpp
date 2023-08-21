@@ -52,7 +52,7 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
         return false;
 
     auto const mods = mir_keyboard_event_modifiers(kev);
-    auto const key_code = mir_keyboard_event_key_code(kev);
+    auto const key_code = mir_keyboard_event_keysym(kev);
 
     auto const ctrl_alt = mir_input_event_modifier_alt | mir_input_event_modifier_ctrl;
 
