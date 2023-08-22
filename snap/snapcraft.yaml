@@ -59,7 +59,7 @@ parts:
       - g++
       - make
     stage-packages:
-      - libmiral5
+      - libmiral6
       - mir-graphics-drivers-desktop
       - libfreetype6
     prime:
