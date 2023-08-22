@@ -43,6 +43,8 @@ parts:
       - enable-patchelf
     override-pull: |
       craftctl default
+      # work around https://github.com/diddlesnaps/snapcraft-multiarch-action/issues/22
+      git config --global --add safe.directory ${CRAFT_PART_SRC}
       server_version=`git rev-list --count HEAD`
       mir_version=`LANG=C apt-cache policy mir-graphics-drivers-desktop | sed -rne 's/^\s+Candidate:\s+([^-]*)-.+$/\1/p'`
       craftctl set version=$server_version-mir$mir_version
