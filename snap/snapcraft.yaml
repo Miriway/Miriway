@@ -16,6 +16,8 @@ package-repositories:
 
 apps:
   miriway:
+    command-chain: &_command_chain
+      - bin/miriway-unset-LD_LIBRARY_PATH
     command: &_command usr/local/bin/miriway
     environment: &_environment
       # Prep for Mir
@@ -24,16 +26,16 @@ apps:
       LIBGL_DRIVERS_PATH: $SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
       LIBINPUT_QUIRKS_DIR: ${SNAP}/usr/share/libinput
       PATH: ${SNAP}/usr/local/bin/:${PATH}
-      # For "reasons" this is being set despite this being a classic snap. This overwrites the nonsense
-      LD_LIBRARY_PATH: ""
 
   vnc-server:
     command-chain:
+      - bin/miriway-unset-LD_LIBRARY_PATH
       - bin/miriway.vnc-server
     command: *_command
     environment: *_environment
 
   vnc-over-ssh:
+    command-chain: *_command_chain
     command: bin/miriway.vnc
     environment: *_environment
 

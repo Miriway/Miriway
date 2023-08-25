@@ -1,0 +1,5 @@
+#! /bin/sh
+
+# For "reasons" this is being set despite this being a classic snap. This strips the nonsense
+unset LD_LIBRARY_PATH
+exec "$@"
