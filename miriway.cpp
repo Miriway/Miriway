@@ -219,11 +219,7 @@ int main(int argc, char const* argv[])
     // Protocols we're reserving for shell components_option
     for (auto const& protocol : {
         WaylandExtensions::zwlr_layer_shell_v1,
-        WaylandExtensions::zwlr_foreign_toplevel_manager_v1,
-        WaylandExtensions::zwp_virtual_keyboard_manager_v1,
-        WaylandExtensions::zwlr_virtual_pointer_manager_v1,
-        WaylandExtensions::ext_session_lock_manager_v1,
-        WaylandExtensions::zwp_input_method_manager_v2})
+        WaylandExtensions::zwlr_foreign_toplevel_manager_v1})
     {
         extensions.conditionally_enable(protocol, enable_for_shell_pids);
     }
