@@ -35,10 +35,15 @@ add_custom_target(miriway-terminal ALL
     cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-terminal ${CMAKE_BINARY_DIR}
 )
 
+add_custom_target(miriway-unsnap ALL
+        cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-unsnap ${CMAKE_BINARY_DIR}
+)
+
 install(PROGRAMS
     ${CMAKE_BINARY_DIR}/miriway
     ${CMAKE_BINARY_DIR}/miriway-shell
     ${CMAKE_BINARY_DIR}/miriway-terminal
+    ${CMAKE_BINARY_DIR}/miriway-unsnap
     DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
