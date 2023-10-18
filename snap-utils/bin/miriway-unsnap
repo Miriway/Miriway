@@ -1,9 +1,0 @@
-#! /bin/bash
-set -e
-
-unset __EGL_VENDOR_LIBRARY_DIRS
-unset LIBGL_DRIVERS_PATH
-unset LIBINPUT_QUIRKS_DIR
-
-PATH="$(echo "$PATH" | sed "s#$SNAP[^:]*:##g")"
-exec "$@"
