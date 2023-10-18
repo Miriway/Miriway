@@ -31,6 +31,8 @@ fi
 if command -v Xwayland > /dev/null
 then
   export MIR_SERVER_ENABLE_X11=1
+  MIR_SERVER_XWAYLAND_PATH=$(which Xwayland)
+  export MIR_SERVER_XWAYLAND_PATH
 fi
 
 # If there's an existing config missing any shell commands, then add them
