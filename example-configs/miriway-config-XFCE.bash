@@ -62,17 +62,27 @@ do
   fi
 done
 
+if [ -e "/usr/share/backgrounds/xfce/xfce-teal.jpg" ]; then
+  # Try Ubuntu XFCE wallpaper (from xfdesktop4-data)
+  background="/usr/share/backgrounds/xfce/xfce-teal.jpg"
+elif  [ -e "/usr/share/backgrounds/warty-final-ubuntu.png" ]; then
+  # fall back to Ubuntu default
+  background="/usr/share/backgrounds/warty-final-ubuntu.png"
+else
+  # fall back to anything we can find
+  background="$(find /usr/share/backgrounds/ -type f | tail -n 1)"
+fi
+
 # Ensure we have a config file with the fixed options
 cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
-ctrl-alt=t:miriway-terminal # Default "terminal emulator finder"
 
-shell-component=swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png # Wallpaper/background
-meta=a:xfce4-appfinder --disable-server # Launcher
-ctrl-alt=t:xfce4-terminal               # Terminal emulator
+shell-component=miriway-unsnap swaybg -i "${background}"  # Wallpaper/background
+meta=a:miriway-unsnap xfce4-appfinder --disable-server    # Launcher
+ctrl-alt=t:miriway-unsnap xfce4-terminal                  # Terminal emulator
 
 meta=Left:@dock-left
 meta=Right:@dock-right
