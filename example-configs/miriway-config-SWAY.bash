@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-shell_components="swaybg waybar wofi swaync"
+shell_components="swaybg waybar wofi swaync kgx"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 waybar_config="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/config"
 waybar_style="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/style.css"
@@ -74,18 +74,29 @@ do
   fi
 done
 
+if [ -e "/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png" ]; then
+  # Try Ubuntu SWAY wallpaper (from sway-backgrounds)
+  background="/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png"
+elif  [ -e "/usr/share/backgrounds/warty-final-ubuntu.png" ]; then
+  # fall back to Ubuntu default
+  background="/usr/share/backgrounds/warty-final-ubuntu.png"
+else
+  # fall back to anything we can find
+  background="$(find /usr/share/backgrounds/ -type f | tail -n 1)"
+fi
+
 # Ensure we have a config file with the fixed options
 cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
-ctrl-alt=t:miriway-terminal # Default "terminal emulator finder"
+ctrl-alt=t:miriway-unsnap kgx
 shell-component=systemd-run --user --scope --slice=background.slice swaync
 
-shell-component=swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png # Wallpaper/background
-shell-component=waybar                                                  # Panel(s)
-shell-meta=a:wofi --show drun --location top_left                       # Launcher
+shell-component=miriway-unsnap swaybg -i "${background}"          # Wallpaper/background
+shell-component=miriway-unsnap waybar                             # Panel(s)
+shell-meta=a:miriway-unsnap wofi --show drun --location top_left  # Launcher
 
 meta=Left:@dock-left
 meta=Right:@dock-right
