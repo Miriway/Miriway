@@ -74,15 +74,15 @@ mkdir "$(dirname "${yambar_config}")" -p -m 700
 cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
-app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
+app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none:-GTK_IM_MODULE
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
-shell-component=systemd-run --user --scope --slice=background.slice swaync
 
-shell-component=swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png
-shell-component=yambar
-
-meta=a:synapse
-ctrl-alt=t:kgx
+ctrl-alt=t:miriway-unsnap kgx
+shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaync
+shell-component=miriway-background /usr/share/backgrounds/warty-final-ubuntu.png
+shell-component=miriway-unsnap yambar
+shell-component=miriway-unsnap synapse --startup
+shell-meta=a:miriway-unsnap synapse
 
 meta=Left:@dock-left
 meta=Right:@dock-right
