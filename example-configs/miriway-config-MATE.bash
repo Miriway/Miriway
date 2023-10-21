@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-shell_components="mate-panel mate-terminal swaybg /usr/lib/mate-notification-daemon/mate-notification-daemon"
+shell_components="mate-panel mate-terminal swaybg /usr/libexec/mate-notification-daemon/mate-notification-daemon"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 
 for component in $shell_components
@@ -31,7 +31,7 @@ then
       waybar ) sudo apt install "$1" fonts-font-awesome;;
       yambar ) sudo apt install "$1" fonts-font-awesome;;
       kgx ) sudo apt install gnome-console;;
-      /usr/lib/mate-notification-daemon/mate-notification-daemon ) sudo apt install mate-notification-daemon;;
+      /usr/libexec/mate-notification-daemon/mate-notification-daemon ) sudo apt install mate-notification-daemon;;
       * )   sudo apt install "$1";;
     esac
 elif command -v dnf > /dev/null
@@ -40,7 +40,7 @@ then
       waybar ) sudo dnf install "$1" fontawesome-fonts;;
       yambar ) sudo dnf install "$1" fontawesome-fonts;;
       kgx ) sudo dnf install gnome-console;;
-      /usr/lib/mate-notification-daemon/mate-notification-daemon ) sudo dnf install mate-notification-daemon;;
+      /usr/libexec/mate-notification-daemon/mate-notification-daemon ) sudo dnf install mate-notification-daemon;;
       * )   sudo dnf install "$1";;
     esac
 elif command -v apk > /dev/null
@@ -49,7 +49,7 @@ then
       waybar ) sudo apk add "$1" font-awesome;;
       yambar ) sudo apk add "$1" font-awesome;;
       kgx ) sudo apk add gnome-console;;
-      /usr/lib/mate-notification-daemon/mate-notification-daemon ) sudo apk add mate-notification-daemon;;
+      /usr/libexec/mate-notification-daemon/mate-notification-daemon ) sudo apk add mate-notification-daemon;;
       * )   sudo apk add "$1";;
     esac
 else
@@ -65,19 +65,33 @@ do
   fi
 done
 
+if [ -e "/usr/share/backgrounds/ubuntu-mate-common/Green-Wall-Logo.png" ]; then
+  # Try Ubuntu MATE wallpaper (from ubuntu-mate-wallpapers-common)
+  background="/usr/share/backgrounds/ubuntu-mate-common/Green-Wall-Logo.png"
+elif  [ -e "/usr/share/backgrounds/warty-final-ubuntu.png" ]; then
+  # fall back to Ubuntu default
+  background="/usr/share/backgrounds/warty-final-ubuntu.png"
+else
+  # fall back to anything we can find
+  background="$(find /usr/share/backgrounds/ -type f | tail -n 1)"
+fi
+
 # Ensure we have a config file with the fixed options
 cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
-shell-component=/usr/lib/mate-notification-daemon/mate-notification-daemon
+shell-component=miriway-unsnap /usr/libexec/mate-notification-daemon/mate-notification-daemon
 
-shell-component=swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png
-shell-component=mate-panel
+shell-component=miriway-unsnap swaybg -i "${background}"
+shell-component=miriway-unsnap mate-panel
 
-meta=a:sh -c "exec mate-panel --run-dialog --display \$DISPLAY"
-ctrl-alt=t:sh -c "exec mate-terminal --display \$DISPLAY"
+meta=a:miriway-unsnap mate-panel --run-dialog
+ctrl-alt=t:miriway-unsnap mate-terminal
+# This hack to work with X11
+#meta=a:miriway-unsnap sh -c "exec mate-panel --run-dialog --display \$DISPLAY"
+#ctrl-alt=t:miriway-unsnap sh -c "exec mate-terminal --display \$DISPLAY"
 
 meta=Left:@dock-left
 meta=Right:@dock-right

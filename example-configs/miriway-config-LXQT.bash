@@ -1,14 +1,14 @@
 #!/bin/bash
 set -e
 
-shell_components="lxqt-policykit qterminal lxqt-runner swaybg"
+shell_components="lxqt-policykit qterminal lxqt-runner lxqt-panel swaybg lubuntu-artwork"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 
 for component in $shell_components
 do
   if ! command -v "$component" > /dev/null
   then
-    echo Need to install "$component"
+    echo May need to install "$component"
   fi
 done
 
@@ -69,10 +69,11 @@ idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
 
-shell-component=swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png
-shell-component=lxqt-policykit-agent
-ctrl-alt=t:qterminal
-meta=a:lxqt-runner
+shell-component=miriway-unsnap swaybg -i /usr/share/lubuntu/wallpapers/lubuntu-default-wallpaper.jpg
+shell-component=miriway-unsnap lxqt-policykit-agent
+shell-component=miriway-unsnap lxqt-panel
+ctrl-alt=t:miriway-unsnap qterminal
+meta=a:miriway-unsnap lxqt-runner
 
 meta=Left:@dock-left
 meta=Right:@dock-right
