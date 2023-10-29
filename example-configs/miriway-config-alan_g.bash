@@ -86,6 +86,7 @@ shell-component=systemd-run --user --scope --slice=background.slice synapse --st
 ctrl-alt=t:miriway-unsnap kgx
 shell-component=yambar
 shell-meta=a:miriway-unsnap synapse
+meta=Print:miriway-unsnap sh -c "grim ~/Pictures/screenshot-\$(date --iso-8601=seconds).png"
 
 meta=Left:@dock-left
 meta=Right:@dock-right
