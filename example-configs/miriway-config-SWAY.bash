@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-shell_components="swaybg waybar wofi swaync kgx"
+shell_components="swaybg waybar wofi swaync kgx swaylock"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 waybar_config="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/config"
 waybar_style="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/style.css"
@@ -97,6 +97,9 @@ shell-component=systemd-run --user --scope --slice=background.slice swaync
 shell-component=miriway-unsnap swaybg -i "${background}"          # Wallpaper/background
 shell-component=miriway-unsnap waybar                             # Panel(s)
 shell-meta=a:miriway-unsnap wofi --show drun --location top_left  # Launcher
+
+shell-add-wayland-extension=ext_session_lock_manager_v1
+shell-meta=l:miriway-unsnap swaylock
 
 meta=Left:@dock-left
 meta=Right:@dock-right

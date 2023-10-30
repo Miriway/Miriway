@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-shell_components="yambar swaybg synapse kgx swaync"
+shell_components="yambar swaybg synapse kgx swaync grim swaylock"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 yambar_config="${XDG_CONFIG_HOME:-$HOME/.config}/yambar/config.yml"
 
@@ -21,10 +21,11 @@ if [ -e "${yambar_config}" ]; then
   echo WARNING Overwriting "${yambar_config}"
 fi
 
-read -p"OK to proceed? [y/n] " yn
+read -p"OK to proceed/configure only? [y/n/c] " yn
 
 case $yn in
   [Yy] ) echo Proceeding...;;
+  [Cc] ) echo Skippling install...; skip_install=1;;
   [Nn] ) exit 1;;
 esac
 
@@ -60,6 +61,7 @@ else
 fi
 }
 
+if [ "${skip_install}" != "1" ]; then
 for component in $shell_components
 do
   if ! command -v "$component" > /dev/null
@@ -67,6 +69,7 @@ do
     install "$component"
   fi
 done
+fi
 
 mkdir "$(dirname "${yambar_config}")" -p -m 700
 
@@ -76,13 +79,17 @@ x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none:-GTK_IM_MODULE
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
+shell-component=systemd-run --user --scope --slice=background.slice swaync
+shell-component=systemd-run --user --scope --slice=background.slice swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png
+shell-component=systemd-run --user --scope --slice=background.slice synapse --startup
+
+shell-add-wayland-extension=ext_session_lock_manager_v1
+shell-ctrl-alt=l:miriway-unsnap swaylock -i /usr/share/backgrounds/warty-final-ubuntu.png
 
 ctrl-alt=t:miriway-unsnap kgx
-shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaync
-shell-component=miriway-background /usr/share/backgrounds/warty-final-ubuntu.png
-shell-component=miriway-unsnap yambar
-shell-component=miriway-unsnap synapse --startup
+shell-component=yambar
 shell-meta=a:miriway-unsnap synapse
+meta=Print:miriway-unsnap sh -c "grim ~/Pictures/screenshot-\$(date --iso-8601=seconds).png"
 
 meta=Left:@dock-left
 meta=Right:@dock-right
@@ -92,6 +99,8 @@ meta=End:@workspace-end
 meta=Page_Up:@workspace-up
 meta=Page_Down:@workspace-down
 ctrl-alt=BackSpace:@exit
+
+display-config=static=${miriway_config/%config/display}
 EOT
 
 # Ensure we have a config file with the fixed options
