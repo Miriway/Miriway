@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-shell_components="yambar swaybg synapse kgx swaync"
+shell_components="yambar swaybg synapse kgx swaync grim swaylock"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 yambar_config="${XDG_CONFIG_HOME:-$HOME/.config}/yambar/config.yml"
 
@@ -82,6 +82,9 @@ shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DIS
 shell-component=systemd-run --user --scope --slice=background.slice swaync
 shell-component=systemd-run --user --scope --slice=background.slice swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png
 shell-component=systemd-run --user --scope --slice=background.slice synapse --startup
+
+shell-add-wayland-extension=ext_session_lock_manager_v1
+shell-ctrl-alt=l:miriway-unsnap swaylock -i /usr/share/backgrounds/warty-final-ubuntu.png
 
 ctrl-alt=t:miriway-unsnap kgx
 shell-component=yambar
