@@ -69,11 +69,11 @@ idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
 
-shell-component=miriway-unsnap swaybg -i /usr/share/lubuntu/wallpapers/lubuntu-default-wallpaper.jpg
+shell-component=miriway-unsnap swaybg --mode fill --output '*' --image /usr/share/lubuntu/wallpapers/lubuntu-default-wallpaper.jpg
 shell-component=miriway-unsnap lxqt-policykit-agent
 shell-component=miriway-unsnap lxqt-panel
 ctrl-alt=t:miriway-unsnap qterminal
-meta=a:miriway-unsnap lxqt-runner
+shell-meta=a:miriway-unsnap lxqt-runner
 
 meta=Left:@dock-left
 meta=Right:@dock-right

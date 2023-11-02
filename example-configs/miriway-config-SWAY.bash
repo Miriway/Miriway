@@ -74,8 +74,11 @@ do
   fi
 done
 
-if [ -e "/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png" ]; then
-  # Try Ubuntu SWAY wallpaper (from sway-backgrounds)
+if [ -e "/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_2048x1536.png" ]; then
+  # Try SWAY wallpaper (from sway-backgrounds)
+  background="/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_2048x1536.png"
+elif  [ -e "/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png" ]; then
+  # Try SWAY wallpaper (from sway-backgrounds)
   background="/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png"
 elif  [ -e "/usr/share/backgrounds/warty-final-ubuntu.png" ]; then
   # fall back to Ubuntu default
@@ -94,9 +97,9 @@ shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DIS
 ctrl-alt=t:miriway-unsnap kgx
 shell-component=systemd-run --user --scope --slice=background.slice swaync
 
-shell-component=miriway-unsnap swaybg -i "${background}"          # Wallpaper/background
-shell-component=miriway-unsnap waybar                             # Panel(s)
-shell-meta=a:miriway-unsnap wofi --show drun --location top_left  # Launcher
+shell-component=miriway-unsnap swaybg --mode fill --output '*' --image '${background}'
+shell-component=miriway-unsnap waybar
+shell-meta=a:miriway-unsnap wofi --show drun --location top_left
 
 shell-add-wayland-extension=ext_session_lock_manager_v1
 shell-meta=l:miriway-unsnap swaylock

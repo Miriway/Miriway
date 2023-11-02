@@ -80,7 +80,7 @@ idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none:-GTK_IM_MODULE
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
 shell-component=systemd-run --user --scope --slice=background.slice swaync
-shell-component=systemd-run --user --scope --slice=background.slice swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png
+shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image /usr/share/backgrounds/warty-final-ubuntu.png
 shell-component=systemd-run --user --scope --slice=background.slice synapse --startup
 
 shell-add-wayland-extension=ext_session_lock_manager_v1

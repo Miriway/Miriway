@@ -68,6 +68,9 @@ done
 if [ -e "/usr/share/backgrounds/ubuntu-mate-common/Green-Wall-Logo.png" ]; then
   # Try Ubuntu MATE wallpaper (from ubuntu-mate-wallpapers-common)
   background="/usr/share/backgrounds/ubuntu-mate-common/Green-Wall-Logo.png"
+elif [ -e "/usr/share/backgrounds/mate/desktop/GreenTraditional.jpg" ]; then
+  # Try Ubuntu MATE wallpaper (from mate-backgrounds)
+  background="/usr/share/backgrounds/mate/desktop/GreenTraditional.jpg"
 elif  [ -e "/usr/share/backgrounds/warty-final-ubuntu.png" ]; then
   # fall back to Ubuntu default
   background="/usr/share/backgrounds/warty-final-ubuntu.png"
@@ -84,13 +87,13 @@ app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miri
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
 shell-component=miriway-unsnap /usr/libexec/mate-notification-daemon/mate-notification-daemon
 
-shell-component=miriway-unsnap swaybg -i "${background}"
+shell-component=miriway-unsnap swaybg --mode fill --output '*' --image '${background}'
 shell-component=miriway-unsnap mate-panel
 
-meta=a:miriway-unsnap mate-panel --run-dialog
+shell-meta=a:miriway-unsnap mate-panel --run-dialog
 ctrl-alt=t:miriway-unsnap mate-terminal
 # This hack to work with X11
-#meta=a:miriway-unsnap sh -c "exec mate-panel --run-dialog --display \$DISPLAY"
+#shell-meta=a:miriway-unsnap sh -c "exec mate-panel --run-dialog --display \$DISPLAY"
 #ctrl-alt=t:miriway-unsnap sh -c "exec mate-terminal --display \$DISPLAY"
 
 meta=Left:@dock-left
