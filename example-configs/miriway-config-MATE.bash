@@ -87,7 +87,7 @@ app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miri
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
 shell-component=miriway-unsnap /usr/libexec/mate-notification-daemon/mate-notification-daemon
 
-shell-component=miriway-unsnap swaybg -i "${background}"
+shell-component=miriway-unsnap swaybg --mode fill --output '*' --image "${background}"
 shell-component=miriway-unsnap mate-panel
 
 meta=a:miriway-unsnap mate-panel --run-dialog

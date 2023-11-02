@@ -28,9 +28,9 @@ are equivalent:
 
 Where|Format
 --|--
-In `.config`| `shell-component=swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png`
-In env| `MIR_SERVER_SHELL_COMPONENT="swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png"`
-Command line| `--shell-component="swaybg -i /usr/share/backgrounds/warty-final-ubuntu.png"`
+In `.config`| `shell-component=swaybg --mode fill --output '*' --image /usr/share/backgrounds/warty-final-ubuntu.png`
+In env| `MIR_SERVER_SHELL_COMPONENT="swaybg --mode fill --output '*' --image /usr/share/backgrounds/warty-final-ubuntu.png"`
+Command line| `--shell-component="swaybg --mode fill --output '*' --image /usr/share/backgrounds/warty-final-ubuntu.png"`
 
 Where there's a clash, the command-line overrides the environment variable which overrides the `.config`.
 

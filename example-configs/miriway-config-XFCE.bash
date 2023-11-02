@@ -80,7 +80,7 @@ idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
 
-shell-component=miriway-unsnap swaybg -i "${background}"  # Wallpaper/background
+shell-component=miriway-unsnap swaybg --mode fill --output '*' --image "${background}"  # Wallpaper/background
 meta=a:miriway-unsnap xfce4-appfinder --disable-server    # Launcher
 ctrl-alt=t:miriway-unsnap xfce4-terminal                  # Terminal emulator
 
