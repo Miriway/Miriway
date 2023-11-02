@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-shell_components="yambar swaybg synapse kgx swaync grim swaylock"
+shell_components="yambar swaybg synapse kgx swaync grim swaylock gnome-keyring-daemon"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 yambar_config="${XDG_CONFIG_HOME:-$HOME/.config}/yambar/config.yml"
 
@@ -38,6 +38,7 @@ then
       yambar ) sudo apt install "$1" fonts-font-awesome;;
       kgx ) sudo apt install gnome-console;;
       swaync ) sudo apt install sway-notification-center;;
+      gnome-keyring-daemon ) sudo apt install gnome-keyring;;
       * )   sudo apt install "$1";;
     esac
 elif command -v dnf > /dev/null
@@ -46,6 +47,7 @@ then
       waybar ) sudo dnf install "$1" fontawesome-fonts;;
       yambar ) sudo dnf install "$1" fontawesome-fonts;;
       kgx ) sudo dnf install gnome-console;;
+      gnome-keyring-daemon ) sudo dnf install gnome-keyring;;
       * )   sudo dnf install "$1";;
     esac
 elif command -v apk > /dev/null
@@ -54,6 +56,7 @@ then
       waybar ) sudo apk add "$1" font-awesome;;
       yambar ) sudo apk add "$1" font-awesome;;
       kgx ) sudo apk add gnome-console;;
+      gnome-keyring-daemon ) sudo apk add install gnome-keyring;;
       * )   sudo apk add "$1";;
     esac
 else
@@ -77,11 +80,12 @@ mkdir "$(dirname "${yambar_config}")" -p -m 700
 cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
-app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none:-GTK_IM_MODULE
-shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
+app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none:-GTK_IM_MODULE:SSH_AUTH_SOCK=/run/user/1000/keyring/ssh
+shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP SSH_AUTH_SOCK
 shell-component=systemd-run --user --scope --slice=background.slice swaync
 shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image /usr/share/backgrounds/warty-final-ubuntu.png
 shell-component=systemd-run --user --scope --slice=background.slice synapse --startup
+shell-component=miriway-unsnap gnome-keyring-daemon
 
 shell-add-wayland-extension=ext_session_lock_manager_v1
 shell-ctrl-alt=l:miriway-unsnap swaylock -i /usr/share/backgrounds/warty-final-ubuntu.png
