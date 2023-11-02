@@ -74,8 +74,11 @@ do
   fi
 done
 
-if [ -e "/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png" ]; then
-  # Try Ubuntu SWAY wallpaper (from sway-backgrounds)
+if [ -e "/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_2048x1536.png" ]; then
+  # Try SWAY wallpaper (from sway-backgrounds)
+  background="/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_2048x1536.png"
+elif  [ -e "/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png" ]; then
+  # Try SWAY wallpaper (from sway-backgrounds)
   background="/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png"
 elif  [ -e "/usr/share/backgrounds/warty-final-ubuntu.png" ]; then
   # fall back to Ubuntu default
