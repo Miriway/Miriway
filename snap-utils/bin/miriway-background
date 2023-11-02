@@ -2,7 +2,7 @@
 set -e
 
 if [ -e "$1" ]; then
-  exec swaybg -i "$1"
+  exec swaybg --image "$1" --mode fill --output '*'
 else
-  exec swaybg -c#3f3f3f
+  exec swaybg --color '#3f3f3f' --output '*'
 fi
