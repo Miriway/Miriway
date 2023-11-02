@@ -68,6 +68,9 @@ done
 if [ -e "/usr/share/backgrounds/ubuntu-mate-common/Green-Wall-Logo.png" ]; then
   # Try Ubuntu MATE wallpaper (from ubuntu-mate-wallpapers-common)
   background="/usr/share/backgrounds/ubuntu-mate-common/Green-Wall-Logo.png"
+elif [ -e "/usr/share/backgrounds/mate/desktop/GreenTraditional.jpg" ]; then
+  # Try Ubuntu MATE wallpaper (from mate-backgrounds)
+  background="/usr/share/backgrounds/mate/desktop/GreenTraditional.jpg"
 elif  [ -e "/usr/share/backgrounds/warty-final-ubuntu.png" ]; then
   # fall back to Ubuntu default
   background="/usr/share/backgrounds/warty-final-ubuntu.png"
