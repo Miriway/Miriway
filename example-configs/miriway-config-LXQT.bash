@@ -73,7 +73,7 @@ shell-component=miriway-unsnap swaybg --mode fill --output '*' --image /usr/shar
 shell-component=miriway-unsnap lxqt-policykit-agent
 shell-component=miriway-unsnap lxqt-panel
 ctrl-alt=t:miriway-unsnap qterminal
-meta=a:miriway-unsnap lxqt-runner
+shell-meta=a:miriway-unsnap lxqt-runner
 
 meta=Left:@dock-left
 meta=Right:@dock-right

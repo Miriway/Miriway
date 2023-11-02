@@ -90,10 +90,10 @@ shell-component=miriway-unsnap /usr/libexec/mate-notification-daemon/mate-notifi
 shell-component=miriway-unsnap swaybg --mode fill --output '*' --image '${background}'
 shell-component=miriway-unsnap mate-panel
 
-meta=a:miriway-unsnap mate-panel --run-dialog
+shell-meta=a:miriway-unsnap mate-panel --run-dialog
 ctrl-alt=t:miriway-unsnap mate-terminal
 # This hack to work with X11
-#meta=a:miriway-unsnap sh -c "exec mate-panel --run-dialog --display \$DISPLAY"
+#shell-meta=a:miriway-unsnap sh -c "exec mate-panel --run-dialog --display \$DISPLAY"
 #ctrl-alt=t:miriway-unsnap sh -c "exec mate-terminal --display \$DISPLAY"
 
 meta=Left:@dock-left
