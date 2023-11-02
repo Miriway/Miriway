@@ -97,9 +97,9 @@ shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DIS
 ctrl-alt=t:miriway-unsnap kgx
 shell-component=systemd-run --user --scope --slice=background.slice swaync
 
-shell-component=miriway-unsnap swaybg --mode fill --output '*' --image "${background}"          # Wallpaper/background
-shell-component=miriway-unsnap waybar                             # Panel(s)
-shell-meta=a:miriway-unsnap wofi --show drun --location top_left  # Launcher
+shell-component=miriway-unsnap swaybg --mode fill --output '*' --image '${background}'
+shell-component=miriway-unsnap waybar
+shell-meta=a:miriway-unsnap wofi --show drun --location top_left
 
 shell-add-wayland-extension=ext_session_lock_manager_v1
 shell-meta=l:miriway-unsnap swaylock
