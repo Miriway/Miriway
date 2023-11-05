@@ -95,7 +95,7 @@ idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
 ctrl-alt=t:miriway-unsnap kgx
-shell-component=systemd-run --user --scope --slice=background.slice swaync
+shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaync
 
 shell-component=miriway-unsnap swaybg --mode fill --output '*' --image '${background}'
 shell-component=miriway-unsnap waybar

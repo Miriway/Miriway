@@ -81,19 +81,19 @@ cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none:-GTK_IM_MODULE:SSH_AUTH_SOCK=/run/user/1000/keyring/ssh
-shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP SSH_AUTH_SOCK
-shell-component=systemd-run --user --scope --slice=background.slice swaync
-shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image /usr/share/backgrounds/warty-final-ubuntu.png
-shell-component=systemd-run --user --scope --slice=background.slice synapse --startup
+shell-component=miriway-unsnap dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP SSH_AUTH_SOCK
+shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaync
+shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image /usr/share/backgrounds/warty-final-ubuntu.png
+shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice synapse --startup
 shell-component=miriway-unsnap gnome-keyring-daemon
+shell-component=yambar
+
+ctrl-alt=t:miriway-unsnap kgx
+shell-meta=a:miriway-unsnap synapse
+meta=Print:miriway-unsnap sh -c "grim ~/Pictures/screenshot-\$(date --iso-8601=seconds).png"
 
 shell-add-wayland-extension=ext_session_lock_manager_v1
 shell-ctrl-alt=l:miriway-unsnap swaylock -i /usr/share/backgrounds/warty-final-ubuntu.png
-
-ctrl-alt=t:miriway-unsnap kgx
-shell-component=yambar
-shell-meta=a:miriway-unsnap synapse
-meta=Print:miriway-unsnap sh -c "grim ~/Pictures/screenshot-\$(date --iso-8601=seconds).png"
 
 meta=Left:@dock-left
 meta=Right:@dock-right
@@ -124,7 +124,7 @@ bar:
           string:
             text: " start"
             margin: 5
-            on-click: synapse
+            on-click: miriway-unsnap synapse
             deco: &greybg
               background:
                 color: 3f3f3fff
