@@ -35,20 +35,4 @@ then
   export MIR_SERVER_XWAYLAND_PATH
 fi
 
-# If there's an existing config missing any shell commands, then add them
-miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
-if [ -e "${miriway_config}" ] && ! grep -q @ "${miriway_config}"
-then
-  cat <<EOT >> "${miriway_config}"
-meta=Left:@dock-left
-meta=Right:@dock-right
-meta=Space:@toggle-maximized
-meta=Home:@workspace-begin
-meta=End:@workspace-end
-meta=Page_Up:@workspace-up
-meta=Page_Down:@workspace-down
-ctrl-alt=BackSpace:@exit
-EOT
-fi
-
 exec "${bindir}"miriway-shell "$@"
