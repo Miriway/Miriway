@@ -1,7 +1,15 @@
 name: miriway
 adopt-info: miriway
-summary: A Mir/Wayland based desktop shell
-description: A Mir/Wayland based desktop shell
+summary: "Miriway: a graphical shell to configure for your desktop environment"
+description: |
+  Miriway isn’t a full featured desktop environment but it could, in principle, 
+  be used to build one.
+
+  It also isn’t fully “desktop ready” as there are quite a lot of “papercut” 
+  concerns that need to be fixed in Mir.
+
+  It does, however, provide a way to test Mir and other components of a desktop 
+  environment that makes these “papercuts” visible and much more likely to be fixed.
 confinement: classic
 base: core22
 
