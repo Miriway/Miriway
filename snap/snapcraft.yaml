@@ -41,10 +41,6 @@ apps:
     command: *_command
     environment: *_environment
 
-  vnc-over-ssh:
-    command: bin/miriway.vnc
-    environment: *_environment
-
 parts:
   miriway:
     build-attributes:
@@ -71,6 +67,7 @@ parts:
     stage-packages:
       - libmiral6
       - mir-graphics-drivers-desktop
+      - mir-platform-graphics-virtual
       - libfreetype6
     prime:
       - -lib/udev
@@ -114,7 +111,6 @@ parts:
     - gvncviewer
     - swaybg
     - synapse
-    - xvfb
     - xwayland
     stage:
       # The libraries in .../dri need no-patchelf, so they come from the mesa-unpatched part
