@@ -35,7 +35,6 @@
 #include <mir/abnormal_exit.h>
 
 #include <sys/wait.h>
-#include <string.h>
 #include <filesystem>
 #include <fstream>
 
@@ -214,7 +213,10 @@ int main(int argc, char const* argv[])
             if (std::ifstream cmdline{"/proc/" + std::to_string(miral::pid_of(info.app())) + "/cmdline"})
             {
                 std::filesystem::path const path{std::istreambuf_iterator{cmdline}, std::istreambuf_iterator<char>{}};
-                return info.user_preference().value_or((strcmp(path.filename().c_str(), "firefox") == 0));
+                auto filename = path.filename().string();
+                filename.erase(filename.find('\0'));
+
+                return info.user_preference().value_or(filename == "firefox");
             }
             return info.user_preference().value_or(false);
         });
