@@ -35,6 +35,8 @@
 #include <mir/abnormal_exit.h>
 
 #include <sys/wait.h>
+#include <filesystem>
+#include <fstream>
 
 using namespace miral;
 using namespace miriway;
@@ -203,6 +205,22 @@ int main(int argc, char const* argv[])
                 return info.user_preference().value_or(true);
             });
     }
+
+    // Workaround for Firefox C&P failing if the (unrelated) wp-primary-selection isn't enabled
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1791417
+    extensions.conditionally_enable("zwp_primary_selection_device_manager_v1",
+        [&](WaylandExtensions::EnableInfo const& info)
+        {
+            if (std::ifstream cmdline{"/proc/" + std::to_string(miral::pid_of(info.app())) + "/cmdline"})
+            {
+                std::filesystem::path const path{std::istreambuf_iterator{cmdline}, std::istreambuf_iterator<char>{}};
+                auto filename = path.filename().string();
+                filename.erase(filename.find('\0'));
+
+                return info.user_preference().value_or(filename == "firefox");
+            }
+            return info.user_preference().value_or(false);
+        });
 
     // To support docks, onscreen keyboards, launchers and the like; enable a number of protocol extensions,
     // but, because they have security implications only for those applications found in `shell_pids`.
