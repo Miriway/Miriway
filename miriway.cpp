@@ -207,6 +207,7 @@ int main(int argc, char const* argv[])
     }
 
     // Workaround for Firefox C&P failing if the (unrelated) wp-primary-selection isn't enabled
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1791417
     extensions.conditionally_enable("zwp_primary_selection_device_manager_v1",
         [&](WaylandExtensions::EnableInfo const& info)
         {
