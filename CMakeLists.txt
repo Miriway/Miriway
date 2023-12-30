@@ -20,6 +20,7 @@ add_executable(miriway-shell
     miriway.cpp
     miriway_commands.cpp miriway_commands.h
     miriway_policy.cpp   miriway_policy.h
+    miriway_workspace_manager.cpp miriway_workspace_manager.h
 )
 
 target_include_directories(miriway-shell PUBLIC SYSTEM ${MIRAL_INCLUDE_DIRS})

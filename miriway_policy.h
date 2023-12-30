@@ -19,10 +19,9 @@
 #ifndef MIRIWAY_POLICY_H_
 #define MIRIWAY_POLICY_H_
 
-#include <miral/minimal_window_manager.h>
+#include "miriway_workspace_manager.h"
 
-#include <map>
-#include <list>
+#include <miral/minimal_window_manager.h>
 
 namespace miriway
 {
@@ -32,7 +31,7 @@ class ShellCommands;
 // A window management policy that adds support for docking and workspaces.
 // Co-ordinates with `ShellCommands` for the handling of related commands.
 class WindowManagerPolicy :
-    public MinimalWindowManager
+    public MinimalWindowManager, public WorkspaceManager
 {
 public:
     WindowManagerPolicy(WindowManagerTools const& tools, ShellCommands& commands);
@@ -40,10 +39,6 @@ public:
     void dock_active_window_left();
     void dock_active_window_right();
     void toggle_maximized_restored();
-    void workspace_begin(bool take_active);
-    void workspace_up(bool take_active);
-    void workspace_down(bool take_active);
-    void workspace_end(bool take_active);
 
 private:
     auto place_new_window(ApplicationInfo const& app_info, WindowSpecification const& request_parameters)
@@ -60,21 +55,9 @@ private:
 
     bool handle_keyboard_event(MirKeyboardEvent const* event) override;
 
-    void apply_workspace_hidden_to(Window const& window);
-    void apply_workspace_visible_to(Window const& window);
-    void change_active_workspace(std::shared_ptr<Workspace> const& ww,
-                                 std::shared_ptr<Workspace> const& old_active,
-                                 miral::Window const& window);
-    using workspace_list = std::list<std::shared_ptr<Workspace>>;
-    void erase_if_empty(workspace_list::iterator const& old_workspace);
     void dock_active_window_under_lock(MirPlacementGravity placement);
 
     ShellCommands* const commands;
-
-    workspace_list workspaces;
-    workspace_list::iterator active_workspace;
-
-    std::map<std::shared_ptr<miral::Workspace>, miral::Window> workspace_to_active;
 };
 }
 
