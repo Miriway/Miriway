@@ -228,3 +228,21 @@ void miriway::WorkspaceManager::advise_adding_to_workspace(std::shared_ptr<Works
         }
     }
 }
+
+auto miriway::WorkspaceManager::active_workspace() const -> std::shared_ptr<Workspace>
+{
+    return *active_workspace_;
+}
+
+bool miriway::WorkspaceManager::is_application(MirDepthLayer layer)
+{
+    switch (layer)
+    {
+    case mir_depth_layer_application:
+    case mir_depth_layer_always_on_top:
+        return true;
+
+    default:;
+        return false;
+    }
+}

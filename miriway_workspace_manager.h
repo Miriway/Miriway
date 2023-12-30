@@ -55,21 +55,9 @@ public:
     void advise_adding_to_workspace(std::shared_ptr<Workspace> const& workspace,
                                     std::vector<Window> const& windows);
 
-    auto active_workspace() const -> std::shared_ptr<Workspace>
-        { return *active_workspace_; }
+    auto active_workspace() const -> std::shared_ptr<Workspace>;
 
-    bool is_application(MirDepthLayer layer)
-    {
-        switch (layer)
-        {
-        case mir_depth_layer_application:
-        case mir_depth_layer_always_on_top:
-            return true;
-
-        default:;
-            return false;
-        }
-    }
+    static bool is_application(MirDepthLayer layer);
 
     struct WorkspaceInfo
     {
