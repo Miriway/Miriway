@@ -52,20 +52,24 @@ public:
                                  std::shared_ptr<Workspace> const& old_active,
                                  miral::Window const& window);
 
+
+    void advise_new_window(const miral::WindowInfo &window_info);
+
     void advise_adding_to_workspace(std::shared_ptr<Workspace> const& workspace,
                                     std::vector<Window> const& windows);
 
     auto active_workspace() const -> std::shared_ptr<Workspace>;
 
+    bool in_hidden_workspace(miral::WindowInfo const& info) const;
+
     static bool is_application(MirDepthLayer layer);
 
-    struct WorkspaceInfo
-    {
-        bool in_hidden_workspace{false};
+    struct WorkspaceInfo;
 
-        MirWindowState old_state = mir_window_state_unknown;
-    };
+    static auto make_workspace_info() -> std::shared_ptr<WorkspaceInfo>;
 
+    // This implementation assumes the userdata contains WorkspaceInfo
+    // but, in case there's another option, made virtual
     virtual auto workspace_info_for(miral::WindowInfo const& info) const ->  WorkspaceInfo&
     {
         return *std::static_pointer_cast<WorkspaceInfo>(info.userdata());

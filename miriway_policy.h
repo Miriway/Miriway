@@ -31,11 +31,15 @@ class ShellCommands;
 // A window management policy that adds support for docking and workspaces.
 // Co-ordinates with `ShellCommands` for the handling of related commands.
 class WindowManagerPolicy :
-    public MinimalWindowManager, public WorkspaceManager
+    public MinimalWindowManager, private WorkspaceManager
 {
 public:
     WindowManagerPolicy(WindowManagerTools const& tools, ShellCommands& commands);
 
+    using WorkspaceManager::workspace_begin;
+    using WorkspaceManager::workspace_end;
+    using WorkspaceManager::workspace_up;
+    using WorkspaceManager::workspace_down;
     void dock_active_window_left();
     void dock_active_window_right();
     void toggle_maximized_restored();

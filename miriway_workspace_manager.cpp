@@ -21,6 +21,13 @@
 using namespace mir::geometry;
 using namespace miral;
 
+struct miriway::WorkspaceManager::WorkspaceInfo
+{
+    bool in_hidden_workspace{false};
+
+    MirWindowState old_state = mir_window_state_unknown;
+};
+
 miriway::WorkspaceManager::WorkspaceManager(WindowManagerTools const& tools) :
     tools_{tools}
 {
@@ -245,4 +252,29 @@ bool miriway::WorkspaceManager::is_application(MirDepthLayer layer)
     default:;
         return false;
     }
+}
+
+bool miriway::WorkspaceManager::in_hidden_workspace(WindowInfo const& info) const
+{
+    auto& workspace_info = workspace_info_for(info);
+
+    return workspace_info.in_hidden_workspace;
+}
+
+void miriway::WorkspaceManager::advise_new_window(WindowInfo const& window_info)
+{
+    if (auto const& parent = window_info.parent())
+    {
+        if (workspace_info_for(tools_.info_for(parent)).in_hidden_workspace)
+            apply_workspace_hidden_to(window_info.window());
+    }
+    else
+    {
+        tools_.add_tree_to_workspace(window_info.window(), active_workspace());
+    }
+}
+
+auto miriway::WorkspaceManager::make_workspace_info() -> std::shared_ptr<WorkspaceInfo>
+{
+    return std::make_shared<WorkspaceInfo>();
 }

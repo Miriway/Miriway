@@ -40,7 +40,7 @@ miral::WindowSpecification miriway::WindowManagerPolicy::place_new_window(
 {
     auto result = MinimalWindowManager::place_new_window(app_info, request_parameters);
 
-    result.userdata() = std::make_shared<WorkspaceInfo>();
+    result.userdata() = make_workspace_info();
     return result;
 }
 
@@ -53,15 +53,7 @@ void miriway::WindowManagerPolicy::advise_new_window(const miral::WindowInfo &wi
         commands->advise_new_window_for(window_info.window().application());
     }
 
-    if (auto const& parent = window_info.parent())
-    {
-        if (workspace_info_for(tools.info_for(parent)).in_hidden_workspace)
-            apply_workspace_hidden_to(window_info.window());
-    }
-    else
-    {
-        tools.add_tree_to_workspace(window_info.window(), active_workspace());
-    }
+    WorkspaceManager::advise_new_window(window_info);
 }
 
 void miriway::WindowManagerPolicy::advise_delete_window(const miral::WindowInfo &window_info)
@@ -128,9 +120,7 @@ void miriway::WindowManagerPolicy::handle_modify_window(WindowInfo& window_info,
 {
     auto mods = modifications;
 
-    auto& workspace_info = workspace_info_for(window_info);
-
-    if (workspace_info.in_hidden_workspace)
+    if (WorkspaceManager::in_hidden_workspace(window_info))
     {
         // Don't allow state changes in hidden workspaces
         if (mods.state().is_set()) mods.state().consume();
