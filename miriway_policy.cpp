@@ -28,8 +28,7 @@ using namespace mir::geometry;
 using namespace miral;
 
 miriway::WindowManagerPolicy::WindowManagerPolicy(WindowManagerTools const& tools, ShellCommands& commands) :
-    MinimalWindowManager{tools},
-    WorkspaceManager{tools},
+    WorkspaceWMStrategy{tools},
     commands{&commands}
 {
     commands.init_window_manager(this);
@@ -38,7 +37,7 @@ miriway::WindowManagerPolicy::WindowManagerPolicy(WindowManagerTools const& tool
 miral::WindowSpecification miriway::WindowManagerPolicy::place_new_window(
     miral::ApplicationInfo const& app_info, miral::WindowSpecification const& request_parameters)
 {
-    auto result = MinimalWindowManager::place_new_window(app_info, request_parameters);
+    auto result = WorkspaceWMStrategy::place_new_window(app_info, request_parameters);
 
     result.userdata() = make_workspace_info();
     return result;
@@ -46,19 +45,17 @@ miral::WindowSpecification miriway::WindowManagerPolicy::place_new_window(
 
 void miriway::WindowManagerPolicy::advise_new_window(const miral::WindowInfo &window_info)
 {
-    MinimalWindowManager::advise_new_window(window_info);
+    WorkspaceWMStrategy::advise_new_window(window_info);
 
     if (is_application(window_info.depth_layer()))
     {
         commands->advise_new_window_for(window_info.window().application());
     }
-
-    WorkspaceManager::advise_new_window(window_info);
 }
 
 void miriway::WindowManagerPolicy::advise_delete_window(const miral::WindowInfo &window_info)
 {
-    MinimalWindowManager::advise_delete_window(window_info);
+    WorkspaceWMStrategy::advise_delete_window(window_info);
     if (is_application(window_info.depth_layer()))
     {
         commands->advise_delete_window_for(window_info.window().application());
@@ -116,25 +113,9 @@ void miriway::WindowManagerPolicy::dock_active_window_right()
         });
 }
 
-void miriway::WindowManagerPolicy::handle_modify_window(WindowInfo& window_info, WindowSpecification const& modifications)
-{
-    auto mods = modifications;
-
-    if (WorkspaceManager::in_hidden_workspace(window_info))
-    {
-        // Don't allow state changes in hidden workspaces
-        if (mods.state().is_set()) mods.state().consume();
-
-        // Don't allow size changes in hidden workspaces
-        if (mods.size().is_set()) mods.size().consume();
-    }
-
-    MinimalWindowManager::handle_modify_window(window_info, mods);
-}
-
 bool miriway::WindowManagerPolicy::handle_keyboard_event(MirKeyboardEvent const* event)
 {
-    return commands->shell_keyboard_enabled() && MinimalWindowManager::handle_keyboard_event(event);
+    return commands->shell_keyboard_enabled() && WorkspaceWMStrategy::handle_keyboard_event(event);
 }
 
 void miriway::WindowManagerPolicy::dock_active_window_under_lock(MirPlacementGravity placement)
@@ -173,12 +154,4 @@ void miriway::WindowManagerPolicy::dock_active_window_under_lock(MirPlacementGra
         tools.place_and_size_for_state(modifications, window_info);
         tools.modify_window(window_info, modifications);
     }
-}
-
-void miriway::WindowManagerPolicy::advise_adding_to_workspace(
-    std::shared_ptr<Workspace> const& workspace,
-    std::vector<Window> const& windows)
-{
-    WindowManagementPolicy::advise_adding_to_workspace(workspace, windows);
-    WorkspaceManager::advise_adding_to_workspace(workspace, windows);
 }

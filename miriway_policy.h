@@ -30,16 +30,15 @@ class ShellCommands;
 
 // A window management policy that adds support for docking and workspaces.
 // Co-ordinates with `ShellCommands` for the handling of related commands.
-class WindowManagerPolicy :
-    public MinimalWindowManager, private WorkspaceManager
+class WindowManagerPolicy : public WorkspaceWMStrategy<MinimalWindowManager>
 {
 public:
     WindowManagerPolicy(WindowManagerTools const& tools, ShellCommands& commands);
 
-    using WorkspaceManager::workspace_begin;
-    using WorkspaceManager::workspace_end;
-    using WorkspaceManager::workspace_up;
-    using WorkspaceManager::workspace_down;
+    using WorkspaceWMStrategy::workspace_begin;
+    using WorkspaceWMStrategy::workspace_end;
+    using WorkspaceWMStrategy::workspace_up;
+    using WorkspaceWMStrategy::workspace_down;
     void dock_active_window_left();
     void dock_active_window_right();
     void toggle_maximized_restored();
@@ -51,11 +50,6 @@ private:
     void advise_new_window(const WindowInfo &window_info) override;
 
     void advise_delete_window(const WindowInfo &window_info) override;
-
-    void handle_modify_window(WindowInfo& window_info, WindowSpecification const& modifications) override;
-
-    void advise_adding_to_workspace(std::shared_ptr<Workspace> const& workspace,
-                                    std::vector<Window> const& windows) override;
 
     bool handle_keyboard_event(MirKeyboardEvent const* event) override;
 

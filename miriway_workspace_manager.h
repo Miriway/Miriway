@@ -16,8 +16,8 @@
  * Authored by: Alan Griffiths <alan@octopull.co.uk>
  */
 
-#ifndef MIRIWAY_MIRIWAY_WORKSPACE_MANAGER_H
-#define MIRIWAY_MIRIWAY_WORKSPACE_MANAGER_H
+#ifndef MIRIWAY_WORKSPACE_MANAGER_H_
+#define MIRIWAY_WORKSPACE_MANAGER_H_
 
 #include <miral/window_manager_tools.h>
 
@@ -27,7 +27,9 @@
 namespace miriway
 {
 using miral::Window;
+using miral::WindowInfo;
 using miral::WindowManagerTools;
+using miral::WindowSpecification;
 using miral::Workspace;
 
 class WorkspaceManager
@@ -53,14 +55,14 @@ public:
                                  miral::Window const& window);
 
 
-    void advise_new_window(const miral::WindowInfo &window_info);
+    void advise_new_window(const WindowInfo &window_info);
 
     void advise_adding_to_workspace(std::shared_ptr<Workspace> const& workspace,
                                     std::vector<Window> const& windows);
 
     auto active_workspace() const -> std::shared_ptr<Workspace>;
 
-    bool in_hidden_workspace(miral::WindowInfo const& info) const;
+    bool in_hidden_workspace(WindowInfo const& info) const;
 
     static bool is_application(MirDepthLayer layer);
 
@@ -70,7 +72,7 @@ public:
 
     // This implementation assumes the userdata contains WorkspaceInfo
     // but, in case there's another option, made virtual
-    virtual auto workspace_info_for(miral::WindowInfo const& info) const ->  WorkspaceInfo&
+    virtual auto workspace_info_for(WindowInfo const& info) const ->  WorkspaceInfo&
     {
         return *std::static_pointer_cast<WorkspaceInfo>(info.userdata());
     }
@@ -87,6 +89,45 @@ private:
     void erase_if_empty(workspace_list::iterator const& old_workspace);
 };
 
+// Template class to hook WorkspaceManager into a window management strategy
+template<typename WMStrategy>
+class WorkspaceWMStrategy : public WMStrategy, protected WorkspaceManager
+{
+protected:
+    explicit WorkspaceWMStrategy(WindowManagerTools const& tools) :
+        WMStrategy{tools},
+        WorkspaceManager{tools}
+    {}
+
+    void advise_new_window(const WindowInfo &window_info) override
+    {
+        WMStrategy::advise_new_window(window_info);
+        WorkspaceManager::advise_new_window(window_info);
+    }
+
+    void advise_adding_to_workspace(std::shared_ptr<Workspace> const& workspace,
+                                    std::vector<Window> const& windows) override
+    {
+        WMStrategy::advise_adding_to_workspace(workspace, windows);
+        WorkspaceManager::advise_adding_to_workspace(workspace, windows);
+    }
+
+    void handle_modify_window(WindowInfo& window_info, WindowSpecification const& modifications) override
+    {
+        auto mods = modifications;
+
+        if (in_hidden_workspace(window_info))
+        {
+            // Don't allow state changes in hidden workspaces
+            if (mods.state().is_set()) mods.state().consume();
+
+            // Don't allow size changes in hidden workspaces
+            if (mods.size().is_set()) mods.size().consume();
+        }
+
+        WMStrategy::handle_modify_window(window_info, mods);
+    }
+};
 } // miriway
 
-#endif //MIRIWAY_MIRIWAY_WORKSPACE_MANAGER_H
+#endif //MIRIWAY_WORKSPACE_MANAGER_H_
