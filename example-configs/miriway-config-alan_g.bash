@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+if [ ! -e ~/.config ]; then mkdir ~/.config; fi
+
 shell_components="yambar swaybg synapse kgx swaync grim swaylock gnome-keyring-daemon"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 yambar_config="${XDG_CONFIG_HOME:-$HOME/.config}/yambar/config.yml"

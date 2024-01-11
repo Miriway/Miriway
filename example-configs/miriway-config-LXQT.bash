@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+if [ ! -e ~/.config ]; then mkdir ~/.config; fi
+
 shell_components="lxqt-policykit qterminal lxqt-runner lxqt-panel swaybg lubuntu-artwork"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 

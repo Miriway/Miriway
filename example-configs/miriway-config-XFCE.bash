@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+if [ ! -e ~/.config ]; then mkdir ~/.config; fi
+
 shell_components="swaybg xfce4-terminal xfce4-appfinder"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 
