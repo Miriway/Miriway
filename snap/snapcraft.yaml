@@ -65,7 +65,8 @@ parts:
       - g++
       - make
     stage-packages:
-      - libmiral6
+      # Stage libmiral<n> indirectly as we cannot (since core22) do `try:/else:`
+      - libmiral-dev
       - mir-graphics-drivers-desktop
       - mir-platform-graphics-virtual
       - libfreetype6
@@ -85,6 +86,10 @@ parts:
       - -usr/share/man
       - -usr/share/pkgconfig
       - -etc/xdg/xdg-miriway/miriway-shell.config-snap
+      # Do not prime the `-dev` part of libmiral-dev, we don't need it (just the libmiral<n> dependency)
+      - -usr/include
+      - -usr/lib/*/pkgconfig
+      - -usr/lib/*/libmir*.so
 
   example-configs:
     plugin: dump
