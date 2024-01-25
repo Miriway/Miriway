@@ -149,10 +149,13 @@ private:
 // useful as it avoids "zombie" child processes).
 struct ShellPids
 {
-    void insert(pid_t pid)
+    ShellPids(std::function<void(std::vector<std::string> const&)> on_restart)
+        : on_restart{std::move(on_restart)} {}
+    void insert(pid_t pid, std::vector<std::string> const& cmd)
     {
         std::lock_guard lock{shell_component_mutex};
-        shell_component_pids.insert(pid);
+        shell_component_pids.insert(std::pair(pid, cmd));
+
     };
 
     void reap()
@@ -163,8 +166,21 @@ struct ShellPids
             auto const pid = waitpid(-1, &status, WNOHANG);
             if (pid > 0)
             {
-                std::lock_guard lock{shell_component_mutex};
-                shell_component_pids.erase(pid);
+                std::optional<std::vector<std::string>> command;
+                {
+                    std::lock_guard lock{shell_component_mutex};
+                    auto it = shell_component_pids.find(pid);
+                    if ( it != shell_component_pids.end())
+                    {
+                        command = std::move(it->second);
+                        shell_component_pids.erase(pid);
+                    }
+                }
+
+                if (status != 0 && command.has_value())
+                {
+                    on_restart(command.value());
+                }
             }
             else
             {
@@ -180,7 +196,8 @@ struct ShellPids
     }
 private:
     std::mutex mutable shell_component_mutex;
-    std::set<pid_t> shell_component_pids;
+    std::map<pid_t, std::vector<std::string>> shell_component_pids;
+    std::function<void(std::vector<std::string> const&)> on_restart;
 };
 }
 
@@ -226,7 +243,8 @@ int main(int argc, char const* argv[])
     // but, because they have security implications only for those applications found in `shell_pids`.
     // We'll use `shell_pids` to track "shell-*" processes.
     // We also check `user_preference()` so these can be enabled by the configuration
-    ShellPids shell_pids;
+    ExternalClientLauncher client_launcher;
+    ShellPids shell_pids{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd), cmd); }};
 
     auto const enable_for_shell_pids = [&](WaylandExtensions::EnableInfo const& info)
         {
@@ -248,11 +266,9 @@ int main(int argc, char const* argv[])
         "shell-add-wayland-extension",
         "Additional Wayland extension to allow shell processes (may be specified multiple times)"};
 
-    ExternalClientLauncher client_launcher;
-
     // A configuration option to start applications when compositor starts and record them in `shell_pids`.
     // Because of the previous section, this allows them some extra Wayland extensions
-    ShellComponents shell_components{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd)); }};
+    ShellComponents shell_components{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd), cmd); }};
     runner.add_start_callback([&]{ shell_components.launch_all(); });
     ConfigurationOption components_option{
         [&](std::vector<std::string> const& apps) { shell_components.populate(apps); },
@@ -264,17 +280,17 @@ int main(int argc, char const* argv[])
     CommandIndex shell_meta{
         "shell-meta",
         "meta <key>:<command> shortcut with shell priviledges (may be specified multiple times)",
-        [&](auto cmd) { shell_pids.insert(client_launcher.launch(cmd)); }};
+        [&](auto cmd) { shell_pids.insert(client_launcher.launch(cmd), cmd); }};
 
     CommandIndex shell_ctrl_alt{
         "shell-ctrl-alt",
         "ctrl-alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)",
-        [&](auto cmd) { shell_pids.insert(client_launcher.launch(cmd)); }};
+        [&](auto cmd) { shell_pids.insert(client_launcher.launch(cmd), cmd); }};
 
     CommandIndex shell_alt{
         "shell-alt",
         "alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)",
-        [&](auto cmd) { shell_pids.insert(client_launcher.launch(cmd)); }};
+        [&](auto cmd) { shell_pids.insert(client_launcher.launch(cmd), cmd); }};
 
     // `meta`, `alt` and `ctrl_alt` provide a lookup to execute the commands configured by the corresponding
     // configuration options. These processes are NOT added to `shell_pids`
