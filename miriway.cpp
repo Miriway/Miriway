@@ -37,6 +37,7 @@
 #include <sys/wait.h>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 
 using namespace miral;
 using namespace miriway;
@@ -149,10 +150,12 @@ private:
 // useful as it avoids "zombie" child processes).
 struct ShellPids
 {
-    void insert(pid_t pid)
+    using OnReap = std::function<void()>;
+
+    void insert(pid_t pid, OnReap cmd = [](){})
     {
         std::lock_guard lock{shell_component_mutex};
-        shell_component_pids.insert(pid);
+        shell_component_pids.insert(std::pair(pid, cmd));
     };
 
     void reap()
@@ -163,8 +166,21 @@ struct ShellPids
             auto const pid = waitpid(-1, &status, WNOHANG);
             if (pid > 0)
             {
-                std::lock_guard lock{shell_component_mutex};
-                shell_component_pids.erase(pid);
+                OnReap on_reap = [](){};
+
+                {
+                    std::lock_guard lock{shell_component_mutex};
+
+                    if (auto it = shell_component_pids.find(pid); it != shell_component_pids.end())
+                    {
+                        if (status)
+                        {
+                            on_reap = it->second;
+                        }
+                        shell_component_pids.erase(pid);
+                    }
+                }
+                on_reap();
             }
             else
             {
@@ -180,7 +196,7 @@ struct ShellPids
     }
 private:
     std::mutex mutable shell_component_mutex;
-    std::set<pid_t> shell_component_pids;
+    std::map<pid_t, OnReap> shell_component_pids;
 };
 }
 
@@ -252,7 +268,12 @@ int main(int argc, char const* argv[])
 
     // A configuration option to start applications when compositor starts and record them in `shell_pids`.
     // Because of the previous section, this allows them some extra Wayland extensions
-    ShellComponents shell_components{[&](auto cmd){ shell_pids.insert(client_launcher.launch(cmd)); }};
+    std::function<void(std::vector<std::string> const&)> shell_launch = [&](std::vector<std::string> const& cmd)
+        {
+            shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, cmd] { shell_launch(cmd); });
+        };
+
+    ShellComponents shell_components{shell_launch};
     runner.add_start_callback([&]{ shell_components.launch_all(); });
     ConfigurationOption components_option{
         [&](std::vector<std::string> const& apps) { shell_components.populate(apps); },
