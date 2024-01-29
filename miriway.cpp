@@ -321,6 +321,8 @@ int main(int argc, char const* argv[])
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_ctrl_alt.try_command_for(c, s, cmd) || ctrl_alt.try_command_for(c, s, cmd); },
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_alt.try_command_for(c, s, cmd) || alt.try_command_for(c, s, cmd); }};
 
+    runner.add_start_callback([&] { runner.register_signal_handler({SIGCHLD}, [&](int) { shell_pids.reap(); }); });
+
     return runner.run_with(
         {
             X11Support{},
@@ -336,7 +338,6 @@ int main(int argc, char const* argv[])
             meta,
             alt,
             Keymap{},
-            PrependEventFilter{[&](MirEvent const*) { shell_pids.reap(); return false; }},
             AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
             set_window_management_policy<WindowManagerPolicy>(commands)
         });
