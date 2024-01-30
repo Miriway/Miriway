@@ -145,18 +145,32 @@ private:
     }
 };
 
-// Keep track of interesting "shell" child processes. Somewhat hacky as `reap()` needs to be called
-// somewhere, and will reap all child processes not just the ones of interest. (But that's actually
-// useful as it avoids "zombie" child processes).
+// Keep track of interesting "shell" child processes and call the corresponding
+// `on_reap` if they fail. Note that it will "reap" all child processes not just
+// the ones of interest. (But that's useful as it avoids "zombie" child processes.)
 struct ShellPids
 {
+    ShellPids(MirRunner& runner)
+    {
+        runner.add_start_callback([&] { runner.register_signal_handler({SIGCHLD}, [this](int) { reap(); }); });
+    }
+
     using OnReap = std::function<void()>;
 
-    void insert(pid_t pid, OnReap cmd = [](){})
+    void insert(pid_t pid, OnReap on_reap = [](){})
     {
         std::lock_guard lock{shell_component_mutex};
-        shell_component_pids.insert(std::pair(pid, cmd));
+        shell_component_pids.insert(std::pair(pid, on_reap));
     };
+
+    bool is_found(pid_t pid) const
+    {
+        std::lock_guard lock{shell_component_mutex};
+        return shell_component_pids.find(pid) != end(shell_component_pids);
+    }
+private:
+    std::mutex mutable shell_component_mutex;
+    std::map<pid_t, OnReap> shell_component_pids;
 
     void reap()
     {
@@ -188,15 +202,6 @@ struct ShellPids
             }
         }
     }
-
-    bool is_found(pid_t pid) const
-    {
-        std::lock_guard lock{shell_component_mutex};
-        return shell_component_pids.find(pid) != end(shell_component_pids);
-    }
-private:
-    std::mutex mutable shell_component_mutex;
-    std::map<pid_t, OnReap> shell_component_pids;
 };
 }
 
@@ -242,7 +247,7 @@ int main(int argc, char const* argv[])
     // but, because they have security implications only for those applications found in `shell_pids`.
     // We'll use `shell_pids` to track "shell-*" processes.
     // We also check `user_preference()` so these can be enabled by the configuration
-    ShellPids shell_pids;
+    ShellPids shell_pids{runner};
 
     auto const enable_for_shell_pids = [&](WaylandExtensions::EnableInfo const& info)
         {
@@ -320,8 +325,6 @@ int main(int argc, char const* argv[])
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_meta.try_command_for(c, s, cmd) || meta.try_command_for(c, s, cmd); },
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_ctrl_alt.try_command_for(c, s, cmd) || ctrl_alt.try_command_for(c, s, cmd); },
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_alt.try_command_for(c, s, cmd) || alt.try_command_for(c, s, cmd); }};
-
-    runner.add_start_callback([&] { runner.register_signal_handler({SIGCHLD}, [&](int) { shell_pids.reap(); }); });
 
     return runner.run_with(
         {
