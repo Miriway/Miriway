@@ -12,6 +12,7 @@ description: |
   environment that makes these “papercuts” visible and much more likely to be fixed.
 confinement: classic
 base: core24
+build-base: devel
 
 platforms:
   amd64:
@@ -52,7 +53,7 @@ parts:
       server_version=`git rev-list --count HEAD`
       mir_version=`LANG=C apt-cache policy mir-graphics-drivers-desktop | sed -rne 's/^\s+Candidate:\s+([^-]*)-.+$/\1/p'`
       craftctl set version=$server_version-mir$mir_version
-      if echo $mir_version | grep -e '+dev' -e '~rc' -q; then craftctl set grade=devel; else craftctl set grade=stable; fi
+      if echo $mir_version | grep -e '+dev' -e '~rc' -q; then craftctl set grade=devel; else craftctl set grade=devel; fi
     plugin: cmake
     source: .
     build-packages:
