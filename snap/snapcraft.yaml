@@ -11,12 +11,12 @@ description: |
   It does, however, provide a way to test Mir and other components of a desktop 
   environment that makes these “papercuts” visible and much more likely to be fixed.
 confinement: classic
-base: core22
+base: core24
 
-architectures:
-  - build-on: amd64
-  - build-on: arm64
-  - build-on: armhf
+platforms:
+  amd64:
+  arm64:
+  armhf:
 
 package-repositories:
   - type: apt
@@ -64,6 +64,7 @@ parts:
       - libxkbcommon-dev
       - g++
       - make
+      - git
     stage-packages:
       # Stage libmiral<n> indirectly as we cannot (since core22) do `try:/else:`
       - libmiral-dev
@@ -112,7 +113,7 @@ parts:
     plugin: nil
     stage-packages:
     - libgl1-mesa-dri
-    - libtinfo5
+    - libtinfo6
     # included in this part because it tries to pull in mesa bits
     - gvncviewer
     - swaybg
