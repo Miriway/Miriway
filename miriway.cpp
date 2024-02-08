@@ -203,6 +203,92 @@ private:
         }
     }
 };
+
+class ShellComponentLaunchManager
+{
+public:
+    ShellComponentLaunchManager(ShellPids& shell_pids, ExternalClientLauncher& client_launcher)
+        : shell_launch([&](std::vector<std::string> const& cmd)
+        {
+            shell_pids.insert(client_launcher.launch(cmd), [this, cmd] {
+                relaunch(cmd);
+            });
+        })
+    {}
+
+    void relaunch(std::vector<std::string> const& cmd)
+    {
+        auto const now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        bool is_registered = false;
+        auto const it = std::find_if(prev_run_stats.begin(), prev_run_stats.end(), [&cmd](auto const& stat)
+        {
+            return stat.cmd == cmd;
+        });
+
+        if (it != prev_run_stats.end())
+        {
+            is_registered = true;
+            auto const time_elapsed_since_last_run = now - it->last_run_time;
+            if (time_elapsed_since_last_run <= MIN_TIME_SECONDS_ALLOWED_BETWEEN_RUNS)
+            {
+                // The command is trying to restart too soon, so we throttle it. For every premature
+                // death that it has in a row, we increasingly throttle its restart time.
+                // After MAX_TOO_SMALL_RERUNS is hit, we stop trying to rerun
+                time_t const time_to_wait = TIME_SECONDS_WAIT_FOREACH_RERUN * (it->num_runs_with_too_small_time_in_between + 1);
+                if (it->num_runs_with_too_small_time_in_between < MAX_TOO_SMALL_RERUNS)
+                    it->next_run_time = now + time_to_wait;
+                else
+                    prev_run_stats.erase(it);
+                return;
+            }
+            else
+            {
+                // The command ran quickly enough, so we can forget about it
+                prev_run_stats.erase(it);
+            }
+        }
+
+        if (!is_registered)
+            prev_run_stats.push_back(ShellComponentRunStats{cmd, now});
+
+        // Launch the command right away because it is either our first time rerunning, or we've decided
+        // to rerun after an appropriate amount of time
+        shell_launch(cmd);
+    }
+
+    void process()
+    {
+        auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        for (auto& prev_run : prev_run_stats)
+        {
+            auto const time_left = prev_run.next_run_time - now;
+            if (prev_run.next_run_time != 0 && time_left <= 0)
+            {
+                prev_run.next_run_time = 0;
+                prev_run.num_runs_with_too_small_time_in_between++;
+                prev_run.last_run_time = now;
+                shell_launch(prev_run.cmd);
+            }
+        }
+    }
+
+    std::function<void(std::vector<std::string> const&)> shell_launch;
+private:
+    static const int MIN_TIME_SECONDS_ALLOWED_BETWEEN_RUNS = 3;
+    static const time_t TIME_SECONDS_WAIT_FOREACH_RERUN = 3;
+    static const int MAX_TOO_SMALL_RERUNS = 10;
+
+    struct ShellComponentRunStats
+    {
+        std::vector<std::string> cmd;
+        time_t last_run_time = 0;
+        int num_runs_with_too_small_time_in_between = 0;
+        time_t next_run_time = 0;
+    };
+
+    std::vector<ShellComponentRunStats> prev_run_stats;
+};
+
 }
 
 int main(int argc, char const* argv[])
@@ -273,12 +359,8 @@ int main(int argc, char const* argv[])
 
     // A configuration option to start applications when compositor starts and record them in `shell_pids`.
     // Because of the previous section, this allows them some extra Wayland extensions
-    std::function<void(std::vector<std::string> const&)> shell_launch = [&](std::vector<std::string> const& cmd)
-        {
-            shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, cmd] { shell_launch(cmd); });
-        };
-
-    ShellComponents shell_components{shell_launch};
+    ShellComponentLaunchManager launch_manager(shell_pids, client_launcher);
+    ShellComponents shell_components{launch_manager.shell_launch};
     runner.add_start_callback([&]{ shell_components.launch_all(); });
     ConfigurationOption components_option{
         [&](std::vector<std::string> const& apps) { shell_components.populate(apps); },
@@ -341,6 +423,7 @@ int main(int argc, char const* argv[])
             meta,
             alt,
             Keymap{},
+            PrependEventFilter{[&](MirEvent const*) { launch_manager.process(); return false; }},
             AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
             set_window_management_policy<WindowManagerPolicy>(commands)
         });
