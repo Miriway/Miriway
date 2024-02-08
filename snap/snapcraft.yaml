@@ -12,6 +12,7 @@ description: |
   environment that makes these “papercuts” visible and much more likely to be fixed.
 confinement: classic
 base: core24
+build-base: devel
 
 architectures:
   - build-on: amd64
