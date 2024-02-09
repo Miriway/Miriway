@@ -38,9 +38,11 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <sys/timerfd.h>
 
 using namespace miral;
 using namespace miriway;
+using namespace std::chrono_literals;
 
 namespace
 {
@@ -207,18 +209,26 @@ private:
 class ShellComponentLaunchManager
 {
 public:
-    ShellComponentLaunchManager(ShellPids& shell_pids, ExternalClientLauncher& client_launcher)
+    ShellComponentLaunchManager(ShellPids& shell_pids, ExternalClientLauncher& client_launcher, MirRunner& runner)
         : shell_launch([&](std::vector<std::string> const& cmd)
-        {
-            shell_pids.insert(client_launcher.launch(cmd), [this, cmd] {
-                relaunch(cmd);
-            });
-        })
+          {
+              shell_pids.insert(client_launcher.launch(cmd), [this, cmd] {
+                  relaunch(cmd);
+              });
+          }),
+          runner{runner}
     {}
+
+    static std::string get_cmd_string(std::vector<std::string> const& cmd)
+    {
+        std::ostringstream os;
+        std::copy(cmd.begin(), cmd.end(), std::ostream_iterator<std::string>( os ));
+        return os.str();
+    }
 
     void relaunch(std::vector<std::string> const& cmd)
     {
-        auto const now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        auto const now = std::chrono::system_clock::now();
         bool is_registered = false;
         auto const it = std::find_if(prev_run_stats.begin(), prev_run_stats.end(), [&cmd](auto const& stat)
         {
@@ -229,21 +239,52 @@ public:
         {
             is_registered = true;
             auto const time_elapsed_since_last_run = now - it->last_run_time;
-            if (time_elapsed_since_last_run <= MIN_TIME_SECONDS_ALLOWED_BETWEEN_RUNS)
+            if (std::chrono::duration_cast<std::chrono::seconds>(time_elapsed_since_last_run) <= MIN_TIME_SECONDS_ALLOWED_BETWEEN_RUNS)
             {
                 // The command is trying to restart too soon, so we throttle it. For every premature
                 // death that it has in a row, we increasingly throttle its restart time.
-                // After MAX_TOO_SMALL_RERUNS is hit, we stop trying to rerun
-                time_t const time_to_wait = TIME_SECONDS_WAIT_FOREACH_RERUN * (it->num_runs_with_too_small_time_in_between + 1);
-                if (it->num_runs_with_too_small_time_in_between < MAX_TOO_SMALL_RERUNS)
-                    it->next_run_time = now + time_to_wait;
-                else
+                // After MAX_TOO_SHORT_RERUNS_IN_A_ROW is hit, we stop trying to rerun
+                if (it->num_runs_with_too_short_time_in_between >= MAX_TOO_SHORT_RERUNS_IN_A_ROW)
+                {
                     prev_run_stats.erase(it);
+                    mir::log_warning("No longer restarting app: %s", get_cmd_string(cmd).c_str());
+                    return;
+                }
+
+                auto const time_to_wait = TIME_SECONDS_WAIT_FOREACH_RERUN * (it->num_runs_with_too_short_time_in_between + 1);
+                auto const timer_fd = timerfd_create(CLOCK_REALTIME, 0);
+                if (timer_fd == -1)
+                {
+                    mir::log_error("timerfd_create failed, unable to restart application: %s", get_cmd_string(cmd).c_str());
+                    return;
+                }
+
+                auto const spec = itimerspec
+                {
+                    { 0, 0 },               // Timer interval
+                    { time_to_wait.count(), 0 } // Initial expiration
+                };
+
+                if (timerfd_settime(timer_fd, 0, &spec, NULL) == -1)
+                {
+                    mir::log_error("timerfd_settime failed, unable to restart application: %s", get_cmd_string(cmd).c_str());
+                    return;
+                }
+
+                auto& prev_run = *it;
+                prev_run.handle = runner.register_fd_handler(mir::Fd{timer_fd}, [this, &prev_run](int){
+                    printf("Restarting\n");
+                    auto const now = std::chrono::system_clock::now();
+                    prev_run.handle.reset();
+                    prev_run.num_runs_with_too_short_time_in_between++;
+                    prev_run.last_run_time = now;
+                    shell_launch(prev_run.cmd);
+                });
                 return;
             }
             else
             {
-                // The command ran quickly enough, so we can forget about it
+                // The command didn't die quickly, so we can forget about it
                 prev_run_stats.erase(it);
             }
         }
@@ -256,37 +297,22 @@ public:
         shell_launch(cmd);
     }
 
-    void process()
-    {
-        auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        for (auto& prev_run : prev_run_stats)
-        {
-            auto const time_left = prev_run.next_run_time - now;
-            if (prev_run.next_run_time != 0 && time_left <= 0)
-            {
-                prev_run.next_run_time = 0;
-                prev_run.num_runs_with_too_small_time_in_between++;
-                prev_run.last_run_time = now;
-                shell_launch(prev_run.cmd);
-            }
-        }
-    }
-
     std::function<void(std::vector<std::string> const&)> shell_launch;
 private:
-    static const int MIN_TIME_SECONDS_ALLOWED_BETWEEN_RUNS = 3;
-    static const time_t TIME_SECONDS_WAIT_FOREACH_RERUN = 3;
-    static const int MAX_TOO_SMALL_RERUNS = 10;
+    static auto constexpr MIN_TIME_SECONDS_ALLOWED_BETWEEN_RUNS = 3s;
+    static auto constexpr TIME_SECONDS_WAIT_FOREACH_RERUN = 3s;
+    static const int MAX_TOO_SHORT_RERUNS_IN_A_ROW = 3;
 
     struct ShellComponentRunStats
     {
         std::vector<std::string> cmd;
-        time_t last_run_time = 0;
-        int num_runs_with_too_small_time_in_between = 0;
-        time_t next_run_time = 0;
+        std::chrono::time_point<std::chrono::system_clock, std::chrono::system_clock::duration> last_run_time;
+        int num_runs_with_too_short_time_in_between = 0;
+        std::unique_ptr<miral::FdHandle> handle = nullptr;
     };
 
     std::vector<ShellComponentRunStats> prev_run_stats;
+    MirRunner& runner;
 };
 
 }
@@ -359,7 +385,7 @@ int main(int argc, char const* argv[])
 
     // A configuration option to start applications when compositor starts and record them in `shell_pids`.
     // Because of the previous section, this allows them some extra Wayland extensions
-    ShellComponentLaunchManager launch_manager(shell_pids, client_launcher);
+    ShellComponentLaunchManager launch_manager(shell_pids, client_launcher, runner);
     ShellComponents shell_components{launch_manager.shell_launch};
     runner.add_start_callback([&]{ shell_components.launch_all(); });
     ConfigurationOption components_option{
@@ -423,7 +449,6 @@ int main(int argc, char const* argv[])
             meta,
             alt,
             Keymap{},
-            PrependEventFilter{[&](MirEvent const*) { launch_manager.process(); return false; }},
             AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
             set_window_management_policy<WindowManagerPolicy>(commands)
         });
