@@ -239,19 +239,19 @@ public:
         {
             is_registered = true;
             auto const time_elapsed_since_last_run = now - it->last_run_time;
-            if (std::chrono::duration_cast<std::chrono::seconds>(time_elapsed_since_last_run) <= MIN_TIME_SECONDS_ALLOWED_BETWEEN_RUNS)
+            if (std::chrono::duration_cast<std::chrono::seconds>(time_elapsed_since_last_run) <= minTimeSecondsAllowedBetweenRuns)
             {
                 // The command is trying to restart too soon, so we throttle it. For every premature
                 // death that it has in a row, we increasingly throttle its restart time.
                 // After MAX_TOO_SHORT_RERUNS_IN_A_ROW is hit, we stop trying to rerun
-                if (it->num_runs_with_too_short_time_in_between >= MAX_TOO_SHORT_RERUNS_IN_A_ROW)
+                if (it->num_runs_with_too_short_time_in_between >= maxTooShortRerunsInARow)
                 {
                     prev_run_stats.erase(it);
                     mir::log_warning("No longer restarting app: %s", get_cmd_string(cmd).c_str());
                     return;
                 }
 
-                auto const time_to_wait = TIME_SECONDS_WAIT_FOREACH_RERUN * (it->num_runs_with_too_short_time_in_between + 1);
+                auto const time_to_wait = timeSecondsWaitForeachRun * (it->num_runs_with_too_short_time_in_between + 1);
                 auto const timer_fd = timerfd_create(CLOCK_REALTIME, 0);
                 if (timer_fd == -1)
                 {
@@ -299,9 +299,9 @@ public:
 
     std::function<void(std::vector<std::string> const&)> shell_launch;
 private:
-    static auto constexpr MIN_TIME_SECONDS_ALLOWED_BETWEEN_RUNS = 3s;
-    static auto constexpr TIME_SECONDS_WAIT_FOREACH_RERUN = 3s;
-    static const int MAX_TOO_SHORT_RERUNS_IN_A_ROW = 3;
+    static auto constexpr minTimeSecondsAllowedBetweenRuns = 3s;
+    static auto constexpr timeSecondsWaitForeachRun = 3s;
+    static const int maxTooShortRerunsInARow = 3;
 
     struct ShellComponentRunStats
     {
