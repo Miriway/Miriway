@@ -42,7 +42,6 @@
 
 using namespace miral;
 using namespace miriway;
-using namespace std::chrono_literals;
 
 namespace
 {
@@ -68,10 +67,28 @@ std::map<std::string, ShellCommands::CmdFunctor> const wm_command =
         { "exit", [](ShellCommands* sc, bool shift) { sc->exit(shift); } },
     };
 
+struct ShellComponentRunInfo
+{
+    time_t last_run_time = 0;
+    int num_runs_with_too_short_time_in_between = 0;
+    std::unique_ptr<miral::FdHandle> handle = nullptr;
+};
+
+auto constexpr min_time_seconds_allowed_between_runs = 3;
+auto constexpr time_seconds_wait_foreach_run = 3;
+const int max_too_short_reruns_in_a_row = 10;
+
+std::string get_cmd_string(std::vector<std::string> const& cmd)
+{
+    std::ostringstream os;
+    std::copy(cmd.begin(), cmd.end(), std::ostream_iterator<std::string>( os ));
+    return os.str();
+}
+
 // Build a list of shell components from "<commands>" values and launch them all after startup
 struct ShellComponents
 {
-    explicit ShellComponents(std::function<void(std::vector<std::string> const& command_line)> launch) :
+    explicit ShellComponents(std::function<void(std::vector<std::string> const& command_line, ShellComponentRunInfo&)> launch) :
         launch{std::move(launch)}{}
 
     void populate(std::vector<std::string> const& cmds)
@@ -79,16 +96,18 @@ struct ShellComponents
         std::transform(begin(cmds), end(cmds), back_inserter(commands), ExternalClientLauncher::split_command);
     }
 
-    void launch_all() const
+    void launch_all()
     {
         for (auto const& command : commands)
         {
-            launch(command);
+            run_info.push_back(ShellComponentRunInfo{0, 0});
+            launch(command, run_info.back());
         }
     }
 private:
-    std::function<void (std::vector<std::string> const& command_line)> const launch;
+    std::function<void (std::vector<std::string> const& command_line, ShellComponentRunInfo&)> const launch;
     std::vector<std::vector<std::string>> commands;
+    std::vector<ShellComponentRunInfo> run_info;
 };
 
 // Build an index of commands from "<key>:<commands>" values and launch them by <key> (if found)
@@ -205,116 +224,6 @@ private:
         }
     }
 };
-
-class ShellComponentLaunchManager
-{
-public:
-    ShellComponentLaunchManager(ShellPids& shell_pids, ExternalClientLauncher& client_launcher, MirRunner& runner)
-        : shell_launch([&](std::vector<std::string> const& cmd)
-          {
-              shell_pids.insert(client_launcher.launch(cmd), [this, cmd] {
-                  relaunch(cmd);
-              });
-          }),
-          runner{runner}
-    {}
-
-    static std::string get_cmd_string(std::vector<std::string> const& cmd)
-    {
-        std::ostringstream os;
-        std::copy(cmd.begin(), cmd.end(), std::ostream_iterator<std::string>( os ));
-        return os.str();
-    }
-
-    void relaunch(std::vector<std::string> const& cmd)
-    {
-        auto const now = std::chrono::system_clock::now();
-        bool is_registered = false;
-        auto const it = std::find_if(prev_run_stats.begin(), prev_run_stats.end(), [&cmd](auto const& stat)
-        {
-            return stat.cmd == cmd;
-        });
-
-        if (it != prev_run_stats.end())
-        {
-            is_registered = true;
-            auto const time_elapsed_since_last_run = now - it->last_run_time;
-            if (std::chrono::duration_cast<std::chrono::seconds>(time_elapsed_since_last_run) <= minTimeSecondsAllowedBetweenRuns)
-            {
-                // The command is trying to restart too soon, so we throttle it. For every premature
-                // death that it has in a row, we increasingly throttle its restart time.
-                // After MAX_TOO_SHORT_RERUNS_IN_A_ROW is hit, we stop trying to rerun
-                if (it->num_runs_with_too_short_time_in_between >= maxTooShortRerunsInARow)
-                {
-                    prev_run_stats.erase(it);
-                    mir::log_warning("No longer restarting app: %s", get_cmd_string(cmd).c_str());
-                    return;
-                }
-
-                auto const time_to_wait = timeSecondsWaitForeachRun * (it->num_runs_with_too_short_time_in_between + 1);
-                auto const timer_fd = timerfd_create(CLOCK_REALTIME, 0);
-                if (timer_fd == -1)
-                {
-                    mir::log_error("timerfd_create failed, unable to restart application: %s", get_cmd_string(cmd).c_str());
-                    return;
-                }
-
-                auto const spec = itimerspec
-                {
-                    { 0, 0 },               // Timer interval
-                    { time_to_wait.count(), 0 } // Initial expiration
-                };
-
-                if (timerfd_settime(timer_fd, 0, &spec, NULL) == -1)
-                {
-                    mir::log_error("timerfd_settime failed, unable to restart application: %s", get_cmd_string(cmd).c_str());
-                    return;
-                }
-
-                auto& prev_run = *it;
-                prev_run.handle = runner.register_fd_handler(mir::Fd{timer_fd}, [this, &prev_run](int){
-                    printf("Restarting\n");
-                    auto const now = std::chrono::system_clock::now();
-                    prev_run.handle.reset();
-                    prev_run.num_runs_with_too_short_time_in_between++;
-                    prev_run.last_run_time = now;
-                    shell_launch(prev_run.cmd);
-                });
-                return;
-            }
-            else
-            {
-                // The command didn't die quickly, so we can forget about it
-                prev_run_stats.erase(it);
-            }
-        }
-
-        if (!is_registered)
-            prev_run_stats.push_back(ShellComponentRunStats{cmd, now});
-
-        // Launch the command right away because it is either our first time rerunning, or we've decided
-        // to rerun after an appropriate amount of time
-        shell_launch(cmd);
-    }
-
-    std::function<void(std::vector<std::string> const&)> shell_launch;
-private:
-    static auto constexpr minTimeSecondsAllowedBetweenRuns = 3s;
-    static auto constexpr timeSecondsWaitForeachRun = 3s;
-    static const int maxTooShortRerunsInARow = 3;
-
-    struct ShellComponentRunStats
-    {
-        std::vector<std::string> cmd;
-        std::chrono::time_point<std::chrono::system_clock, std::chrono::system_clock::duration> last_run_time;
-        int num_runs_with_too_short_time_in_between = 0;
-        std::unique_ptr<miral::FdHandle> handle = nullptr;
-    };
-
-    std::vector<ShellComponentRunStats> prev_run_stats;
-    MirRunner& runner;
-};
-
 }
 
 int main(int argc, char const* argv[])
@@ -385,8 +294,66 @@ int main(int argc, char const* argv[])
 
     // A configuration option to start applications when compositor starts and record them in `shell_pids`.
     // Because of the previous section, this allows them some extra Wayland extensions
-    ShellComponentLaunchManager launch_manager(shell_pids, client_launcher, runner);
-    ShellComponents shell_components{launch_manager.shell_launch};
+    std::function<void(std::vector<std::string> const&, ShellComponentRunInfo&)> shell_launch
+        = [&](std::vector<std::string> const& cmd, ShellComponentRunInfo& info)
+        {
+            time_t now;
+            time(&now);
+            auto const time_elapsed_since_last_run = now - info.last_run_time;
+            if (time_elapsed_since_last_run <= min_time_seconds_allowed_between_runs)
+            {
+                // The command is trying to restart too soon, so we throttle it. For every premature
+                // death that it has in a row, we increasingly throttle its restart time.
+                // After MAX_TOO_SHORT_RERUNS_IN_A_ROW is hit, we stop trying to rerun
+                if (info.num_runs_with_too_short_time_in_between >= max_too_short_reruns_in_a_row)
+                {
+                    mir::log_warning("No longer restarting app: %s", get_cmd_string(cmd).c_str());
+                    return;
+                }
+
+                auto const time_to_wait = time_seconds_wait_foreach_run * (info.num_runs_with_too_short_time_in_between + 1);
+                auto const timer_fd = timerfd_create(CLOCK_REALTIME, 0);
+                if (timer_fd == -1)
+                {
+                    mir::log_error("timerfd_create failed, unable to restart application: %s", get_cmd_string(cmd).c_str());
+                    return;
+                }
+
+                auto const spec = itimerspec
+                {
+                    { 0, 0 },               // Timer interval
+                    { time_to_wait, 0 } // Initial expiration
+                };
+
+                if (timerfd_settime(timer_fd, 0, &spec, NULL) == -1)
+                {
+                    mir::log_error("timerfd_settime failed, unable to restart application: %s", get_cmd_string(cmd).c_str());
+                    return;
+                }
+
+                info.handle = runner.register_fd_handler(mir::Fd{timer_fd}, [&](int){
+                    time_t now;
+                    time(&now);
+                    info.handle.reset();
+                    info.num_runs_with_too_short_time_in_between++;
+                    info.last_run_time = now;
+                    shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, &info, &cmd] {
+                        shell_launch(cmd, info);
+                    });
+                });
+                return;
+            }
+            else
+            {
+                info.num_runs_with_too_short_time_in_between = 0;
+                info.last_run_time = now;
+                shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, &info, &cmd] {
+                    shell_launch(cmd, info);
+                });
+            }
+        };
+
+    ShellComponents shell_components{shell_launch};
     runner.add_start_callback([&]{ shell_components.launch_all(); });
     ConfigurationOption components_option{
         [&](std::vector<std::string> const& apps) { shell_components.populate(apps); },
