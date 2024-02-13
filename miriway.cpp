@@ -40,6 +40,7 @@
 #include <functional>
 #include <sys/timerfd.h>
 #include <ctime>
+#include <numeric>
 
 using namespace miral;
 using namespace miriway;
@@ -74,13 +75,6 @@ struct ShellComponentRunInfo
     int runs_in_quick_succession = 0;
     std::unique_ptr<miral::FdHandle> handle = nullptr;
 };
-
-std::string get_cmd_string(std::vector<std::string> const& cmd)
-{
-    std::ostringstream os;
-    std::copy(cmd.begin(), cmd.end(), std::ostream_iterator<std::string>( os ));
-    return os.str();
-}
 
 // Build a list of shell components from "<commands>" values and launch them all after startup
 struct ShellComponents
@@ -295,8 +289,16 @@ int main(int argc, char const* argv[])
             static auto constexpr min_time_seconds_allowed_between_runs = 3;
             static auto constexpr time_seconds_wait_foreach_run = 3;
             static const int max_too_short_reruns_in_a_row = 10;
+            static const auto get_cmd_string = [](std::vector<std::string> const& cmd)
+            {
+                return std::accumulate(std::begin(cmd), std::end(cmd), std::string(),
+                    [](std::string current, std::string next)
+                    {
+                       return current.empty() ? next : current + " " + next;
+                    });
+            };
 
-            time_t now = std::time(nullptr);
+            time_t const now = std::time(nullptr);
             auto const time_elapsed_since_last_run = now - info->last_run_time;
             if (time_elapsed_since_last_run <= min_time_seconds_allowed_between_runs)
             {
@@ -330,10 +332,9 @@ int main(int argc, char const* argv[])
                 }
 
                 info->handle = runner.register_fd_handler(mir::Fd{timer_fd}, [info, &shell_pids, &client_launcher, &cmd, &shell_launch](int){
-                    time_t now = std::time(nullptr);
                     info->handle.reset();
                     info->runs_in_quick_succession++;
-                    info->last_run_time = now;
+                    info->last_run_time = std::time(nullptr);
                     shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, info, &cmd] {
                         shell_launch(cmd, info);
                     });
