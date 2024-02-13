@@ -93,7 +93,7 @@ struct ShellComponents
         std::transform(begin(cmds), end(cmds), back_inserter(commands), ExternalClientLauncher::split_command);
     }
 
-    void launch_all()
+    void launch_all() const
     {
         for (auto const& command : commands)
         {
@@ -302,7 +302,7 @@ int main(int argc, char const* argv[])
             {
                 // The command is trying to restart too soon, so we throttle it. For every premature
                 // death that it has in a row, we increasingly throttle its restart time.
-                // After MAX_TOO_SHORT_RERUNS_IN_A_ROW is hit, we stop trying to rerun
+                // After max_too_short_reruns_in_a_row is hit, we stop trying to rerun
                 if (info->runs_in_quick_succession >= max_too_short_reruns_in_a_row)
                 {
                     mir::log_warning("No longer restarting app: %s", get_cmd_string(cmd).c_str());
