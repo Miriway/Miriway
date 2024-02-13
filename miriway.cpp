@@ -39,6 +39,7 @@
 #include <fstream>
 #include <functional>
 #include <sys/timerfd.h>
+#include <ctime>
 
 using namespace miral;
 using namespace miriway;
@@ -70,13 +71,9 @@ std::map<std::string, ShellCommands::CmdFunctor> const wm_command =
 struct ShellComponentRunInfo
 {
     time_t last_run_time = 0;
-    int num_runs_with_too_short_time_in_between = 0;
+    int runs_in_quick_succession = 0;
     std::unique_ptr<miral::FdHandle> handle = nullptr;
 };
-
-auto constexpr min_time_seconds_allowed_between_runs = 3;
-auto constexpr time_seconds_wait_foreach_run = 3;
-const int max_too_short_reruns_in_a_row = 10;
 
 std::string get_cmd_string(std::vector<std::string> const& cmd)
 {
@@ -88,7 +85,7 @@ std::string get_cmd_string(std::vector<std::string> const& cmd)
 // Build a list of shell components from "<commands>" values and launch them all after startup
 struct ShellComponents
 {
-    explicit ShellComponents(std::function<void(std::vector<std::string> const& command_line, ShellComponentRunInfo&)> launch) :
+    explicit ShellComponents(std::function<void(std::vector<std::string> const& command_line)> launch) :
         launch{std::move(launch)}{}
 
     void populate(std::vector<std::string> const& cmds)
@@ -100,14 +97,12 @@ struct ShellComponents
     {
         for (auto const& command : commands)
         {
-            run_info.push_back(ShellComponentRunInfo{0, 0});
-            launch(command, run_info.back());
+            launch(command);
         }
     }
 private:
-    std::function<void (std::vector<std::string> const& command_line, ShellComponentRunInfo&)> const launch;
+    std::function<void (std::vector<std::string> const& command_line)> const launch;
     std::vector<std::vector<std::string>> commands;
-    std::vector<ShellComponentRunInfo> run_info;
 };
 
 // Build an index of commands from "<key>:<commands>" values and launch them by <key> (if found)
@@ -294,24 +289,27 @@ int main(int argc, char const* argv[])
 
     // A configuration option to start applications when compositor starts and record them in `shell_pids`.
     // Because of the previous section, this allows them some extra Wayland extensions
-    std::function<void(std::vector<std::string> const&, ShellComponentRunInfo&)> shell_launch
-        = [&](std::vector<std::string> const& cmd, ShellComponentRunInfo& info)
+    std::function<void(std::vector<std::string> const&, std::shared_ptr<ShellComponentRunInfo>)> shell_launch
+        = [&](std::vector<std::string> const& cmd, std::shared_ptr<ShellComponentRunInfo> info)
         {
-            time_t now;
-            time(&now);
-            auto const time_elapsed_since_last_run = now - info.last_run_time;
+            static auto constexpr min_time_seconds_allowed_between_runs = 3;
+            static auto constexpr time_seconds_wait_foreach_run = 3;
+            static const int max_too_short_reruns_in_a_row = 10;
+
+            time_t now = std::time(nullptr);
+            auto const time_elapsed_since_last_run = now - info->last_run_time;
             if (time_elapsed_since_last_run <= min_time_seconds_allowed_between_runs)
             {
                 // The command is trying to restart too soon, so we throttle it. For every premature
                 // death that it has in a row, we increasingly throttle its restart time.
                 // After MAX_TOO_SHORT_RERUNS_IN_A_ROW is hit, we stop trying to rerun
-                if (info.num_runs_with_too_short_time_in_between >= max_too_short_reruns_in_a_row)
+                if (info->runs_in_quick_succession >= max_too_short_reruns_in_a_row)
                 {
                     mir::log_warning("No longer restarting app: %s", get_cmd_string(cmd).c_str());
                     return;
                 }
 
-                auto const time_to_wait = time_seconds_wait_foreach_run * (info.num_runs_with_too_short_time_in_between + 1);
+                auto const time_to_wait = time_seconds_wait_foreach_run * (info->runs_in_quick_succession + 1);
                 auto const timer_fd = timerfd_create(CLOCK_REALTIME, 0);
                 if (timer_fd == -1)
                 {
@@ -331,13 +329,12 @@ int main(int argc, char const* argv[])
                     return;
                 }
 
-                info.handle = runner.register_fd_handler(mir::Fd{timer_fd}, [&](int){
-                    time_t now;
-                    time(&now);
-                    info.handle.reset();
-                    info.num_runs_with_too_short_time_in_between++;
-                    info.last_run_time = now;
-                    shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, &info, &cmd] {
+                info->handle = runner.register_fd_handler(mir::Fd{timer_fd}, [info, &shell_pids, &client_launcher, &cmd, &shell_launch](int){
+                    time_t now = std::time(nullptr);
+                    info->handle.reset();
+                    info->runs_in_quick_succession++;
+                    info->last_run_time = now;
+                    shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, info, &cmd] {
                         shell_launch(cmd, info);
                     });
                 });
@@ -345,15 +342,15 @@ int main(int argc, char const* argv[])
             }
             else
             {
-                info.num_runs_with_too_short_time_in_between = 0;
-                info.last_run_time = now;
-                shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, &info, &cmd] {
+                info->runs_in_quick_succession = 0;
+                info->last_run_time = now;
+                shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, info, &cmd] {
                     shell_launch(cmd, info);
                 });
             }
         };
 
-    ShellComponents shell_components{shell_launch};
+    ShellComponents shell_components{[&shell_launch](auto const& cmd) { shell_launch(cmd, std::make_shared<ShellComponentRunInfo>()); }};
     runner.add_start_callback([&]{ shell_components.launch_all(); });
     ConfigurationOption components_option{
         [&](std::vector<std::string> const& apps) { shell_components.populate(apps); },
