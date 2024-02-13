@@ -286,13 +286,13 @@ int main(int argc, char const* argv[])
     std::function<void(std::vector<std::string> const&, std::shared_ptr<ShellComponentRunInfo>)> shell_launch
         = [&](std::vector<std::string> const& cmd, std::shared_ptr<ShellComponentRunInfo> info)
         {
-            static auto constexpr min_time_seconds_allowed_between_runs = 3;
-            static auto constexpr time_seconds_wait_foreach_run = 3;
-            static const int max_too_short_reruns_in_a_row = 10;
-            static const auto get_cmd_string = [](std::vector<std::string> const& cmd)
+            static int constexpr min_time_seconds_allowed_between_runs = 3;
+            static int constexpr time_seconds_wait_foreach_run = 3;
+            static int const max_too_short_reruns_in_a_row = 3;
+            static auto const get_cmd_string = [](std::vector<std::string> const& cmd)
             {
                 return std::accumulate(std::begin(cmd), std::end(cmd), std::string(),
-                    [](std::string current, std::string next)
+                    [](std::string const& current, std::string const& next)
                     {
                        return current.empty() ? next : current + " " + next;
                     });
