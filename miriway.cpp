@@ -38,6 +38,9 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <sys/timerfd.h>
+#include <ctime>
+#include <numeric>
 
 using namespace miral;
 using namespace miriway;
@@ -65,6 +68,13 @@ std::map<std::string, ShellCommands::CmdFunctor> const wm_command =
         { "workspace-down", [](ShellCommands* sc, bool shift) { sc->workspace_down(shift); } },
         { "exit", [](ShellCommands* sc, bool shift) { sc->exit(shift); } },
     };
+
+struct ShellComponentRunInfo
+{
+    time_t last_run_time = 0;
+    int runs_in_quick_succession = 0;
+    std::unique_ptr<miral::FdHandle> handle = nullptr;
+};
 
 // Build a list of shell components from "<commands>" values and launch them all after startup
 struct ShellComponents
@@ -273,12 +283,75 @@ int main(int argc, char const* argv[])
 
     // A configuration option to start applications when compositor starts and record them in `shell_pids`.
     // Because of the previous section, this allows them some extra Wayland extensions
-    std::function<void(std::vector<std::string> const&)> shell_launch = [&](std::vector<std::string> const& cmd)
+    std::function<void(std::vector<std::string> const&, std::shared_ptr<ShellComponentRunInfo>)> shell_launch
+        = [&](std::vector<std::string> const& cmd, std::shared_ptr<ShellComponentRunInfo> info)
         {
-            shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, cmd] { shell_launch(cmd); });
+            static int constexpr min_time_seconds_allowed_between_runs = 3;
+            static int constexpr time_seconds_wait_foreach_run = 3;
+            static int const max_too_short_reruns_in_a_row = 3;
+            static auto const get_cmd_string = [](std::vector<std::string> const& cmd)
+            {
+                return std::accumulate(std::begin(cmd), std::end(cmd), std::string(),
+                    [](std::string const& current, std::string const& next)
+                    {
+                       return current.empty() ? next : current + " " + next;
+                    });
+            };
+
+            time_t const now = std::time(nullptr);
+            auto const time_elapsed_since_last_run = now - info->last_run_time;
+            if (time_elapsed_since_last_run <= min_time_seconds_allowed_between_runs)
+            {
+                // The command is trying to restart too soon, so we throttle it. For every premature
+                // death that it has in a row, we increasingly throttle its restart time.
+                // After max_too_short_reruns_in_a_row is hit, we stop trying to rerun
+                if (info->runs_in_quick_succession >= max_too_short_reruns_in_a_row)
+                {
+                    mir::log_warning("No longer restarting app: %s", get_cmd_string(cmd).c_str());
+                    return;
+                }
+
+                auto const time_to_wait = time_seconds_wait_foreach_run * (info->runs_in_quick_succession + 1);
+                auto const timer_fd = timerfd_create(CLOCK_REALTIME, 0);
+                if (timer_fd == -1)
+                {
+                    mir::log_error("timerfd_create failed, unable to restart application: %s", get_cmd_string(cmd).c_str());
+                    return;
+                }
+
+                auto const spec = itimerspec
+                {
+                    { 0, 0 },               // Timer interval
+                    { time_to_wait, 0 } // Initial expiration
+                };
+
+                if (timerfd_settime(timer_fd, 0, &spec, NULL) == -1)
+                {
+                    mir::log_error("timerfd_settime failed, unable to restart application: %s", get_cmd_string(cmd).c_str());
+                    return;
+                }
+
+                info->handle = runner.register_fd_handler(mir::Fd{timer_fd}, [info, &shell_pids, &client_launcher, &cmd, &shell_launch](int){
+                    info->handle.reset();
+                    info->runs_in_quick_succession++;
+                    info->last_run_time = std::time(nullptr);
+                    shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, info, &cmd] {
+                        shell_launch(cmd, info);
+                    });
+                });
+                return;
+            }
+            else
+            {
+                info->runs_in_quick_succession = 0;
+                info->last_run_time = now;
+                shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, info, &cmd] {
+                    shell_launch(cmd, info);
+                });
+            }
         };
 
-    ShellComponents shell_components{shell_launch};
+    ShellComponents shell_components{[&shell_launch](auto const& cmd) { shell_launch(cmd, std::make_shared<ShellComponentRunInfo>()); }};
     runner.add_start_callback([&]{ shell_components.launch_all(); });
     ConfigurationOption components_option{
         [&](std::vector<std::string> const& apps) { shell_components.populate(apps); },
