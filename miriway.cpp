@@ -33,6 +33,7 @@
 #include <miral/x11_support.h>
 #include <mir/log.h>
 #include <mir/abnormal_exit.h>
+#include <miral/session_lock_listener.h>
 
 #include <sys/wait.h>
 #include <filesystem>
@@ -94,9 +95,25 @@ struct ShellComponents
             launch(command);
         }
     }
+
+    bool try_add_lockscreen_app(std::vector<std::string> const& cmd)
+    {
+        if (lockscreen_app.has_value())
+            return false;
+
+        lockscreen_app = cmd;
+        return true;
+    }
+
+    void launch_lockscreen() const
+    {
+        if (lockscreen_app.has_value())
+            launch(lockscreen_app.value());
+    }
 private:
     std::function<void (std::vector<std::string> const& command_line)> const launch;
     std::vector<std::vector<std::string>> commands;
+    std::optional<std::vector<std::string>> lockscreen_app;
 };
 
 // Build an index of commands from "<key>:<commands>" values and launch them by <key> (if found)
@@ -268,7 +285,8 @@ int main(int argc, char const* argv[])
     // Protocols we're reserving for shell components_option
     for (auto const& protocol : {
         WaylandExtensions::zwlr_layer_shell_v1,
-        WaylandExtensions::zwlr_foreign_toplevel_manager_v1})
+        WaylandExtensions::zwlr_foreign_toplevel_manager_v1,
+        WaylandExtensions::ext_session_lock_manager_v1})
     {
         extensions.conditionally_enable(protocol, enable_for_shell_pids);
     }
@@ -352,11 +370,21 @@ int main(int argc, char const* argv[])
         };
 
     ShellComponents shell_components{[&shell_launch](auto const& cmd) { shell_launch(cmd, std::make_shared<ShellComponentRunInfo>()); }};
+
     runner.add_start_callback([&]{ shell_components.launch_all(); });
     ConfigurationOption components_option{
         [&](std::vector<std::string> const& apps) { shell_components.populate(apps); },
         "shell-component",
         "Shell component to launch on startup (may be specified multiple times)"};
+
+    ConfigurationOption lockscreen_option{
+        [&](std::vector<std::string> const& apps) {
+            if (!shell_components.try_add_lockscreen_app(apps))
+                mir::fatal_error("Cannot specify --lockscreen-app more than once");
+        },
+        "lockscreen-app",
+        "Lockscreen app to be triggered when the compositor session is locked (may only be specified once)"
+    };
 
     // `shell_meta`, `shell_ctrl_alt` and `shell_alt` provide a lookup to execute the commands configured by the
     // corresponding configuration options. These processes are added to `shell_pids`
@@ -407,6 +435,7 @@ int main(int argc, char const* argv[])
             display_configuration_options,
             client_launcher,
             components_option,
+            lockscreen_option,
             shell_ctrl_alt,
             shell_alt,
             shell_meta,
@@ -415,6 +444,9 @@ int main(int argc, char const* argv[])
             alt,
             Keymap{},
             AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
-            set_window_management_policy<WindowManagerPolicy>(commands)
+            set_window_management_policy<WindowManagerPolicy>(commands),
+            SessionLockListener(
+                [&] { shell_components.launch_lockscreen(); },
+                [&] {})
         });
 }
