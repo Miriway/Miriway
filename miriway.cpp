@@ -34,24 +34,8 @@
 #include <mir/log.h>
 #include <mir/abnormal_exit.h>
 
-#if MIRAL_MAJOR_VERSION == 5
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 0, 0)
 #include <miral/session_lock_listener.h>
-#else
-#define QUOTE(x) #x
-#define STR(x) QUOTE(x)
-
-namespace miral
-{
-class SessionLockListener
-{
-public:
-    SessionLockListener(std::function<void()>, std::function<void()>) {}
-    void operator()(mir::Server&) const
-    {
-        mir::log_error("SessionLockListener is not available in the provided version of mir: " STR(MIRAL_MAJOR_VERSION));
-    }
-};
-}
 #endif
 
 #include <sys/wait.h>
@@ -124,34 +108,40 @@ class LockScreen
 public:
     explicit LockScreen(
         std::function<void(std::vector<std::string> const& command_line)> launch,
-        std::function<void(std::string name)> const& conditionally_enable)
-        : lockscreen_option(
-            [&](mir::optional_value<std::string> const& app) {
-                    if (app.is_set())
-                        lockscreen_app = app.value();
-                },
-                "lockscreen-app",
-                "Lockscreen app to be triggered when the compositor session is locked"
-            ),
-            session_locker(
-              [&]{
-                  if (lockscreen_app) launch(ExternalClientLauncher::split_command(*lockscreen_app));
-              },
-              [] {}
-          )
+        std::function<void(std::string name)> const& conditionally_enable) :
+        launch{std::move(launch)},
+        lockscreen_option{[this](mir::optional_value<std::string> const& app)
+            {
+                if (app.is_set())
+                {
+    #if MIRAL_VERSION < MIR_VERSION_NUMBER(5, 0, 0)
+                    mir::log_warning("SessionLockListener is not available before miral 5.0");
+    #endif
+                    lockscreen_app = app.value();
+                }
+            },
+      "lockscreen-app",
+      "Lockscreen app to be triggered when the compositor session is locked"
+        }
     {
         conditionally_enable(WaylandExtensions::ext_session_lock_manager_v1);
     }
-
     void operator()(mir::Server& server) const
     {
         lockscreen_option(server);
         session_locker(server);
     }
-
 private:
+    std::function<void(std::vector<std::string> const& command_line)> const launch;
     ConfigurationOption const lockscreen_option;
-    SessionLockListener const session_locker;
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 0, 0)
+    SessionLockListener const session_locker{
+        [this]{ if (lockscreen_app) launch(ExternalClientLauncher::split_command(*lockscreen_app)); },
+        [] {}
+    };
+#else
+    static auto constexpr session_locker = [](mir::Server&){};
+#endif
     std::optional<std::string> lockscreen_app;
 };
 
