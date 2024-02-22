@@ -117,7 +117,7 @@ public:
     #if MIRAL_VERSION < MIR_VERSION_NUMBER(5, 0, 0)
                     mir::log_warning("SessionLockListener is not available before miral 5.0");
     #endif
-                    lockscreen_app = app.value();
+                    lockscreen_app = ExternalClientLauncher::split_command(app.value());
                 }
             },
       "lockscreen-app",
@@ -136,13 +136,13 @@ private:
     ConfigurationOption const lockscreen_option;
 #if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 0, 0)
     SessionLockListener const session_locker{
-        [this]{ if (lockscreen_app) launch(ExternalClientLauncher::split_command(*lockscreen_app)); },
+        [this]{ if (lockscreen_app) launch(lockscreen_app.value()); },
         [] {}
     };
 #else
     static auto constexpr session_locker = [](mir::Server&){};
 #endif
-    std::optional<std::string> lockscreen_app;
+    std::optional<std::vector<std::string>> lockscreen_app;
 };
 
 // Build an index of commands from "<key>:<commands>" values and launch them by <key> (if found)
