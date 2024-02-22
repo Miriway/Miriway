@@ -230,7 +230,7 @@ private:
 
     void reap()
     {
-        int status;
+        int status = 0;
         while (true)
         {
             auto const pid = waitpid(-1, &status, WNOHANG);
@@ -243,8 +243,9 @@ private:
 
                     if (auto it = shell_component_pids.find(pid); it != shell_component_pids.end())
                     {
-                        if (status)
+                        if (WIFEXITED(status) && WEXITSTATUS(status))
                         {
+                            mir::log_info("Process exited with status: %d", WEXITSTATUS(status));
                             on_reap = it->second;
                         }
                         shell_component_pids.erase(pid);
