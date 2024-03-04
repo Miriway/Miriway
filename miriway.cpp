@@ -120,8 +120,8 @@ public:
                     lockscreen_app = ExternalClientLauncher::split_command(app.value());
                 }
             },
-      "lockscreen-app",
-      "Lockscreen app to be triggered when the compositor session is locked"
+            "lockscreen-app",
+            "Lockscreen app to be triggered when the compositor session is locked"
         }
     {
         conditionally_enable(WaylandExtensions::ext_session_lock_manager_v1);
@@ -243,9 +243,9 @@ private:
 
                     if (auto it = shell_component_pids.find(pid); it != shell_component_pids.end())
                     {
-                        if (WIFEXITED(status) && WEXITSTATUS(status))
+                        if ((WIFEXITED(status) && WEXITSTATUS(status))
+                            || (WIFSIGNALED(status) && WTERMSIG(status)))
                         {
-                            mir::log_info("Process exited with status: %d", WEXITSTATUS(status));
                             on_reap = it->second;
                         }
                         shell_component_pids.erase(pid);
@@ -446,6 +446,11 @@ int main(int argc, char const* argv[])
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_ctrl_alt.try_command_for(c, s, cmd) || ctrl_alt.try_command_for(c, s, cmd); },
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_alt.try_command_for(c, s, cmd) || alt.try_command_for(c, s, cmd); }};
 
+    LockScreen lockscreen(
+        [&shell_launch](auto const& cmd) { shell_launch(cmd, std::make_shared<ShellComponentRunInfo>()); },
+        [&extensions, &enable_for_shell_pids](auto protocol) {
+            extensions.conditionally_enable(protocol, enable_for_shell_pids); });
+
     return runner.run_with(
         {
             X11Support{},
@@ -463,9 +468,6 @@ int main(int argc, char const* argv[])
             Keymap{},
             AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
             set_window_management_policy<WindowManagerPolicy>(commands),
-            LockScreen(
-                [&shell_launch](auto const& cmd) { shell_launch(cmd, std::make_shared<ShellComponentRunInfo>()); },
-                [&extensions, &enable_for_shell_pids](auto protocol) {
-                    extensions.conditionally_enable(protocol, enable_for_shell_pids); })
+            lockscreen
         });
 }
