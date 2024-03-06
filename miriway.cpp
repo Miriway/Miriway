@@ -473,10 +473,12 @@ int main(int argc, char const* argv[])
 
                 return commands.input_event(e);
             }},
-            set_window_management_policy<WindowManagerPolicy>(commands),
-            lockscreen,
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 0, 0)
             SessionLockListener(
                 [&] { is_locked = true; },
-                [&] { is_locked = false; })
+                [&] { is_locked = false; }),
+#endif
+            set_window_management_policy<WindowManagerPolicy>(commands),
+            lockscreen
         });
 }
