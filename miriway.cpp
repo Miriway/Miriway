@@ -451,6 +451,7 @@ int main(int argc, char const* argv[])
         [&extensions, &enable_for_shell_pids](auto protocol) {
             extensions.conditionally_enable(protocol, enable_for_shell_pids); });
 
+    bool is_locked = false;
     return runner.run_with(
         {
             X11Support{},
@@ -466,8 +467,16 @@ int main(int argc, char const* argv[])
             meta,
             alt,
             Keymap{},
-            AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
+            AppendEventFilter{[&](MirEvent const* e) {
+                if (is_locked)
+                    return false;
+
+                return commands.input_event(e);
+            }},
             set_window_management_policy<WindowManagerPolicy>(commands),
-            lockscreen
+            lockscreen,
+            SessionLockListener(
+                [&] { is_locked = true; },
+                [&] { is_locked = false; })
         });
 }
