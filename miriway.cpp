@@ -34,6 +34,10 @@
 #include <mir/log.h>
 #include <mir/abnormal_exit.h>
 
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 0, 0)
+#include <miral/session_lock_listener.h>
+#endif
+
 #include <sys/wait.h>
 #include <filesystem>
 #include <fstream>
@@ -97,6 +101,48 @@ struct ShellComponents
 private:
     std::function<void (std::vector<std::string> const& command_line)> const launch;
     std::vector<std::vector<std::string>> commands;
+};
+
+class LockScreen
+{
+public:
+    explicit LockScreen(
+        std::function<void(std::vector<std::string> const& command_line)> launch,
+        std::function<void(std::string name)> const& conditionally_enable) :
+        launch{std::move(launch)},
+        lockscreen_option{[this](mir::optional_value<std::string> const& app)
+            {
+                if (app.is_set())
+                {
+    #if MIRAL_VERSION < MIR_VERSION_NUMBER(5, 0, 0)
+                    mir::log_warning("SessionLockListener is not available before miral 5.0");
+    #endif
+                    lockscreen_app = ExternalClientLauncher::split_command(app.value());
+                }
+            },
+            "lockscreen-app",
+            "Lockscreen app to be triggered when the compositor session is locked"
+        }
+    {
+        conditionally_enable(WaylandExtensions::ext_session_lock_manager_v1);
+    }
+    void operator()(mir::Server& server) const
+    {
+        lockscreen_option(server);
+        session_locker(server);
+    }
+private:
+    std::function<void(std::vector<std::string> const& command_line)> const launch;
+    ConfigurationOption const lockscreen_option;
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 0, 0)
+    SessionLockListener const session_locker{
+        [this]{ if (lockscreen_app) launch(lockscreen_app.value()); },
+        [] {}
+    };
+#else
+    static auto constexpr session_locker = [](mir::Server&){};
+#endif
+    std::optional<std::vector<std::string>> lockscreen_app;
 };
 
 // Build an index of commands from "<key>:<commands>" values and launch them by <key> (if found)
@@ -184,7 +230,7 @@ private:
 
     void reap()
     {
-        int status;
+        int status = 0;
         while (true)
         {
             auto const pid = waitpid(-1, &status, WNOHANG);
@@ -197,7 +243,8 @@ private:
 
                     if (auto it = shell_component_pids.find(pid); it != shell_component_pids.end())
                     {
-                        if (status)
+                        if ((WIFEXITED(status) && WEXITSTATUS(status))
+                            || (WIFSIGNALED(status) && WTERMSIG(status)))
                         {
                             on_reap = it->second;
                         }
@@ -399,6 +446,12 @@ int main(int argc, char const* argv[])
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_ctrl_alt.try_command_for(c, s, cmd) || ctrl_alt.try_command_for(c, s, cmd); },
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_alt.try_command_for(c, s, cmd) || alt.try_command_for(c, s, cmd); }};
 
+    LockScreen lockscreen(
+        [&shell_launch](auto const& cmd) { shell_launch(cmd, std::make_shared<ShellComponentRunInfo>()); },
+        [&extensions, &enable_for_shell_pids](auto protocol) {
+            extensions.conditionally_enable(protocol, enable_for_shell_pids); });
+
+    bool is_locked = false;
     return runner.run_with(
         {
             X11Support{},
@@ -414,7 +467,18 @@ int main(int argc, char const* argv[])
             meta,
             alt,
             Keymap{},
-            AppendEventFilter{[&](MirEvent const* e) { return commands.input_event(e); }},
-            set_window_management_policy<WindowManagerPolicy>(commands)
+            AppendEventFilter{[&](MirEvent const* e) {
+                if (is_locked)
+                    return false;
+
+                return commands.input_event(e);
+            }},
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 0, 0)
+            SessionLockListener(
+                [&] { is_locked = true; },
+                [&] { is_locked = false; }),
+#endif
+            set_window_management_policy<WindowManagerPolicy>(commands),
+            lockscreen
         });
 }
