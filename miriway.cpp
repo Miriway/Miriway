@@ -131,13 +131,23 @@ public:
         lockscreen_option(server);
         session_locker(server);
     }
+
+    bool is_locked() const { return is_locked_; }
+
 private:
     std::function<void(std::vector<std::string> const& command_line)> const launch;
     ConfigurationOption const lockscreen_option;
+    bool is_locked_ = false;
 #if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 0, 0)
     SessionLockListener const session_locker{
-        [this]{ if (lockscreen_app) launch(lockscreen_app.value()); },
-        [] {}
+        [this]{
+            if (lockscreen_app && !is_locked_)
+            {
+                is_locked_ = true;
+                launch(lockscreen_app.value());
+            }
+        },
+        [this] { is_locked_ = false; }
     };
 #else
     static auto constexpr session_locker = [](mir::Server&){};
@@ -451,7 +461,6 @@ int main(int argc, char const* argv[])
         [&extensions, &enable_for_shell_pids](auto protocol) {
             extensions.conditionally_enable(protocol, enable_for_shell_pids); });
 
-    bool is_locked = false;
     return runner.run_with(
         {
             X11Support{},
@@ -468,16 +477,11 @@ int main(int argc, char const* argv[])
             alt,
             Keymap{},
             AppendEventFilter{[&](MirEvent const* e) {
-                if (is_locked)
+                if (lockscreen.is_locked())
                     return false;
 
                 return commands.input_event(e);
             }},
-#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 0, 0)
-            SessionLockListener(
-                [&] { is_locked = true; },
-                [&] { is_locked = false; }),
-#endif
             set_window_management_policy<WindowManagerPolicy>(commands),
             lockscreen
         });
