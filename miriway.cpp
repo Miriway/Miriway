@@ -75,9 +75,13 @@ std::map<std::string, ShellCommands::CmdFunctor> const wm_command =
 
 struct ShellComponentRunInfo
 {
+    ShellComponentRunInfo() : ShellComponentRunInfo{[]() { return true; }} {}
+    explicit ShellComponentRunInfo(std::function<bool()> const should_restart_predicate)
+        : should_restart_predicate{std::move(should_restart_predicate)} {}
     time_t last_run_time = 0;
     int runs_in_quick_succession = 0;
     std::unique_ptr<miral::FdHandle> handle = nullptr;
+    std::function<bool()> const should_restart_predicate;
 };
 
 // Build a list of shell components from "<commands>" values and launch them all after startup
@@ -379,11 +383,16 @@ int main(int argc, char const* argv[])
                 }
 
                 info->handle = runner.register_fd_handler(mir::Fd{timer_fd}, [info, &shell_pids, &client_launcher, &cmd, &shell_launch](int){
+                    // While waiting for the timer, the predicate could have a different value
+                    if (!info->should_restart_predicate())
+                        return;
+
                     info->handle.reset();
                     info->runs_in_quick_succession++;
                     info->last_run_time = std::time(nullptr);
                     shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, info, &cmd] {
-                        shell_launch(cmd, info);
+                        if (info->should_restart_predicate())
+                            shell_launch(cmd, info);
                     });
                 });
                 return;
@@ -393,7 +402,8 @@ int main(int argc, char const* argv[])
                 info->runs_in_quick_succession = 0;
                 info->last_run_time = now;
                 shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, info, &cmd] {
-                    shell_launch(cmd, info);
+                    if (info->should_restart_predicate())
+                        shell_launch(cmd, info);
                 });
             }
         };
@@ -446,12 +456,14 @@ int main(int argc, char const* argv[])
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_ctrl_alt.try_command_for(c, s, cmd) || ctrl_alt.try_command_for(c, s, cmd); },
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_alt.try_command_for(c, s, cmd) || alt.try_command_for(c, s, cmd); }};
 
+    std::atomic<bool> is_locked = false;
     LockScreen lockscreen(
-        [&shell_launch](auto const& cmd) { shell_launch(cmd, std::make_shared<ShellComponentRunInfo>()); },
+        [&shell_launch, &is_locked](auto const& cmd) { shell_launch(cmd, std::make_shared<ShellComponentRunInfo>(
+            [&is_locked]() { return is_locked.load(); }));
+        },
         [&extensions, &enable_for_shell_pids](auto protocol) {
             extensions.conditionally_enable(protocol, enable_for_shell_pids); });
 
-    bool is_locked = false;
     return runner.run_with(
         {
             X11Support{},
