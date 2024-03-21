@@ -102,8 +102,12 @@ ctrl-alt=t:miriway-unsnap kgx
 shell-meta=a:miriway-unsnap synapse
 meta=Print:miriway-unsnap sh -c "grim ~/Pictures/screenshot-\$(date --iso-8601=seconds).png"
 
-shell-ctrl-alt=l:miriway-unsnap loginctl lock-session
-lockscreen-app=miriway-unsnap swaylock -i /usr/share/backgrounds/warty-final-ubuntu.png
+$(if find $(dirname "$0")/../usr/lib -name libmirserver.so.59 | grep libmirserver.so.59 > /dev/null; then
+  echo shell-ctrl-alt=l:swaylock -i ${background}
+else
+  echo shell-ctrl-alt=l:miriway-unsnap loginctl lock-session
+  echo lockscreen-app=swaylock -i ${background}
+fi)
 
 meta=Left:@dock-left
 meta=Right:@dock-right
