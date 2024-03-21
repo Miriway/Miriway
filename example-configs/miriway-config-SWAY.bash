@@ -3,7 +3,7 @@ set -e
 
 if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 
-shell_components="swaybg waybar wofi swaync kgx swaylock"
+shell_components="waybar wofi kgx"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 waybar_config="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/config"
 waybar_style="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/style.css"
@@ -97,14 +97,18 @@ idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
 ctrl-alt=t:miriway-unsnap kgx
-shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaync
+shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image ${background}
+shell-component=systemd-run --user --scope --slice=background.slice swaync
 
-shell-component=miriway-unsnap swaybg --mode fill --output '*' --image '${background}'
 shell-component=miriway-unsnap waybar
 shell-meta=a:miriway-unsnap wofi --show drun --location top_left
 
-shell-add-wayland-extension=ext_session_lock_manager_v1
-shell-meta=l:miriway-unsnap swaylock
+$(if find $(dirname "$0")/../usr/lib -name libmirserver.so.59 | grep libmirserver.so.59 > /dev/null; then
+  echo shell-ctrl-alt=l:swaylock -i ${background}
+else
+  echo shell-ctrl-alt=l:miriway-unsnap loginctl lock-session
+  echo lockscreen-app=swaylock -i ${background}
+fi)
 
 meta=Left:@dock-left
 meta=Right:@dock-right
