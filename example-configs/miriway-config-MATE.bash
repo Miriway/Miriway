@@ -3,7 +3,7 @@ set -e
 
 if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 
-shell_components="mate-panel mate-terminal swaybg /usr/libexec/mate-notification-daemon/mate-notification-daemon"
+shell_components="mate-panel mate-terminal /usr/libexec/mate-notification-daemon/mate-notification-daemon"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 
 for component in $shell_components
