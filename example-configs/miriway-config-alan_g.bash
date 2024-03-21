@@ -78,6 +78,7 @@ fi
 
 mkdir "$(dirname "${yambar_config}")" -p -m 700
 
+miriway_display="${miriway_config/%config/display}"
 if  [ -e "/usr/share/backgrounds/warty-final-ubuntu.png" ]; then
   # fall back to Ubuntu default
   background="/usr/share/backgrounds/warty-final-ubuntu.png"
@@ -102,8 +103,16 @@ ctrl-alt=t:miriway-unsnap kgx
 shell-meta=a:miriway-unsnap synapse
 meta=Print:miriway-unsnap sh -c "grim ~/Pictures/screenshot-\$(date --iso-8601=seconds).png"
 
-shell-ctrl-alt=l:miriway-unsnap loginctl lock-session
-lockscreen-app=miriway-unsnap swaylock -i /usr/share/backgrounds/warty-final-ubuntu.png
+$(if find $(dirname "$0")/../usr/lib -name libmirserver.so.59 | grep libmirserver.so.59 > /dev/null; then
+  echo shell-ctrl-alt=l:swaylock -i ${background}
+else
+  echo shell-ctrl-alt=l:miriway-unsnap loginctl lock-session
+  echo lockscreen-app=swaylock -i ${background}
+fi)
+
+ctrl-alt=d:cp ${miriway_display}~docked ${miriway_display}
+ctrl-alt=u:cp ${miriway_display}~undocked ${miriway_display}
+ctrl-alt=s:miriway-swap
 
 meta=Left:@dock-left
 meta=Right:@dock-right
@@ -114,7 +123,7 @@ meta=Page_Up:@workspace-up
 meta=Page_Down:@workspace-down
 ctrl-alt=BackSpace:@exit
 
-display-config=static=${miriway_config/%config/display}
+display-config=static=${miriway_display}
 EOT
 
 # Ensure we have a config file with the fixed options
@@ -129,15 +138,31 @@ bar:
   font: *ubuntu
 
   left:
-    - label:
+    - cpu:
         content:
-          string:
-            text: " start"
-            margin: 5
-            on-click: miriway-unsnap synapse
+          map:
             deco: &greybg
               background:
                 color: 3f3f3fff
+            conditions:
+              id >= 0:
+                - ramp:
+                    tag: cpu
+                    items:
+                      - string: {text: ▁, foreground: 00ff00ff}
+                      - string: {text: ▂, foreground: 00ff00ff}
+                      - string: {text: ▃, foreground: 00ff00ff}
+                      - string: {text: ▄}
+                      - string: {text: ▅}
+                      - string: {text: ▆, foreground: ffa600ff}
+                      - string: {text: ▇, foreground: ffa600ff}
+                      - string: {text: █, foreground: ff0000ff}
+    - mem:
+        content:
+          - string:
+              margin: 5
+              text: "mem: {percent_used}%"
+              deco: *greybg
 
   center:
     - clock:
