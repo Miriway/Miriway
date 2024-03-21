@@ -115,7 +115,9 @@ parts:
     - libgl1-mesa-dri
     - libtinfo6
     # included in this part because they try to pull in mesa bits
+    - sway-notification-center
     - swaybg
+    - swaylock
     - synapse
     - xwayland
     - yambar

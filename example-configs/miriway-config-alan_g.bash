@@ -3,7 +3,7 @@ set -e
 
 if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 
-shell_components="yambar swaybg synapse kgx swaync grim swaylock gnome-keyring-daemon"
+shell_components="synapse kgx grim gnome-keyring-daemon"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 yambar_config="${XDG_CONFIG_HOME:-$HOME/.config}/yambar/config.yml"
 
@@ -78,24 +78,32 @@ fi
 
 mkdir "$(dirname "${yambar_config}")" -p -m 700
 
+if  [ -e "/usr/share/backgrounds/warty-final-ubuntu.png" ]; then
+  # fall back to Ubuntu default
+  background="/usr/share/backgrounds/warty-final-ubuntu.png"
+else
+  # fall back to anything we can find
+  background="$(find /usr/share/backgrounds/ -type f | tail -n 1)"
+fi
+
 # Ensure we have a config file with the fixed options
 cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none:-GTK_IM_MODULE:SSH_AUTH_SOCK=/run/user/1000/keyring/ssh
 shell-component=miriway-unsnap dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP SSH_AUTH_SOCK
-shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaync
-shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image /usr/share/backgrounds/warty-final-ubuntu.png
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice synapse --startup
+shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image ${background}
+shell-component=systemd-run --user --scope --slice=background.slice swaync
+shell-component=systemd-run --user --scope --slice=background.slice yambar
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice gnome-keyring-daemon --foreground
-shell-component=yambar
 
 ctrl-alt=t:miriway-unsnap kgx
 shell-meta=a:miriway-unsnap synapse
 meta=Print:miriway-unsnap sh -c "grim ~/Pictures/screenshot-\$(date --iso-8601=seconds).png"
 
-shell-add-wayland-extension=ext_session_lock_manager_v1
-shell-ctrl-alt=l:miriway-unsnap swaylock -i /usr/share/backgrounds/warty-final-ubuntu.png
+shell-ctrl-alt=l:miriway-unsnap loginctl lock-session
+lockscreen-app=miriway-unsnap swaylock -i /usr/share/backgrounds/warty-final-ubuntu.png
 
 meta=Left:@dock-left
 meta=Right:@dock-right
