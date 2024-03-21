@@ -133,15 +133,33 @@ bar:
   font: *ubuntu
 
   left:
-    - label:
+    - cpu:
+        poll-interval: 1000
         content:
-          string:
-            text: " start"
-            margin: 5
-            on-click: miriway-unsnap synapse
+          map:
             deco: &greybg
               background:
                 color: 3f3f3fff
+            conditions:
+              id >= 0:
+                - ramp:
+                    tag: cpu
+                    items:
+                      - string: {text: ▁, foreground: 00ff00ff}
+                      - string: {text: ▂, foreground: 00ff00ff}
+                      - string: {text: ▃, foreground: 00ff00ff}
+                      - string: {text: ▄}
+                      - string: {text: ▅}
+                      - string: {text: ▆, foreground: ffa600ff}
+                      - string: {text: ▇, foreground: ffa600ff}
+                      - string: {text: █, foreground: ff0000ff}
+    - mem:
+        poll-interval: 1000
+        content:
+          - string:
+              margin: 5
+              text: "mem: {percent_used}%"
+              deco: *greybg
 
   center:
     - clock:
