@@ -87,7 +87,7 @@ shell-component=miriway-unsnap dbus-update-activation-environment --systemd DISP
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaync
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image /usr/share/backgrounds/warty-final-ubuntu.png
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice synapse --startup
-shell-component=miriway-unsnap gnome-keyring-daemon
+shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice gnome-keyring-daemon --foreground
 shell-component=yambar
 
 ctrl-alt=t:miriway-unsnap kgx

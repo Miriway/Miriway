@@ -228,6 +228,16 @@ struct ShellPids
         std::lock_guard lock{shell_component_mutex};
         return shell_component_pids.find(pid) != end(shell_component_pids);
     }
+
+    void shutdown()
+    {
+        std::lock_guard lock{shell_component_mutex};
+        for (auto [pid, _] : shell_component_pids)
+        {
+            kill(pid, SIGTERM);
+        }
+        shell_component_pids.clear();
+    }
 private:
     std::mutex mutable shell_component_mutex;
     std::map<pid_t, OnReap> shell_component_pids;
@@ -309,6 +319,7 @@ int main(int argc, char const* argv[])
     // We'll use `shell_pids` to track "shell-*" processes.
     // We also check `user_preference()` so these can be enabled by the configuration
     ShellPids shell_pids{runner};
+    runner.add_stop_callback([&shell_pids]{ shell_pids.shutdown(); });
 
     auto const enable_for_shell_pids = [&](WaylandExtensions::EnableInfo const& info)
         {
