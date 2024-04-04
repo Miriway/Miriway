@@ -33,9 +33,9 @@ set (CMAKE_REQUIRED_INCLUDES "${MIRAL_INCLUDE_DIRS}")
 include_directories(miriway-shell PUBLIC SYSTEM ${MIRAL_INCLUDE_DIRS})
 CHECK_INCLUDE_FILE_CXX(miral/input_device_config.h MIRAL_INPUT_DEVICE_CONFIG)
 if (MIRAL_INPUT_DEVICE_CONFIG)
-    target_compile_definitions(miriway-shell MIR_LOG_COMPONENT="miriway" MIRAL_INPUT_DEVICE_CONFIG=1)
+    target_compile_definitions(miriway-shell PRIVATE MIR_LOG_COMPONENT="miriway" MIRAL_INPUT_DEVICE_CONFIG=1)
 else()
-    target_compile_definitions(miriway-shell MIR_LOG_COMPONENT="miriway")
+    target_compile_definitions(miriway-shell PRIVATE MIR_LOG_COMPONENT="miriway")
 endif ()
 
 add_custom_target(miriway ALL
