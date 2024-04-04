@@ -13,6 +13,8 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,defs")
 
 include(GNUInstallDirs)
 include(FindPkgConfig)
+include(CheckIncludeFileCXX)
+
 pkg_check_modules(MIRAL miral REQUIRED)
 pkg_check_modules(XKBCOMMON xkbcommon REQUIRED)
 
@@ -27,6 +29,13 @@ target_include_directories(miriway-shell PUBLIC SYSTEM ${MIRAL_INCLUDE_DIRS})
 target_link_libraries(     miriway-shell               ${MIRAL_LDFLAGS})
 target_link_libraries(     miriway-shell               ${XKBCOMMON_LIBRARIES})
 set_target_properties(     miriway-shell PROPERTIES COMPILE_DEFINITIONS MIR_LOG_COMPONENT="miriway")
+
+set (CMAKE_REQUIRED_INCLUDES "${MIRAL_INCLUDE_DIRS}")
+include_directories(miriway-shell PUBLIC SYSTEM ${MIRAL_INCLUDE_DIRS})
+CHECK_INCLUDE_FILE_CXX(miral/input_device_config.h MIRAL_INPUT_DEVICE_CONFIG)
+if (MIRAL_INPUT_DEVICE_CONFIG)
+    set_target_properties(miriway-shell PROPERTIES COMPILE_DEFINITIONS MIRAL_INPUT_DEVICE_CONFIG=1)
+endif ()
 
 add_custom_target(miriway ALL
     cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway ${CMAKE_BINARY_DIR}

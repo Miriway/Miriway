@@ -37,6 +37,9 @@
 #if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 0, 0)
 #include <miral/session_lock_listener.h>
 #endif
+#ifdef MIRAL_INPUT_DEVICE_CONFIG
+#include <miral/input_device_config.h>
+#endif
 
 #include <sys/wait.h>
 #include <filesystem>
@@ -500,6 +503,9 @@ int main(int argc, char const* argv[])
             SessionLockListener(
                 [&] { is_locked = true; },
                 [&] { is_locked = false; }),
+#endif
+#ifdef MIRAL_INPUT_DEVICE_CONFIG
+            add_input_device_configuration,
 #endif
             set_window_management_policy<WindowManagerPolicy>(commands),
             lockscreen
