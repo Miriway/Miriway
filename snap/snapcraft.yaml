@@ -13,10 +13,10 @@ description: |
 confinement: classic
 base: core24
 
-architectures:
-  - build-on: amd64
-  - build-on: arm64
-  - build-on: armhf
+platforms:
+  amd64:
+  arm64:
+  armhf:
 
 package-repositories:
   - type: apt
