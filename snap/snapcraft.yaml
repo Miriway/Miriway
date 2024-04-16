@@ -69,6 +69,7 @@ parts:
       - libmiral-dev
       - mir-graphics-drivers-desktop
       - mir-platform-graphics-virtual
+      - mir-graphics-drivers-nvidia
       - libfreetype6
     prime:
       - -lib/udev
