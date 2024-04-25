@@ -27,9 +27,9 @@ apps:
     command: &_command usr/local/bin/miriway
     environment: &_environment
       # Prep for Mir
-      MIR_SERVER_PLATFORM_PATH: ${SNAP}/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/mir/server-platform
+      MIR_SERVER_PLATFORM_PATH: ${SNAP}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/mir/server-platform
       __EGL_VENDOR_LIBRARY_DIRS: $SNAP/etc/glvnd/egl_vendor.d:$SNAP/usr/share/glvnd/egl_vendor.d
-      LIBGL_DRIVERS_PATH: $SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
+      LIBGL_DRIVERS_PATH: $SNAP/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
       LIBINPUT_QUIRKS_DIR: ${SNAP}/usr/share/libinput
       PATH: ${SNAP}/bin/:${SNAP}/usr/bin/:${SNAP}/usr/local/bin/:${PATH}
       # For "reasons" this is being set despite this being a classic snap. This overwrites the nonsense
@@ -120,7 +120,7 @@ parts:
     - xwayland
     stage:
       # The libraries in .../dri need no-patchelf, so they come from the mesa-unpatched part
-      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
 
   yambar:
     build-attributes:
@@ -175,4 +175,4 @@ parts:
       - no-patchelf # Otherwise snapcraft may strip the build ID and cause the driver to crash
     stage:
       # Only the libraries in .../dri need to not be patched, the rest come from the mesa part
-      - usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
+      - usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
