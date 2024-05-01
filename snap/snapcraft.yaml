@@ -48,7 +48,7 @@ parts:
     build-attributes:
       - enable-patchelf
     stage-snaps:
-      - mir-libs/22/edge
+      - mir-libs/24/edge
     prime:
       - -*.h
       - -*.pc
