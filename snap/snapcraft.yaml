@@ -74,6 +74,7 @@ parts:
       - g++
       - make
       - git
+      - libglibmm-2.4-dev
     stage-packages:
       - libfreetype6
     prime:
