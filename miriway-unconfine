@@ -1,0 +1,7 @@
+#! /bin/bash
+set -e
+if command -v $terminal > /dev/null
+then
+  exec aa-exec -p unconfined "$@"
+fi
+exec "$@"
