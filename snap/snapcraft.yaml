@@ -24,6 +24,9 @@ package-repositories:
 
 apps:
   miriway:
+    command-chain:
+      # Workaround for classic snaps having a confinement profile
+      - usr/local/bin/miriway-unconfine
     command: &_command usr/local/bin/miriway
     environment: &_environment
       # Prep for Mir
