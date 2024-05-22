@@ -19,6 +19,8 @@
 #include "miriway_policy.h"
 #include "miriway_commands.h"
 
+#include <mir/abnormal_exit.h>
+#include <mir/log.h>
 #include <miral/append_event_filter.h>
 #include <miral/configuration_option.h>
 #include <miral/display_configuration_option.h>
@@ -27,16 +29,12 @@
 #include <miral/keymap.h>
 #include <miral/prepend_event_filter.h>
 #include <miral/runner.h>
-#include <miral/set_window_management_policy.h>
-#include <miral/wayland_extensions.h>
-#include <miral/version.h>
-#include <miral/x11_support.h>
-#include <mir/log.h>
-#include <mir/abnormal_exit.h>
-
-#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 0, 0)
 #include <miral/session_lock_listener.h>
-#endif
+#include <miral/set_window_management_policy.h>
+#include <miral/version.h>
+#include <miral/wayland_extensions.h>
+#include <miral/x11_support.h>
+
 #ifdef MIRAL_INPUT_DEVICE_CONFIG
 #include <miral/input_device_config.h>
 #endif
@@ -121,9 +119,6 @@ public:
             {
                 if (app.is_set())
                 {
-    #if MIRAL_VERSION < MIR_VERSION_NUMBER(5, 0, 0)
-                    mir::log_warning("SessionLockListener is not available before miral 5.0");
-    #endif
                     lockscreen_app = ExternalClientLauncher::split_command(app.value());
                 }
             },
@@ -141,14 +136,10 @@ public:
 private:
     std::function<void(std::vector<std::string> const& command_line)> const launch;
     ConfigurationOption const lockscreen_option;
-#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 0, 0)
     SessionLockListener const session_locker{
         [this]{ if (lockscreen_app) launch(lockscreen_app.value()); },
         [] {}
     };
-#else
-    static auto constexpr session_locker = [](mir::Server&){};
-#endif
     std::optional<std::vector<std::string>> lockscreen_app;
 };
 
@@ -499,11 +490,9 @@ int main(int argc, char const* argv[])
 
                 return commands.input_event(e);
             }},
-#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 0, 0)
             SessionLockListener(
                 [&] { is_locked = true; },
                 [&] { is_locked = false; }),
-#endif
 #ifdef MIRAL_INPUT_DEVICE_CONFIG
             add_input_device_configuration,
 #endif
