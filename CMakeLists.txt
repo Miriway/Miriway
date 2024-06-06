@@ -31,12 +31,7 @@ target_link_libraries(     miriway-shell               ${XKBCOMMON_LIBRARIES})
 
 set (CMAKE_REQUIRED_INCLUDES "${MIRAL_INCLUDE_DIRS}")
 include_directories(miriway-shell PUBLIC SYSTEM ${MIRAL_INCLUDE_DIRS})
-CHECK_INCLUDE_FILE_CXX(miral/input_device_config.h MIRAL_INPUT_DEVICE_CONFIG)
-if (MIRAL_INPUT_DEVICE_CONFIG)
-    target_compile_definitions(miriway-shell PRIVATE MIR_LOG_COMPONENT="miriway" MIRAL_INPUT_DEVICE_CONFIG=1)
-else()
-    target_compile_definitions(miriway-shell PRIVATE MIR_LOG_COMPONENT="miriway")
-endif ()
+target_compile_definitions(miriway-shell PRIVATE MIR_LOG_COMPONENT="miriway")
 
 add_custom_target(miriway ALL
     cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway ${CMAKE_BINARY_DIR}
