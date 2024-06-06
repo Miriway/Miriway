@@ -35,10 +35,6 @@
 #include <miral/wayland_extensions.h>
 #include <miral/x11_support.h>
 
-#ifdef MIRAL_INPUT_DEVICE_CONFIG
-#include <miral/input_device_config.h>
-#endif
-
 #include <sys/wait.h>
 #include <filesystem>
 #include <fstream>
@@ -493,9 +489,6 @@ int main(int argc, char const* argv[])
             SessionLockListener(
                 [&] { is_locked = true; },
                 [&] { is_locked = false; }),
-#ifdef MIRAL_INPUT_DEVICE_CONFIG
-            add_input_device_configuration,
-#endif
             set_window_management_policy<WindowManagerPolicy>(commands),
             lockscreen
         });
