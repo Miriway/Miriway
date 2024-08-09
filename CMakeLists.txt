@@ -15,7 +15,7 @@ include(GNUInstallDirs)
 include(FindPkgConfig)
 include(CheckIncludeFileCXX)
 
-pkg_check_modules(MIRAL miral REQUIRED)
+pkg_check_modules(MIRAL miral>=5.0 REQUIRED)
 pkg_check_modules(XKBCOMMON xkbcommon REQUIRED)
 
 add_executable(miriway-shell
