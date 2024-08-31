@@ -113,6 +113,73 @@ void miriway::WindowManagerPolicy::dock_active_window_right()
         });
 }
 
+bool miriway::WindowManagerPolicy::handle_pointer_event(const MirPointerEvent* event)
+{
+    bool result = WorkspaceWMStrategy<MinimalWindowManager>::handle_pointer_event(event);
+
+    if (moving_window)
+    {
+        if (result)
+        {
+            window_moved = true;
+        }
+
+        if (!result)
+        {
+            moving_window = false;
+
+            if (window_moved)
+            {
+                if (auto active_window = tools.active_window())
+                {
+                    Rectangle const window_rect{active_window.top_left(), active_window.size()};
+                    auto const active_rect = tools.active_application_zone().extents();
+                    auto const overlap = intersection_of(active_rect, window_rect);
+
+                    // If part of the active window is offscreen at offscreen horizontally, dock it!
+                    if (overlap.size.width < window_rect.size.width)
+                    {
+                        if (overlap.left() == active_rect.left())
+                        {
+                            dock_active_window_under_lock(
+                                MirPlacementGravity(mir_placement_gravity_northwest | mir_placement_gravity_southwest));
+                        }
+                        else
+                        {
+                            dock_active_window_under_lock(
+                                MirPlacementGravity(mir_placement_gravity_northeast | mir_placement_gravity_southeast));
+                        }
+                    }
+
+                    // If part of the active window is offscreen at top, maximize it!
+                    if (overlap.size.height < window_rect.size.height)
+                    {
+                        if (overlap.top() == active_rect.top())
+                        {
+                            auto& window_info = tools.info_for(active_window);
+                            WindowSpecification modifications;
+
+                            modifications.state() = mir_window_state_maximized;
+
+                            tools.place_and_size_for_state(modifications, window_info);
+                            tools.modify_window(window_info, modifications);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+void miriway::WindowManagerPolicy::handle_request_move(WindowInfo& window_info, const MirInputEvent* input_event)
+{
+    moving_window = true;
+    window_moved = false;
+    WorkspaceWMStrategy<MinimalWindowManager>::handle_request_move(window_info, input_event);
+}
+
 bool miriway::WindowManagerPolicy::handle_keyboard_event(MirKeyboardEvent const* event)
 {
     return commands->shell_keyboard_enabled() && WorkspaceWMStrategy::handle_keyboard_event(event);
