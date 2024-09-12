@@ -42,7 +42,7 @@ apps:
     environment: &_environment
       # Prep for Mir
       MIR_SERVER_PLATFORM_PATH: ${SNAP}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/mir/server-platform
-      __EGL_VENDOR_LIBRARY_DIRS: /var/lib/snapd/lib/glvnd/egl_vendor.d:$SNAP/etc/glvnd/egl_vendor.d:$SNAP/usr/share/glvnd/egl_vendor.d
+      __EGL_VENDOR_LIBRARY_DIRS: /etc/glvnd/egl_vendor.d:/usr/share/glvnd/egl_vendor.d:$SNAP/etc/glvnd/egl_vendor.d:$SNAP/usr/share/glvnd/egl_vendor.d
       LIBGL_DRIVERS_PATH: $SNAP/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
       LIBINPUT_QUIRKS_DIR: ${SNAP}/usr/share/libinput
       PATH: ${SNAP}/bin/:${SNAP}/usr/bin/:${SNAP}/usr/local/bin/:${PATH}
