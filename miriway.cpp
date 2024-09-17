@@ -26,6 +26,7 @@
 #include <miral/display_configuration_option.h>
 #include <miral/external_client.h>
 #include <miral/keymap.h>
+#include <miral/idle_listener.h>
 #include <miral/prepend_event_filter.h>
 #include <miral/runner.h>
 #include <miral/session_lock_listener.h>
@@ -33,10 +34,6 @@
 #include <miral/version.h>
 #include <miral/wayland_extensions.h>
 #include <miral/x11_support.h>
-
-#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 1, 0)
-#include <miral/idle_listener.h>
-#endif
 
 #include <sys/wait.h>
 #include <filesystem>
@@ -123,14 +120,12 @@ public:
             },
             "lockscreen-app",
             "Lockscreen app to be triggered when the compositor session is locked"
-#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 1, 0)
         },
         lockscreen_on_idle{[this](bool on)
             { if (on) idle_listener.on_off([this]() { launch_lockscreen(); }); },
                 "lockscreen-on-idle",
                 "Trigger lockscreen on idle timeout",
                 true
-#endif
         }
     {
         conditionally_enable(WaylandExtensions::ext_session_lock_manager_v1);
@@ -139,10 +134,8 @@ public:
     {
         lockscreen_option(server);
         session_locker(server);
-#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 1, 0)
         lockscreen_on_idle(server);
         idle_listener(server);
-#endif
     }
 
 private:
@@ -157,10 +150,8 @@ private:
         [] {}
     };
     std::optional<std::vector<std::string>> lockscreen_app;
-#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 1, 0)
     ConfigurationOption const lockscreen_on_idle;
     IdleListener idle_listener;
-#endif
 };
 
 // Build an index of commands from "<key>:<commands>" values and launch them by <key> (if found)
