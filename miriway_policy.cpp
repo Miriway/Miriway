@@ -133,7 +133,7 @@ bool miriway::WindowManagerPolicy::handle_pointer_event(const MirPointerEvent* e
                 if (auto active_window = tools.active_window())
                 {
                     Rectangle const window_rect{active_window.top_left(), active_window.size()};
-                    auto const active_rect = tools.active_application_zone().extents();
+                    auto const active_rect = tools.active_output();
                     auto const overlap = intersection_of(active_rect, window_rect);
                     Point const cursor{
                         mir_pointer_event_axis_value(event, mir_pointer_axis_x),
