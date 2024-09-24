@@ -41,6 +41,8 @@ public:
     using WorkspaceWMStrategy::workspace_down;
     void dock_active_window_left();
     void dock_active_window_right();
+    bool handle_pointer_event(const MirPointerEvent* event) override;
+    void handle_request_move(WindowInfo& window_info, const MirInputEvent* input_event) override;
     void toggle_maximized_restored();
 
 private:
@@ -57,6 +59,10 @@ private:
     static bool eligible_to_dock(MirWindowType window_type);
 
     ShellCommands* const commands;
+
+    // moving_window and window_moved are a huristic to deduce whether a window has been moved by user
+    bool moving_window = false;  // A move request has been made
+    bool window_moved = false;   // Pointer events have been processed following a move request
 };
 }
 
