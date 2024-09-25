@@ -91,6 +91,7 @@ fi
 cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
+touchpad-tap-to-click=true
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none:-GTK_IM_MODULE:SSH_AUTH_SOCK=/run/user/1000/keyring/ssh
 shell-component=miriway-unsnap dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP SSH_AUTH_SOCK
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice synapse --startup
