@@ -79,7 +79,10 @@ fi
 mkdir "$(dirname "${yambar_config}")" -p -m 700
 
 miriway_display="${miriway_config/%config/display}"
-if  [ -e "/usr/share/backgrounds/warty-final-ubuntu.png" ]; then
+if  [ -e "/home/${USER}/Downloads/yorkshire.jpg" ]; then
+  # fall back to Ubuntu default
+  background="/home/${USER}/Downloads/yorkshire.jpg"
+elif  [ -e "/usr/share/backgrounds/warty-final-ubuntu.png" ]; then
   # fall back to Ubuntu default
   background="/usr/share/backgrounds/warty-final-ubuntu.png"
 else
@@ -110,6 +113,7 @@ lockscreen-app=swaylock -i ${background}
 ctrl-alt=d:cp ${miriway_display}~docked ${miriway_display}
 ctrl-alt=u:cp ${miriway_display}~undocked ${miriway_display}
 ctrl-alt=s:miriway-swap
+shell-ctrl-alt=y:systemd-run --user --scope --slice=background.slice yambar
 
 meta=Left:@dock-left
 meta=Right:@dock-right
@@ -121,6 +125,7 @@ meta=Page_Down:@workspace-down
 ctrl-alt=BackSpace:@exit
 
 display-config=static=${miriway_display}
+composite-delay=60
 EOT
 
 # Ensure we have a config file with the fixed options
