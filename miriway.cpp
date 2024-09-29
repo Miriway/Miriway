@@ -16,9 +16,9 @@
  * Authored by: Alan Griffiths <alan@octopull.co.uk>
  */
 
-#include "miriway_policy.h"
-#include "miriway_commands.h"
 #include "miriway_child_control.h"
+#include "miriway_commands.h"
+#include "miriway_policy.h"
 
 #include <mir/abnormal_exit.h>
 #include <mir/log.h>
@@ -26,8 +26,8 @@
 #include <miral/configuration_option.h>
 #include <miral/display_configuration_option.h>
 #include <miral/external_client.h>
-#include <miral/keymap.h>
 #include <miral/idle_listener.h>
+#include <miral/keymap.h>
 #include <miral/prepend_event_filter.h>
 #include <miral/runner.h>
 #include <miral/session_lock_listener.h>
