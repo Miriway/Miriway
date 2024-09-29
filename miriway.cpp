@@ -52,41 +52,30 @@ namespace
 class ChildControl
 {
 public:
-    ChildControl(MirRunner& runner, WaylandExtensions& extensions) :
+    explicit ChildControl(MirRunner& runner);
+
+    void operator()(mir::Server& server);
+
+    void launch_shell(std::vector<std::string> const& cmd);
+    void launch_shell(std::vector<std::string> const& cmd, std::function<bool()> const should_restart_predicate);
+    void run_shell(std::vector<std::string> const& cmd);
+    void run_app(std::vector<std::string> const& cmd);
+    void enable_for_shell(WaylandExtensions& extensions, std::string const& protocol);
+
+private:
+    class Self;
+    std::shared_ptr<Self> self;
+};
+
+class ChildControl::Self
+{
+public:
+
+    explicit Self(MirRunner& runner) :
         runner{runner},
         shell_pids{runner}
     {
         runner.add_stop_callback([this]{ shell_pids.shutdown(); });
-
-        // Protocols we're reserving for shell components_option
-        for (auto const& protocol : {
-            WaylandExtensions::zwlr_layer_shell_v1,
-            WaylandExtensions::zwlr_foreign_toplevel_manager_v1})
-        {
-            enable_for_shell(extensions, protocol);
-        }
-    }
-
-    void operator()(mir::Server& server)
-    {
-        client_launcher(server);
-    }
-
-    void launch_shell(std::vector<std::string> const& cmd)
-    {
-        shell_launch(cmd, std::make_shared<ShellComponentRunInfo>());
-    }
-    void launch_shell(std::vector<std::string> const& cmd, std::function<bool()> const should_restart_predicate)
-    {
-        shell_launch(cmd, std::make_shared<ShellComponentRunInfo>(should_restart_predicate));
-    }
-    void run_shell(std::vector<std::string> const& cmd)
-    {
-        shell_pids.insert(client_launcher.launch(cmd));
-    }
-    void run_app(std::vector<std::string> const& cmd)
-    {
-        client_launcher.launch(cmd);
     }
 
     void enable_for_shell(WaylandExtensions& extensions, std::string const& protocol)
@@ -94,7 +83,6 @@ public:
         extensions.conditionally_enable(protocol, enable_for_shell_pids);
     }
 
-private:
     struct ShellComponentRunInfo
     {
         ShellComponentRunInfo() : ShellComponentRunInfo{[]() { return true; }} {}
@@ -268,6 +256,39 @@ private:
             }
         };
 };
+
+ChildControl::ChildControl(MirRunner& runner) :
+    self{std::make_shared<Self>(runner)}
+{
+}
+
+void ChildControl::operator()(mir::Server& server)
+{
+    self->client_launcher(server);
+}
+
+void ChildControl::launch_shell(std::vector<std::string> const& cmd)
+{
+    self->shell_launch(cmd, std::make_shared<Self::ShellComponentRunInfo>());
+}
+
+void ChildControl::launch_shell(std::vector<std::string> const& cmd, std::function<bool()> const should_restart_predicate)
+{
+    self->shell_launch(cmd, std::make_shared<Self::ShellComponentRunInfo>(should_restart_predicate));
+}
+void ChildControl::run_shell(std::vector<std::string> const& cmd)
+{
+    self->shell_pids.insert(self->client_launcher.launch(cmd));
+}
+void ChildControl::run_app(std::vector<std::string> const& cmd)
+{
+    self->client_launcher.launch(cmd);
+}
+
+void ChildControl::enable_for_shell(WaylandExtensions& extensions, std::string const& protocol)
+{
+    extensions.conditionally_enable(protocol, self->enable_for_shell_pids);
+}
 
 auto to_key(std::string_view as_string) -> xkb_keysym_t
 {
@@ -459,7 +480,7 @@ int main(int argc, char const* argv[])
             return info.user_preference().value_or(false);
         });
 
-    ChildControl child_control(runner, extensions);
+    ChildControl child_control(runner);
 
 
     // Protocols we're reserving for shell components_option
@@ -537,7 +558,7 @@ int main(int argc, char const* argv[])
             pre_init(shell_extension),
             extensions,
             display_configuration_options,
-            std::ref(child_control),
+            child_control,
             components_option,
             shell_ctrl_alt,
             shell_alt,
