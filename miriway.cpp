@@ -16,8 +16,9 @@
  * Authored by: Alan Griffiths <alan@octopull.co.uk>
  */
 
-#include "miriway_policy.h"
+#include "miriway_child_control.h"
 #include "miriway_commands.h"
+#include "miriway_policy.h"
 
 #include <mir/abnormal_exit.h>
 #include <mir/log.h>
@@ -25,8 +26,8 @@
 #include <miral/configuration_option.h>
 #include <miral/display_configuration_option.h>
 #include <miral/external_client.h>
-#include <miral/keymap.h>
 #include <miral/idle_listener.h>
+#include <miral/keymap.h>
 #include <miral/prepend_event_filter.h>
 #include <miral/runner.h>
 #include <miral/session_lock_listener.h>
@@ -35,13 +36,9 @@
 #include <miral/wayland_extensions.h>
 #include <miral/x11_support.h>
 
-#include <sys/wait.h>
 #include <filesystem>
 #include <fstream>
 #include <functional>
-#include <sys/timerfd.h>
-#include <ctime>
-#include <numeric>
 
 using namespace miral;
 using namespace miriway;
@@ -69,17 +66,6 @@ std::map<std::string, ShellCommands::CmdFunctor> const wm_command =
         { "workspace-down", [](ShellCommands* sc, bool shift) { sc->workspace_down(shift); } },
         { "exit", [](ShellCommands* sc, bool shift) { sc->exit(shift); } },
     };
-
-struct ShellComponentRunInfo
-{
-    ShellComponentRunInfo() : ShellComponentRunInfo{[]() { return true; }} {}
-    explicit ShellComponentRunInfo(std::function<bool()> const should_restart_predicate)
-        : should_restart_predicate{std::move(should_restart_predicate)} {}
-    time_t last_run_time = 0;
-    int runs_in_quick_succession = 0;
-    std::unique_ptr<miral::FdHandle> handle = nullptr;
-    std::function<bool()> const should_restart_predicate;
-};
 
 // Build a list of shell components from "<commands>" values and launch them all after startup
 struct ShellComponents
@@ -209,76 +195,6 @@ private:
         }
     }
 };
-
-// Keep track of interesting "shell" child processes and call the corresponding
-// `on_reap` if they fail. Note that it will "reap" all child processes not just
-// the ones of interest. (But that's useful as it avoids "zombie" child processes.)
-struct ShellPids
-{
-    ShellPids(MirRunner& runner)
-    {
-        runner.add_start_callback([&] { runner.register_signal_handler({SIGCHLD}, [this](int) { reap(); }); });
-    }
-
-    using OnReap = std::function<void()>;
-
-    void insert(pid_t pid, OnReap on_reap = [](){})
-    {
-        std::lock_guard lock{shell_component_mutex};
-        shell_component_pids.insert(std::pair(pid, on_reap));
-    };
-
-    bool is_found(pid_t pid) const
-    {
-        std::lock_guard lock{shell_component_mutex};
-        return shell_component_pids.find(pid) != end(shell_component_pids);
-    }
-
-    void shutdown()
-    {
-        std::lock_guard lock{shell_component_mutex};
-        for (auto [pid, _] : shell_component_pids)
-        {
-            kill(pid, SIGTERM);
-        }
-        shell_component_pids.clear();
-    }
-private:
-    std::mutex mutable shell_component_mutex;
-    std::map<pid_t, OnReap> shell_component_pids;
-
-    void reap()
-    {
-        int status = 0;
-        while (true)
-        {
-            auto const pid = waitpid(-1, &status, WNOHANG);
-            if (pid > 0)
-            {
-                OnReap on_reap = [](){};
-
-                {
-                    std::lock_guard lock{shell_component_mutex};
-
-                    if (auto it = shell_component_pids.find(pid); it != shell_component_pids.end())
-                    {
-                        if ((WIFEXITED(status) && WEXITSTATUS(status))
-                            || (WIFSIGNALED(status) && WTERMSIG(status)))
-                        {
-                            on_reap = it->second;
-                        }
-                        shell_component_pids.erase(pid);
-                    }
-                }
-                on_reap();
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-};
 }
 
 int main(int argc, char const* argv[])
@@ -319,112 +235,24 @@ int main(int argc, char const* argv[])
             return info.user_preference().value_or(false);
         });
 
-    // To support docks, onscreen keyboards, launchers and the like; enable a number of protocol extensions,
-    // but, because they have security implications only for those applications found in `shell_pids`.
-    // We'll use `shell_pids` to track "shell-*" processes.
-    // We also check `user_preference()` so these can be enabled by the configuration
-    ShellPids shell_pids{runner};
-    runner.add_stop_callback([&shell_pids]{ shell_pids.shutdown(); });
+    ChildControl child_control(runner);
 
-    auto const enable_for_shell_pids = [&](WaylandExtensions::EnableInfo const& info)
-        {
-            pid_t const pid = pid_of(info.app());
-            return shell_pids.is_found(pid) || info.user_preference().value_or(false);
-        };
 
     // Protocols we're reserving for shell components_option
     for (auto const& protocol : {
         WaylandExtensions::zwlr_layer_shell_v1,
         WaylandExtensions::zwlr_foreign_toplevel_manager_v1})
     {
-        extensions.conditionally_enable(protocol, enable_for_shell_pids);
+        child_control.enable_for_shell(extensions, protocol);
     }
 
     ConfigurationOption shell_extension{
         [&](std::vector<std::string> const& protocols)
-            { for (auto const& protocol : protocols) extensions.conditionally_enable(protocol, enable_for_shell_pids); },
-        "shell-add-wayland-extension",
-        "Additional Wayland extension to allow shell processes (may be specified multiple times)"};
+        { for (auto const& protocol : protocols) child_control.enable_for_shell(extensions, protocol); },
+    "shell-add-wayland-extension",
+    "Additional Wayland extension to allow shell processes (may be specified multiple times)"};
 
-    ExternalClientLauncher client_launcher;
-
-    // A configuration option to start applications when compositor starts and record them in `shell_pids`.
-    // Because of the previous section, this allows them some extra Wayland extensions
-    std::function<void(std::vector<std::string> const&, std::shared_ptr<ShellComponentRunInfo>)> shell_launch
-        = [&](std::vector<std::string> const& cmd, std::shared_ptr<ShellComponentRunInfo> info)
-        {
-            static int constexpr min_time_seconds_allowed_between_runs = 3;
-            static int constexpr time_seconds_wait_foreach_run = 3;
-            static int const max_too_short_reruns_in_a_row = 3;
-            static auto const get_cmd_string = [](std::vector<std::string> const& cmd)
-            {
-                return std::accumulate(std::begin(cmd), std::end(cmd), std::string(),
-                    [](std::string const& current, std::string const& next)
-                    {
-                       return current.empty() ? next : current + " " + next;
-                    });
-            };
-
-            time_t const now = std::time(nullptr);
-            auto const time_elapsed_since_last_run = now - info->last_run_time;
-            if (time_elapsed_since_last_run <= min_time_seconds_allowed_between_runs)
-            {
-                // The command is trying to restart too soon, so we throttle it. For every premature
-                // death that it has in a row, we increasingly throttle its restart time.
-                // After max_too_short_reruns_in_a_row is hit, we stop trying to rerun
-                if (info->runs_in_quick_succession >= max_too_short_reruns_in_a_row)
-                {
-                    mir::log_warning("No longer restarting app: %s", get_cmd_string(cmd).c_str());
-                    return;
-                }
-
-                auto const time_to_wait = time_seconds_wait_foreach_run * (info->runs_in_quick_succession + 1);
-                auto const timer_fd = timerfd_create(CLOCK_REALTIME, 0);
-                if (timer_fd == -1)
-                {
-                    mir::log_error("timerfd_create failed, unable to restart application: %s", get_cmd_string(cmd).c_str());
-                    return;
-                }
-
-                auto const spec = itimerspec
-                {
-                    { 0, 0 },               // Timer interval
-                    { time_to_wait, 0 } // Initial expiration
-                };
-
-                if (timerfd_settime(timer_fd, 0, &spec, NULL) == -1)
-                {
-                    mir::log_error("timerfd_settime failed, unable to restart application: %s", get_cmd_string(cmd).c_str());
-                    return;
-                }
-
-                info->handle = runner.register_fd_handler(mir::Fd{timer_fd}, [info, &shell_pids, &client_launcher, &cmd, &shell_launch](int){
-                    // While waiting for the timer, the predicate could have a different value
-                    if (!info->should_restart_predicate())
-                        return;
-
-                    info->handle.reset();
-                    info->runs_in_quick_succession++;
-                    info->last_run_time = std::time(nullptr);
-                    shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, info, &cmd] {
-                        if (info->should_restart_predicate())
-                            shell_launch(cmd, info);
-                    });
-                });
-                return;
-            }
-            else
-            {
-                info->runs_in_quick_succession = 0;
-                info->last_run_time = now;
-                shell_pids.insert(client_launcher.launch(cmd), [&shell_launch, info, &cmd] {
-                    if (info->should_restart_predicate())
-                        shell_launch(cmd, info);
-                });
-            }
-        };
-
-    ShellComponents shell_components{[&shell_launch](auto const& cmd) { shell_launch(cmd, std::make_shared<ShellComponentRunInfo>()); }};
+    ShellComponents shell_components{[&child_control](auto const& cmd) { child_control.launch_shell(cmd); }};
     runner.add_start_callback([&]{ shell_components.launch_all(); });
     ConfigurationOption components_option{
         [&](std::vector<std::string> const& apps) { shell_components.populate(apps); },
@@ -436,34 +264,34 @@ int main(int argc, char const* argv[])
     CommandIndex shell_meta{
         "shell-meta",
         "meta <key>:<command> shortcut with shell priviledges (may be specified multiple times)",
-        [&](auto cmd) { shell_pids.insert(client_launcher.launch(cmd)); }};
+        [&child_control](auto cmd) { child_control.run_shell(cmd); }};
 
     CommandIndex shell_ctrl_alt{
         "shell-ctrl-alt",
         "ctrl-alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)",
-        [&](auto cmd) { shell_pids.insert(client_launcher.launch(cmd)); }};
+        [&child_control](auto cmd) { child_control.run_shell(cmd); }};
 
     CommandIndex shell_alt{
         "shell-alt",
         "alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)",
-        [&](auto cmd) { shell_pids.insert(client_launcher.launch(cmd)); }};
+        [&child_control](auto cmd) { child_control.run_shell(cmd); }};
 
     // `meta`, `alt` and `ctrl_alt` provide a lookup to execute the commands configured by the corresponding
     // configuration options. These processes are NOT added to `shell_pids`
     CommandIndex meta{
         "meta",
         "meta <key>:<command> shortcut (may be specified multiple times)",
-        [&](auto cmd) { client_launcher.launch(cmd); }};
+        [&](auto cmd) { child_control.run_app(cmd); }};
 
     CommandIndex ctrl_alt{
         "ctrl-alt",
         "ctrl-alt <key>:<command> shortcut (may be specified multiple times)",
-        [&](auto cmd) { client_launcher.launch(cmd); }};
+        [&](auto cmd) { child_control.run_app(cmd); }};
 
     CommandIndex alt{
         "alt",
         "alt <key>:<command> shortcut (may be specified multiple times)",
-        [&](auto cmd) { client_launcher.launch(cmd); }};
+        [&](auto cmd) { child_control.run_app(cmd); }};
 
     // Process input events to identifies commands Miriway needs to handle
     ShellCommands commands{
@@ -474,11 +302,10 @@ int main(int argc, char const* argv[])
 
     std::atomic<bool> is_locked = false;
     LockScreen lockscreen(
-        [&shell_launch, &is_locked](auto const& cmd) { shell_launch(cmd, std::make_shared<ShellComponentRunInfo>(
-            [&is_locked]() { return is_locked.load(); }));
+        [&child_control, &is_locked](auto const& cmd) { child_control.launch_shell(cmd, [&is_locked]() { return is_locked.load(); });
         },
-        [&extensions, &enable_for_shell_pids](auto protocol) {
-            extensions.conditionally_enable(protocol, enable_for_shell_pids); });
+        [&extensions, &child_control](auto protocol) {
+            child_control.enable_for_shell(extensions, protocol); });
 
     return runner.run_with(
         {
@@ -486,7 +313,7 @@ int main(int argc, char const* argv[])
             pre_init(shell_extension),
             extensions,
             display_configuration_options,
-            client_launcher,
+            child_control,
             components_option,
             shell_ctrl_alt,
             shell_alt,
