@@ -1,0 +1,29 @@
+#!/bin/bash
+
+bindir=$(dirname "$0")
+
+if [ "${bindir}" != "" ]; then bindir="${bindir}/"; fi
+
+unset WAYLAND_DISPLAY
+port=0
+while [ -e "${XDG_RUNTIME_DIR}/wayland-${port}" ]; do
+    let port+=1
+done
+wayland_display=wayland-${port}
+
+WAYLAND_DISPLAY=${wayland_display} MIR_SERVER_DISPLAY_AUTOSCALE=1200 "${bindir}"miriway-run-shell&
+miriway_pid=$!
+
+# Wait until the server starts
+until [ -O "${XDG_RUNTIME_DIR}/${wayland_display}" ]
+do
+  if ! kill -0 ${miriway_pid} &> /dev/null
+  then
+    echo "ERROR: ${miral_server} [pid=${miriway_pid}] is not running"
+    exit 1
+  fi
+  inotifywait -qq --timeout 5 --event create $(dirname "${XDG_RUNTIME_DIR}/${wayland_display}")
+done
+
+XDG_SESSION_TYPE=mir GDK_BACKEND=wayland,x11 QT_QPA_PLATFORM=wayland SDL_VIDEODRIVER=wayland WAYLAND_DISPLAY=${wayland_display} NO_AT_BRIDGE=1 "$@"
+kill $miriway_pid

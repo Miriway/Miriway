@@ -47,6 +47,10 @@ add_custom_target(miriway ALL
     cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway ${CMAKE_BINARY_DIR}
 )
 
+add_custom_target(miriway-run ALL
+    cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-run ${CMAKE_BINARY_DIR}
+)
+
 add_custom_target(miriway-terminal ALL
     cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-terminal ${CMAKE_BINARY_DIR}
 )
@@ -65,6 +69,7 @@ add_custom_target(miriway-background ALL
 
 install(PROGRAMS
     ${CMAKE_BINARY_DIR}/miriway
+    ${CMAKE_BINARY_DIR}/miriway-run
     ${CMAKE_BINARY_DIR}/miriway-run-shell
     ${CMAKE_BINARY_DIR}/miriway-shell
     ${CMAKE_BINARY_DIR}/miriway-terminal
