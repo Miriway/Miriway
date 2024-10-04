@@ -1,5 +1,5 @@
 /*
- * Copyright © 2022 Octopull Ltd.
+ * Copyright © 2024 Octopull Ltd.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3,
@@ -16,19 +16,17 @@
  * Authored by: Alan Griffiths <alan@octopull.co.uk>
  */
 
-#include "miriway_child_control.h"
-#include "miriway_commands.h"
-
 #include <miral/display_configuration_option.h>
 #include <miral/keymap.h>
 #include <miral/runner.h>
 #include <miral/wayland_extensions.h>
 #include <miral/minimal_window_manager.h>
 #include <miral/set_window_management_policy.h>
+#include <miral/toolkit_event.h>
 #include <miral/x11_support.h>
 
 using namespace miral;
-using namespace miriway;
+using namespace miral::toolkit;
 
 namespace
 {
@@ -73,14 +71,12 @@ int main(int argc, char const* argv[])
     for (auto const& ext : wayland_extensions.all_supported())
         wayland_extensions.enable(ext);
 
-    ChildControl child_control(runner);
     return runner.run_with(
         {
             set_window_management_policy<MiralRunWM>(),
             X11Support{},
             wayland_extensions,
             display_configuration_options,
-            child_control,
             Keymap{},
         });
 }

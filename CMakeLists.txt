@@ -40,7 +40,8 @@ target_compile_definitions(miriway-shell PRIVATE MIR_LOG_COMPONENT="miriway")
 add_executable(miriway-run-shell
     miriway-run-shell.cpp
 )
-target_link_libraries(miriway-run-shell miriwaycommon)
+target_link_libraries(miriway-run-shell ${MIRAL_LDFLAGS})
+target_include_directories(miriway-run-shell PUBLIC SYSTEM ${MIRAL_INCLUDE_DIRS})
 target_compile_definitions(miriway-run-shell PRIVATE MIR_LOG_COMPONENT="miriway")
 
 add_custom_target(miriway ALL
