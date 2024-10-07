@@ -44,8 +44,15 @@ apps:
 
   vnc-server:
     command-chain:
+      - usr/local/bin/miriway-unconfine
       - bin/miriway.vnc-server
     command: *_command
+    environment: *_environment
+
+  run:
+    command-chain:
+      - usr/local/bin/miriway-unconfine
+    command: usr/local/bin/miriway-run
     environment: *_environment
 
 parts:

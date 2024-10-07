@@ -18,24 +18,38 @@ include(CheckIncludeFileCXX)
 pkg_check_modules(MIRAL miral>=5.1 REQUIRED)
 pkg_check_modules(XKBCOMMON xkbcommon REQUIRED)
 
-add_executable(miriway-shell
-    miriway.cpp
+set (CMAKE_REQUIRED_INCLUDES "${MIRAL_INCLUDE_DIRS}")
+
+add_library(miriwaycommon STATIC
     miriway_child_control.cpp       miriway_child_control.h
     miriway_commands.cpp            miriway_commands.h
-    miriway_policy.cpp              miriway_policy.h
     miriway_workspace_manager.cpp   miriway_workspace_manager.h
 )
 
-target_include_directories(miriway-shell PUBLIC SYSTEM ${MIRAL_INCLUDE_DIRS})
-target_link_libraries(     miriway-shell               ${MIRAL_LDFLAGS})
-target_link_libraries(     miriway-shell               ${XKBCOMMON_LIBRARIES})
+target_include_directories(miriwaycommon PUBLIC SYSTEM ${MIRAL_INCLUDE_DIRS})
+target_link_libraries(     miriwaycommon PUBLIC        ${MIRAL_LDFLAGS} ${XKBCOMMON_LIBRARIES})
+target_compile_definitions(miriwaycommon PRIVATE MIR_LOG_COMPONENT="miriway")
 
-set (CMAKE_REQUIRED_INCLUDES "${MIRAL_INCLUDE_DIRS}")
-include_directories(miriway-shell PUBLIC SYSTEM ${MIRAL_INCLUDE_DIRS})
+add_executable(miriway-shell
+    miriway.cpp
+    miriway_policy.cpp              miriway_policy.h
+)
+target_link_libraries(miriway-shell miriwaycommon)
 target_compile_definitions(miriway-shell PRIVATE MIR_LOG_COMPONENT="miriway")
+
+add_executable(miriway-run-shell
+    miriway-run-shell.cpp
+)
+target_link_libraries(miriway-run-shell ${MIRAL_LDFLAGS})
+target_include_directories(miriway-run-shell PUBLIC SYSTEM ${MIRAL_INCLUDE_DIRS})
+target_compile_definitions(miriway-run-shell PRIVATE MIR_LOG_COMPONENT="miriway")
 
 add_custom_target(miriway ALL
     cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway ${CMAKE_BINARY_DIR}
+)
+
+add_custom_target(miriway-run ALL
+    cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-run ${CMAKE_BINARY_DIR}
 )
 
 add_custom_target(miriway-terminal ALL
@@ -56,6 +70,8 @@ add_custom_target(miriway-background ALL
 
 install(PROGRAMS
     ${CMAKE_BINARY_DIR}/miriway
+    ${CMAKE_BINARY_DIR}/miriway-run
+    ${CMAKE_BINARY_DIR}/miriway-run-shell
     ${CMAKE_BINARY_DIR}/miriway-shell
     ${CMAKE_BINARY_DIR}/miriway-terminal
     ${CMAKE_BINARY_DIR}/miriway-unsnap
