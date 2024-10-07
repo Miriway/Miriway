@@ -58,6 +58,29 @@ public:
         }
         return false;
     }
+
+    // Keep main window centered
+    void handle_modify_window(WindowInfo& window_info, const WindowSpecification& new_modifications) override
+    {
+        if (new_modifications.size() &&
+            (window_info.type() == mir_window_type_normal || window_info.type() == mir_window_type_freestyle) &&
+            !window_info.parent() &&
+            new_modifications.state().value_or(window_info.state()) == mir_window_state_restored)
+        {
+            auto modifications = new_modifications;
+            auto const output = tools.active_output();
+
+            modifications.top_left() = Point{
+                output.left() + (output.size.width - modifications.size().value().width)/2,
+                output.top() + (output.size.height - modifications.size().value().height)/2};
+
+            MinimalWindowManager::handle_modify_window(window_info, modifications);
+        }
+        else
+        {
+            MinimalWindowManager::handle_modify_window(window_info, new_modifications);
+        }
+    }
 };
 }
 
