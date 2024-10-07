@@ -19,10 +19,10 @@ until [ -O "${XDG_RUNTIME_DIR}/${wayland_display}" ]
 do
   if ! kill -0 ${miriway_pid} &> /dev/null
   then
-    echo "ERROR: ${miral_server} [pid=${miriway_pid}] is not running"
+    echo "ERROR: miriway-run-shell [pid=${miriway_pid}] is not running"
     exit 1
   fi
-  inotifywait -qq --timeout 5 --event create $(dirname "${XDG_RUNTIME_DIR}/${wayland_display}")
+  inotifywait -qq --timeout 5 --event create "$(dirname "${XDG_RUNTIME_DIR}/${wayland_display}")"
 done
 
 XDG_SESSION_TYPE=mir GDK_BACKEND=wayland,x11 QT_QPA_PLATFORM=wayland SDL_VIDEODRIVER=wayland WAYLAND_DISPLAY=${wayland_display} NO_AT_BRIDGE=1 "$@"
