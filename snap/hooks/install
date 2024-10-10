@@ -1,7 +1,9 @@
 #!/bin/sh -e
 
-mkdir -p /usr/share/wayland-sessions/
+mkdir -p /usr/share/wayland-sessions/ /usr/lib/systemd/user/ /usr/bin/libexec/
 cp "$SNAP"/usr/local/share/wayland-sessions/miriway.desktop /usr/share/wayland-sessions/miriway.desktop
+cp "$SNAP"/usr/lib/systemd/user/miriway-session.target /usr/lib/systemd/user/
+cp "$SNAP"/usr/bin/libexec/miriway-session-startup  /usr/bin/libexec/
 
 xdg_config=/etc/xdg/xdg-miriway
 
@@ -26,7 +28,7 @@ cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
-shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
+shell-component=/usr/bin/libexec/miriway-setup
 
 ctrl-alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/local/bin/miriway-terminal
 shell-component=miriway-background ${background}
