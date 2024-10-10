@@ -121,6 +121,10 @@ parts:
     plugin: dump
     source: snap-utils
 
+  systemd:
+    plugin: dump
+    source: systemd
+
   mesa-patchelf:
     build-attributes:
       - enable-patchelf
