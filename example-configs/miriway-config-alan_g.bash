@@ -3,8 +3,8 @@ set -e
 
 if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 
-shell_components="synapse swaync swaybg kgx grim gnome-keyring-daemon"
-shell_packages="synapse sway-notification-center swaybg gnome-console grim gnome-keyring"
+shell_components="synapse swaync swaybg swaylock kgx grim gnome-keyring-daemon"
+shell_packages="synapse sway-notification-center swaybg swaylock gnome-console grim gnome-keyring"
 
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 yambar_config="${XDG_CONFIG_HOME:-$HOME/.config}/yambar/config.yml"
@@ -84,7 +84,7 @@ shell-meta=a:miriway-unsnap synapse
 meta=Print:miriway-unsnap sh -c "grim ~/Pictures/screenshot-\$(date --iso-8601=seconds).png"
 
 shell-ctrl-alt=l:miriway-unsnap loginctl lock-session
-lockscreen-app=swaylock -i ${background}
+lockscreen-app=miriway swaylock -i ${background}
 
 ctrl-alt=d:cp ${miriway_display}~docked ${miriway_display}
 ctrl-alt=u:cp ${miriway_display}~undocked ${miriway_display}

@@ -3,8 +3,8 @@ set -e
 
 if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 
-shell_components="waybar wofi kgx swaybg"
-shell_packages="waybar wofi gnome-console swaybg sway-backgrounds"
+shell_components="waybar wofi kgx swaybg swaylock swaync"
+shell_packages="waybar wofi gnome-console swaybg swaylock sway-notification-center sway-backgrounds"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 waybar_config="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/config"
@@ -84,7 +84,7 @@ shell-component=miriway-unsnap waybar
 shell-meta=a:miriway-unsnap wofi --show drun --location top_left
 
 shell-ctrl-alt=l:miriway-unsnap loginctl lock-session
-lockscreen-app=swaylock -i ${background}
+lockscreen-app=miriway-unsnap swaylock -i ${background}
 
 meta=Left:@dock-left
 meta=Right:@dock-right
