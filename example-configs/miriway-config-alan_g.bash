@@ -3,15 +3,20 @@ set -e
 
 if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 
-shell_components="synapse kgx grim gnome-keyring-daemon"
+shell_components="synapse swaync swaybg kgx grim gnome-keyring-daemon"
+shell_packages="synapse sway-notification-center swaybg gnome-console grim gnome-keyring"
+
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 yambar_config="${XDG_CONFIG_HOME:-$HOME/.config}/yambar/config.yml"
+
+unset need_install
 
 for component in $shell_components
 do
   if ! command -v "$component" > /dev/null
   then
     echo Need to install "$component"
+    need_install=1
   fi
 done
 
@@ -27,53 +32,24 @@ read -p"OK to proceed/configure only? [y/n/c] " yn
 
 case $yn in
   [Yy] ) echo Proceeding...;;
-  [Cc] ) echo Skippling install...; skip_install=1;;
+  [Cc] ) echo Skippling install...; unset need_install;;
   [Nn] ) exit 1;;
 esac
 
-install()
-{
-if command -v apt > /dev/null
+if [ -n "$need_install" ]
 then
-    case "$1" in
-      waybar ) sudo apt install "$1" fonts-font-awesome;;
-      yambar ) sudo apt install "$1" fonts-font-awesome;;
-      kgx ) sudo apt install gnome-console;;
-      swaync ) sudo apt install sway-notification-center;;
-      gnome-keyring-daemon ) sudo apt install gnome-keyring;;
-      * )   sudo apt install "$1";;
-    esac
-elif command -v dnf > /dev/null
-then
-    case "$1" in
-      waybar ) sudo dnf install "$1" fontawesome-fonts;;
-      yambar ) sudo dnf install "$1" fontawesome-fonts;;
-      kgx ) sudo dnf install gnome-console;;
-      gnome-keyring-daemon ) sudo dnf install gnome-keyring;;
-      * )   sudo dnf install "$1";;
-    esac
-elif command -v apk > /dev/null
-then
-    case "$1" in
-      waybar ) sudo apk add "$1" font-awesome;;
-      yambar ) sudo apk add "$1" font-awesome;;
-      kgx ) sudo apk add gnome-console;;
-      gnome-keyring-daemon ) sudo apk add install gnome-keyring;;
-      * )   sudo apk add "$1";;
-    esac
-else
-  echo ERROR: I cannot find an install tool for this system
-fi
-}
-
-if [ "${skip_install}" != "1" ]; then
-for component in $shell_components
-do
-  if ! command -v "$component" > /dev/null
+  if command -v apt > /dev/null
   then
-    install "$component"
+    sudo apt install $shell_packages fonts-font-awesome
+  elif command -v dnf > /dev/null
+  then
+    sudo dnf install $shell_packages fontawesome-fonts
+  elif command -v apk > /dev/null
+  then
+    sudo apk add $shell_packages font-awesome
+  else
+    echo ERROR: I cannot find an install tool for this system
   fi
-done
 fi
 
 mkdir "$(dirname "${yambar_config}")" -p -m 700
