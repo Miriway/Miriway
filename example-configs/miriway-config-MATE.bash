@@ -3,7 +3,9 @@ set -e
 
 if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 
-shell_components="mate-panel mate-terminal /usr/libexec/mate-notification-daemon/mate-notification-daemon"
+shell_components="mate-panel mate-terminal /usr/libexec/mate-notification-daemon/mate-notification-daemon swaybg"
+shell_packages="mate-panel mate-terminal mate-notification-daemon mate-backgrounds swaybg"
+
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 
 for component in $shell_components
@@ -11,6 +13,7 @@ do
   if ! command -v "$component" > /dev/null
   then
     echo Need to install "$component"
+    need_install=1
   fi
 done
 
@@ -25,47 +28,21 @@ case $yn in
   [Nn] ) exit 1;;
 esac
 
-install()
-{
-if command -v apt > /dev/null
+if [ -n "$need_install" ]
 then
-    case "$1" in
-      waybar ) sudo apt install "$1" fonts-font-awesome;;
-      yambar ) sudo apt install "$1" fonts-font-awesome;;
-      kgx ) sudo apt install gnome-console;;
-      /usr/libexec/mate-notification-daemon/mate-notification-daemon ) sudo apt install mate-notification-daemon;;
-      * )   sudo apt install "$1";;
-    esac
-elif command -v dnf > /dev/null
-then
-    case "$1" in
-      waybar ) sudo dnf install "$1" fontawesome-fonts;;
-      yambar ) sudo dnf install "$1" fontawesome-fonts;;
-      kgx ) sudo dnf install gnome-console;;
-      /usr/libexec/mate-notification-daemon/mate-notification-daemon ) sudo dnf install mate-notification-daemon;;
-      * )   sudo dnf install "$1";;
-    esac
-elif command -v apk > /dev/null
-then
-    case "$1" in
-      waybar ) sudo apk add "$1" font-awesome;;
-      yambar ) sudo apk add "$1" font-awesome;;
-      kgx ) sudo apk add gnome-console;;
-      /usr/libexec/mate-notification-daemon/mate-notification-daemon ) sudo apk add mate-notification-daemon;;
-      * )   sudo apk add "$1";;
-    esac
-else
-  echo ERROR: I cannot find an install tool for this system
-fi
-}
-
-for component in $shell_components
-do
-  if ! command -v "$component" > /dev/null
+  if command -v apt > /dev/null
   then
-    install "$component"
+    sudo apt install $shell_packages fonts-font-awesome
+  elif command -v dnf > /dev/null
+  then
+    sudo dnf install $shell_packages fontawesome-fonts
+  elif command -v apk > /dev/null
+  then
+    sudo apk add $shell_packages font-awesome
+  else
+    echo ERROR: I cannot find an install tool for this system
   fi
-done
+fi
 
 if [ -e "/usr/share/backgrounds/ubuntu-mate-common/Green-Wall-Logo.png" ]; then
   # Try Ubuntu MATE wallpaper (from ubuntu-mate-wallpapers-common)
@@ -88,8 +65,7 @@ idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
 shell-component=miriway-unsnap /usr/libexec/mate-notification-daemon/mate-notification-daemon
-
-shell-component=miriway-unsnap swaybg --mode fill --output '*' --image '${background}'
+shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image '${background}'
 shell-component=miriway-unsnap mate-panel
 
 shell-meta=a:miriway-unsnap mate-panel --run-dialog

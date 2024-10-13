@@ -3,16 +3,21 @@ set -e
 
 if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 
-shell_components="waybar wofi kgx"
+shell_components="waybar wofi kgx swaybg swaylock swaync"
+shell_packages="waybar wofi gnome-console swaybg swaylock sway-notification-center sway-backgrounds"
+miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 waybar_config="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/config"
 waybar_style="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/style.css"
+
+unset need_install
 
 for component in $shell_components
 do
   if ! command -v "$component" > /dev/null
   then
     echo Need to install "$component"
+    need_install=1
   fi
 done
 
@@ -35,46 +40,21 @@ case $yn in
   [Nn] ) exit 1;;
 esac
 
-install()
-{
-if command -v apt > /dev/null
+if [ -n "$need_install" ]
 then
-    case "$1" in
-      waybar ) sudo apt install "$1" fonts-font-awesome;;
-      yambar ) sudo apt install "$1" fonts-font-awesome;;
-      wofi ) sudo apt install "$1" fonts-font-awesome;;
-      kgx ) sudo apt install gnome-console;;
-      swaync ) sudo apt install sway-notification-center;;
-      * )   sudo apt install "$1";;
-    esac
-elif command -v dnf > /dev/null
-then
-    case "$1" in
-      waybar ) sudo dnf install "$1" fontawesome-fonts;;
-      yambar ) sudo dnf install "$1" fontawesome-fonts;;
-      kgx ) sudo dnf install gnome-console;;
-      * )   sudo dnf install "$1";;
-    esac
-elif command -v apk > /dev/null
-then
-    case "$1" in
-      waybar ) sudo apk add "$1" font-awesome;;
-      yambar ) sudo apk add "$1" font-awesome;;
-      kgx ) sudo apk add gnome-console;;
-      * )   sudo apk add "$1";;
-    esac
-else
-  echo ERROR: I cannot find an install tool for this system
-fi
-}
-
-for component in $shell_components
-do
-  if ! command -v "$component" > /dev/null
+  if command -v apt > /dev/null
   then
-    install "$component"
+    sudo apt install $shell_packages fonts-font-awesome
+  elif command -v dnf > /dev/null
+  then
+    sudo dnf install $shell_packages fontawesome-fonts
+  elif command -v apk > /dev/null
+  then
+    sudo apk add $shell_packages font-awesome
+  else
+    echo ERROR: I cannot find an install tool for this system
   fi
-done
+fi
 
 if [ -e "/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_2048x1536.png" ]; then
   # Try SWAY wallpaper (from sway-backgrounds)
@@ -103,12 +83,8 @@ shell-component=systemd-run --user --scope --slice=background.slice swaync
 shell-component=miriway-unsnap waybar
 shell-meta=a:miriway-unsnap wofi --show drun --location top_left
 
-$(if find $(dirname "$0")/../usr/lib -name libmirserver.so.59 | grep libmirserver.so.59 > /dev/null; then
-  echo shell-ctrl-alt=l:swaylock -i ${background}
-else
-  echo shell-ctrl-alt=l:miriway-unsnap loginctl lock-session
-  echo lockscreen-app=swaylock -i ${background}
-fi)
+shell-ctrl-alt=l:miriway-unsnap loginctl lock-session
+lockscreen-app=miriway-unsnap swaylock -i ${background}
 
 meta=Left:@dock-left
 meta=Right:@dock-right

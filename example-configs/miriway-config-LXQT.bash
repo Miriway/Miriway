@@ -3,14 +3,18 @@ set -e
 
 if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 
-shell_components="lxqt-policykit qterminal lxqt-runner lxqt-panel lubuntu-artwork"
+shell_components="lxqt-policykit-agent qterminal lxqt-runner lxqt-panel swaybg"
+shell_packages="lxqt-policykit qterminal lxqt-runner lxqt-panel lubuntu-artwork swaybg"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
+
+unset need_install
 
 for component in $shell_components
 do
   if ! command -v "$component" > /dev/null
   then
     echo May need to install "$component"
+    need_install=1
   fi
 done
 
@@ -25,44 +29,21 @@ case $yn in
   [Nn] ) exit 1;;
 esac
 
-install()
-{
-if command -v apt > /dev/null
+if [ -n "$need_install" ]
 then
-    case "$1" in
-      waybar ) sudo apt install "$1" fonts-font-awesome;;
-      yambar ) sudo apt install "$1" fonts-font-awesome;;
-      kgx ) sudo apt install gnome-console;;
-      * )   sudo apt install "$1";;
-    esac
-elif command -v dnf > /dev/null
-then
-    case "$1" in
-      waybar ) sudo dnf install "$1" fontawesome-fonts;;
-      yambar ) sudo dnf install "$1" fontawesome-fonts;;
-      kgx ) sudo dnf install gnome-console;;
-      * )   sudo dnf install "$1";;
-    esac
-elif command -v apk > /dev/null
-then
-    case "$1" in
-      waybar ) sudo apk add "$1" font-awesome;;
-      yambar ) sudo apk add "$1" font-awesome;;
-      kgx ) sudo apk add gnome-console;;
-      * )   sudo apk add "$1";;
-    esac
-else
-  echo ERROR: I cannot find an install tool for this system
-fi
-}
-
-for component in $shell_components
-do
-  if ! command -v "$component" > /dev/null
+  if command -v apt > /dev/null
   then
-    install "$component"
+    sudo apt install $shell_packages fonts-font-awesome
+  elif command -v dnf > /dev/null
+  then
+    sudo dnf install $shell_packages fontawesome-fonts
+  elif command -v apk > /dev/null
+  then
+    sudo apk add $shell_packages font-awesome
+  else
+    echo ERROR: I cannot find an install tool for this system
   fi
-done
+fi
 
 # Ensure we have a config file with the fixed options
 cat <<EOT > "${miriway_config}"
