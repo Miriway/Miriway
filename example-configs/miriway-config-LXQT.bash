@@ -4,7 +4,7 @@ set -e
 if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 
 shell_components="lxqt-policykit-agent qterminal lxqt-runner lxqt-panel swaybg"
-shell_packages="lxqt-policykit qterminal lxqt-runner lxqt-panel lubuntu-artwork swaybg"
+shell_packages="lxqt-policykit qterminal lxqt-runner lxqt-panel lxqt-branding-debian lubuntu-artwork swaybg"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 
 unset need_install
