@@ -61,7 +61,7 @@ cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
-shell-component=dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
+shell-component=miriway-unsnap dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_DATA_HOME XDG_CONFIG_HOME XDG_CONFIG_DIRS XDG_DATA_DIRS XDG_CACHE_HOME XDG_DESKTOP_DIR XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP
 
 shell-component=miriway-unsnap swaybg --mode fill --output '*' --image '${background}'
 shell-component=miriway-unsnap xfce4-panel
