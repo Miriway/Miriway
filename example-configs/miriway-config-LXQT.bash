@@ -33,7 +33,7 @@ if [ -n "$need_install" ]
 then
   if command -v apt > /dev/null
   then
-    sudo apt install $shell_packages fonts-font-awesome
+    sudo apt install $shell_packages fonts-font-awesome lxqt-branding-debian
   elif command -v dnf > /dev/null
   then
     sudo dnf install $shell_packages fontawesome-fonts
