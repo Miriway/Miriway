@@ -307,6 +307,14 @@ int main(int argc, char const* argv[])
         [&extensions, &child_control](auto protocol) {
             child_control.enable_for_shell(extensions, protocol); });
 
+    runner.add_start_callback([&child_control]
+        {
+            if (auto const miriway_session_startup = getenv("MIRIWAY_SESSION_STARTUP"))
+            {
+                child_control.run_app({miriway_session_startup});
+            }
+        });
+
     return runner.run_with(
         {
             X11Support{},
