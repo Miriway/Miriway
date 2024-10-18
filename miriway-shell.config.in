@@ -3,7 +3,7 @@ idle-timeout=600
 ctrl-alt=t:miriway-terminal # Default "terminal emulator finder"
 
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none:-GTK_IM_MODULE
-shell-component=@CMAKE_INSTALL_FULL_LIBEXECDIR@/miriway-setup
+shell-component=@CMAKE_INSTALL_FULL_LIBEXECDIR@/miriway-session-startup
 
 meta=Left:@dock-left
 meta=Right:@dock-right
