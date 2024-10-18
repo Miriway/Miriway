@@ -77,13 +77,13 @@ install(PROGRAMS
     DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/miriway-shell.config.in miriway-shell.config @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/miriway.desktop.in miriway.desktop @ONLY)
 
-install(FILES ${CMAKE_SOURCE_DIR}/miriway.desktop
+install(FILES ${CMAKE_BINARY_DIR}/miriway.desktop
     DESTINATION ${CMAKE_INSTALL_DATADIR}/wayland-sessions/
 )
 
-install(FILES ${CMAKE_BINARY_DIR}/miriway-shell.config
+install(FILES ${CMAKE_SOURCE_DIR}/miriway-shell.config
     DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/xdg/xdg-miriway
 )
 
