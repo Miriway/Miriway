@@ -151,8 +151,21 @@ session_cleanup () {
         systemctl --user unset-environment $VARIABLES
     fi
 }
+
+wait_while()
+{
+  while
+    inotifywait --event delete "$(dirname "$1")"&
+    inotify_pid=$!
+    [ -e "$1" ]
+  do
+    wait "${inotify_pid}"
+  done
+  kill "${inotify_pid}"
+}
+
 trap session_cleanup INT TERM
-## wait until the compositor exits
-#miraclemsg -t subscribe '["shutdown"]'
-## run cleanup handler on normal exit
-#session_cleanup
+# wait until the compositor exits
+wait_while "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY:-wayland-0}"
+# run cleanup handler on normal exit
+session_cleanup
