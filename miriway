@@ -28,6 +28,10 @@ then
   export XDG_CONFIG_DIRS="/usr/local/etc/xdg/xdg-miriway:${XDG_CONFIG_DIRS:-/etc/xdg}"
 fi
 
+if [ "$SNAP_NAME" = "miriway" ] && [ -n "${MIRIWAY_SESSION_STARTUP}" ]; then
+  export MIRIWAY_SESSION_STARTUP="$SNAP/usr/bin/libexec/miriway-session-startup"
+fi
+
 if command -v Xwayland > /dev/null
 then
   export MIR_SERVER_ENABLE_X11=1
