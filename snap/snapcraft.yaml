@@ -63,11 +63,13 @@ parts:
       craftctl default
       # work around https://github.com/diddlesnaps/snapcraft-multiarch-action/issues/22
       git config --global --add safe.directory ${CRAFT_PART_SRC}
-      server_version=`git describe | cut -c 2-`
+      server_version=`git describe | cut -c 2-15`
       mir_version=`LANG=C apt-cache policy mir-graphics-drivers-desktop | sed -rne 's/^\s+Candidate:\s+([^-]*)-.+$/\1/p'`
-      craftctl set version=$server_version-mir${mir_version/+/}
+      craftctl set version=$server_version-mir${mir_version}
       if echo $mir_version | grep -e '+dev' -e '~rc' -q; then craftctl set grade=devel; else craftctl set grade=stable; fi
     plugin: cmake
+    cmake-parameters:
+      - -DCMAKE_INSTALL_FULL_LIBEXECDIR=/usr/libexec
     source: .
     build-packages:
       - pkg-config
@@ -86,6 +88,7 @@ parts:
       - mir-platform-graphics-virtual
       - mir-graphics-drivers-nvidia
       - libfreetype6
+      - inotify-tools
     prime:
       - -lib/udev
       - -usr/doc
@@ -120,6 +123,10 @@ parts:
   snap-utils:
     plugin: dump
     source: snap-utils
+
+  systemd:
+    plugin: dump
+    source: systemd
 
   mesa-patchelf:
     build-attributes:
