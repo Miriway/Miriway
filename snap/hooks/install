@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 mkdir -p /usr/share/wayland-sessions/ /usr/lib/systemd/user/ /usr/libexec/
-cp "$SNAP"/usr/local/share/wayland-sessions/miriway.desktop /usr/share/wayland-sessions/miriway.desktop
+cp "$SNAP"/usr/share/wayland-sessions/miriway.desktop /usr/share/wayland-sessions/miriway.desktop
 cp "$SNAP"/usr/lib/systemd/user/miriway-session.target /usr/lib/systemd/user/
 cp "$SNAP"/usr/libexec/miriway-session-startup  /usr/libexec/
 
@@ -29,7 +29,7 @@ x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 
-ctrl-alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/local/bin/miriway-terminal
+ctrl-alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/miriway-terminal
 shell-component=miriway-background ${background}
 shell-component=yambar --config="${yambar_config}"
 shell-component=miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse --startup
