@@ -87,7 +87,7 @@ install(FILES ${CMAKE_SOURCE_DIR}/miriway-shell.config
     DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/xdg/xdg-miriway
 )
 
-install(PROGRAMS ${CMAKE_SOURCE_DIR}/systemd/usr/bin/libexec/miriway-session-startup
+install(PROGRAMS ${CMAKE_SOURCE_DIR}/systemd/usr/libexec/miriway-session-startup
     DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}
 )
 
