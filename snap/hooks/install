@@ -28,7 +28,6 @@ cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
-shell-component=/usr/bin/libexec/miriway-setup
 
 ctrl-alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/local/bin/miriway-terminal
 shell-component=miriway-background ${background}
