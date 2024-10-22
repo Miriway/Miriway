@@ -1,3 +1,4 @@
 #!/bin/sh
 
 rm /usr/share/wayland-sessions/miriway.desktop /etc/xdg/xdg-miriway/miriway-shell.config
+rm /usr/lib/systemd/user/miriway-session.target /usr/libexec/miriway-session-startup
