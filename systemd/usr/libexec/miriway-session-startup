@@ -32,13 +32,9 @@
 #    Possible (but not exhaustive) list of variables:
 #    - DISPLAY - for X11 applications that are started as user session services
 #    - WAYLAND_DISPLAY - similarly, this is needed for wayland-native services
-#    - I3SOCK/SWAYSOCK - allow services to talk with miracle using i3 IPC protocol
 #
 # 2. `xdg-desktop-portal` requires XDG_CURRENT_DESKTOP to be set in order to
 #    select the right implementation for screenshot and screencast portals.
-#    With all the numerous ways to start miracle, it's not possible to rely on the
-#    right value of the XDG_CURRENT_DESKTOP variable within the login session,
-#    therefore the script will ensure that it is always set to `miracle-wm`.
 #
 # 3. GUI applications started as a systemd service (or via xdg-autostart-generator)
 #    may rely on the XDG_SESSION_TYPE variable to select the backend.
@@ -59,7 +55,6 @@
 #  - https://www.freedesktop.org/software/systemd/man/systemd.special.html#graphical-session.target
 #  - https://systemd.io/DESKTOP_ENVIRONMENTS/
 #
-export XDG_CURRENT_DESKTOP=Miriway
 export XDG_SESSION_DESKTOP="${XDG_SESSION_DESKTOP:-Miriway}"
 export XDG_SESSION_TYPE=wayland
 VARIABLES="DESKTOP_SESSION XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE"
@@ -133,14 +128,6 @@ systemctl --user reset-failed
 # shellcheck disable=SC2086
 systemctl --user import-environment $VARIABLES
 systemctl --user start "$SESSION_TARGET"
-
-## Optionally, wait until the compositor exits and cleanup variables and services.
-#if [ -z "$WITH_CLEANUP" ] ||
-#    [ -z "$SWAYSOCK" ] ||
-#    ! hash miraclemsg 2>/dev/null
-#then
-#    exit 0;
-#fi
 
 # declare cleanup handler and run it on script termination via kill or Ctrl-C
 session_cleanup () {
