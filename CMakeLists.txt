@@ -80,7 +80,9 @@ install(PROGRAMS
     DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-install(FILES ${CMAKE_SOURCE_DIR}/miriway.desktop
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/miriway.desktop.in miriway.desktop @ONLY)
+
+install(FILES ${CMAKE_BINARY_DIR}/miriway.desktop
     DESTINATION ${CMAKE_INSTALL_DATADIR}/wayland-sessions/
 )
 
@@ -88,3 +90,10 @@ install(FILES ${CMAKE_SOURCE_DIR}/miriway-shell.config
     DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/xdg/xdg-miriway
 )
 
+install(PROGRAMS ${CMAKE_SOURCE_DIR}/systemd/usr/libexec/miriway-session-startup
+    DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}
+)
+
+install(PROGRAMS ${CMAKE_SOURCE_DIR}/systemd/usr/lib/systemd/user/miriway-session.target
+    DESTINATION /usr/lib/systemd/user/
+)

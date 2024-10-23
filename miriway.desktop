@@ -1,5 +1,0 @@
-[Desktop Entry]
-Name=Miriway
-Comment=Mir/Wayland desktop environment
-Exec=sh -l -c miriway
-Type=Application
