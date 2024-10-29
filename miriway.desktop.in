@@ -3,3 +3,4 @@ Name=Miriway
 Comment=Mir/Wayland desktop environment
 Exec=env MIRIWAY_SESSION_STARTUP=@CMAKE_INSTALL_FULL_LIBEXECDIR@/miriway-session-startup MIRIWAY_SESSION_SHUTDOWN=@CMAKE_INSTALL_FULL_LIBEXECDIR@/miriway-session-shutdown sh -l -c miriway
 Type=Application
+TryExec=miriway
