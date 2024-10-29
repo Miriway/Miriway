@@ -91,3 +91,8 @@ I've provided an `example-configs` subdirectory to hold scripts to set up exampl
 In particular, I've added `example-configs/miriway-config-alan_g.bash` which sets up some options I've been trying.
 The script works fine on Ubuntu 23.04, but isn't portable (it uses apt and assumes packages are in the archive).
 If you have an alternative configuration, please share!
+
+## Community
+
+* [GitHub Discussions](https://github.com/Miriway/Miriway/discussions)
+* [Matrix chat room](https://matrix.to/#/#miriway:matrix.org)
