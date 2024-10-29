@@ -91,6 +91,10 @@ install(PROGRAMS ${CMAKE_SOURCE_DIR}/systemd/usr/libexec/miriway-session-startup
     DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}
 )
 
+install(PROGRAMS ${CMAKE_SOURCE_DIR}/systemd/usr/libexec/miriway-session-shutdown
+    DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}
+)
+
 install(PROGRAMS ${CMAKE_SOURCE_DIR}/systemd/usr/lib/systemd/user/miriway-session.target
     DESTINATION /usr/lib/systemd/user/
 )

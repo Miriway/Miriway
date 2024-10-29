@@ -315,6 +315,14 @@ int main(int argc, char const* argv[])
             }
         });
 
+    runner.add_stop_callback([&child_control]
+        {
+            if (auto const miriway_session_shutdown = getenv("MIRIWAY_SESSION_SHUTDOWN"))
+            {
+                child_control.run_app({miriway_session_shutdown});
+            }
+        });
+
     return runner.run_with(
         {
             X11Support{},
