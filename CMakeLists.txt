@@ -57,11 +57,11 @@ add_custom_target(miriway-terminal ALL
 )
 
 add_custom_target(miriway-unsnap ALL
-        cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-unsnap ${CMAKE_BINARY_DIR}
+    cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-unsnap ${CMAKE_BINARY_DIR}
 )
 
 add_custom_target(miriway-background ALL
-        cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-background ${CMAKE_BINARY_DIR}
+    cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-background ${CMAKE_BINARY_DIR}
 )
 
 install(PROGRAMS
