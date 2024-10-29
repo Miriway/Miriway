@@ -60,7 +60,6 @@ export XDG_SESSION_TYPE=wayland
 VARIABLES="DESKTOP_SESSION XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE"
 VARIABLES="${VARIABLES} DISPLAY WAYLAND_DISPLAY"
 SESSION_TARGET="miriway-session.target"
-#WITH_CLEANUP=1
 
 print_usage() {
     cat <<EOH
@@ -69,7 +68,6 @@ Usage:
   --add-env NAME, -E NAME
                     Add a variable name to the subset of environment passed
                     to the user session. Can be specified multiple times.
-  --no-cleanup      Skip cleanup code at compositor exit.
 EOH
 }
 
@@ -89,10 +87,6 @@ while [ $# -gt 0 ]; do
     --add-env | -E)
         shift
         VARIABLES="${VARIABLES} ${1}" ;;
-    --with-cleanup)
-        ;; # ignore (enabled by default)
-    --no-cleanup)
-        unset WITH_CLEANUP ;;
     -*)
         echo "Unexpected option: $1" 1>&2
         print_usage

@@ -30,50 +30,9 @@
 #  - https://systemd.io/DESKTOP_ENVIRONMENTS/
 #
 export XDG_SESSION_DESKTOP="${XDG_SESSION_DESKTOP:-Miriway}"
-export XDG_SESSION_TYPE=wayland
 VARIABLES="DESKTOP_SESSION XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE"
 VARIABLES="${VARIABLES} DISPLAY WAYLAND_DISPLAY"
 SESSION_TARGET="miriway-session.target"
-
-print_usage() {
-    cat <<EOH
-Usage:
-  --help            Show this help message and exit.
-  --add-env NAME, -E NAME
-                    Add a variable name to the subset of environment passed
-                    to the user session. Can be specified multiple times.
-EOH
-}
-
-while [ $# -gt 0 ]; do
-    case "$1" in
-    --help)
-        print_usage
-        exit 0 ;;
-    # The following flag is intentionally not exposed in the usage info:
-    #  - I don't believe that's the right or safe thing to do;
-    #  - systemd upstream is of the same opinion and has already deprecated
-    #    the ability to import the full environment (systemd/systemd#18137)
-    --all-environment)
-        VARIABLES="" ;;
-    --add-env=?*)
-        VARIABLES="${VARIABLES} ${1#*=}" ;;
-    --add-env | -E)
-        shift
-        VARIABLES="${VARIABLES} ${1}" ;;
-    --with-cleanup)
-        ;; # ignore (enabled by default)
-    --no-cleanup)
-        unset WITH_CLEANUP ;;
-    -*)
-        echo "Unexpected option: $1" 1>&2
-        print_usage
-        exit 1 ;;
-    *)
-        break ;;
-    esac
-    shift
-done
 
 # shellcheck disable=SC2086
 systemctl --user stop "$SESSION_TARGET"
