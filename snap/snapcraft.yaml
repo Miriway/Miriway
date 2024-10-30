@@ -88,7 +88,6 @@ parts:
       - mir-platform-graphics-virtual
       - mir-graphics-drivers-nvidia
       - libfreetype6
-      - inotify-tools
     prime:
       - -lib/udev
       - -usr/doc
