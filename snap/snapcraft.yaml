@@ -28,7 +28,7 @@ package-repositories:
 
 apps:
   miriway:
-    command-chain:
+    command-chain: &command_chain
       # Workaround for classic snaps having a confinement profile
       - bin/miriway-unconfine
     command: &_command usr/bin/miriway
@@ -41,6 +41,11 @@ apps:
       PATH: ${SNAP}/bin/:${SNAP}/usr/bin/:${SNAP}/usr/local/bin/:${PATH}
       # For "reasons" this is being set despite this being a classic snap. This overwrites the nonsense
       LD_LIBRARY_PATH: ""
+
+  session:
+    command-chain: *command_chain
+    command: usr/bin/miriway-session
+    environment: *_environment
 
   vnc-server:
     command-chain:
