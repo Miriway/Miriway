@@ -1,0 +1,7 @@
+[General]
+DisplayServer=wayland
+GreeterEnvironment=QT_WAYLAND_SHELL_INTEGRATION=layer-shell
+InputMethod=
+
+[Wayland]
+CompositorCommand=@CMAKE_INSTALL_FULL_BINDIR@/miriway --add-wayland-extensions=zwlr_layer_shell_v1

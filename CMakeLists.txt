@@ -15,6 +15,8 @@ include(GNUInstallDirs)
 include(FindPkgConfig)
 include(CheckIncludeFileCXX)
 
+option(SDDM "Install configuration for SDDM?" OFF)
+
 pkg_check_modules(MIRAL miral>=5.1 REQUIRED)
 pkg_check_modules(XKBCOMMON xkbcommon REQUIRED)
 
@@ -83,3 +85,10 @@ install(FILES ${CMAKE_SOURCE_DIR}/miriway-shell.config
     DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/xdg/xdg-miriway
 )
 
+if(SDDM)
+    configure_file(${CMAKE_SOURCE_DIR}/sddm/miriway.conf.in
+        ${CMAKE_BINARY_DIR}/sddm/miriway.conf @ONLY)
+    install(FILES ${CMAKE_BINARY_DIR}/sddm/miriway.conf
+        DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/sddm.conf.d/
+    )
+endif()
