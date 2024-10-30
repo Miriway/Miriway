@@ -30,7 +30,7 @@ apps:
   miriway:
     command-chain:
       # Workaround for classic snaps having a confinement profile
-      - usr/local/bin/miriway-unconfine
+      - bin/miriway-unconfine
     command: &_command usr/local/bin/miriway
     environment: &_environment
       # Prep for Mir
@@ -44,14 +44,14 @@ apps:
 
   vnc-server:
     command-chain:
-      - usr/local/bin/miriway-unconfine
+      - bin/miriway-unconfine
       - bin/miriway.vnc-server
     command: *_command
     environment: *_environment
 
   run:
     command-chain:
-      - usr/local/bin/miriway-unconfine
+      - bin/miriway-unconfine
     command: usr/local/bin/miriway-run
     environment: *_environment
 
@@ -63,9 +63,9 @@ parts:
       craftctl default
       # work around https://github.com/diddlesnaps/snapcraft-multiarch-action/issues/22
       git config --global --add safe.directory ${CRAFT_PART_SRC}
-      server_version=`git describe | cut -c 2-`
+      server_version=`git describe | cut -c 2-15`
       mir_version=`LANG=C apt-cache policy mir-graphics-drivers-desktop | sed -rne 's/^\s+Candidate:\s+([^-]*)-.+$/\1/p'`
-      craftctl set version=$server_version-mir${mir_version/+/}
+      craftctl set version=$server_version-mir${mir_version}
       if echo $mir_version | grep -e '+dev' -e '~rc' -q; then craftctl set grade=devel; else craftctl set grade=stable; fi
     plugin: cmake
     source: .
