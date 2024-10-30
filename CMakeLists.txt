@@ -71,11 +71,14 @@ install(PROGRAMS
     ${CMAKE_BINARY_DIR}/miriway-run
     ${CMAKE_BINARY_DIR}/miriway-run-shell
     ${CMAKE_BINARY_DIR}/miriway-shell
+    ${CMAKE_BINARY_DIR}/miriway-session
     ${CMAKE_BINARY_DIR}/miriway-terminal
     ${CMAKE_BINARY_DIR}/miriway-unsnap
     ${CMAKE_BINARY_DIR}/miriway-background
     DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/miriway-session.in miriway-session @ONLY)
 
 install(FILES ${CMAKE_SOURCE_DIR}/miriway.desktop
     DESTINATION ${CMAKE_INSTALL_DATADIR}/wayland-sessions/
@@ -85,6 +88,17 @@ install(FILES ${CMAKE_SOURCE_DIR}/miriway-shell.config
     DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/xdg/xdg-miriway
 )
 
+install(PROGRAMS ${CMAKE_SOURCE_DIR}/systemd/usr/libexec/miriway-session-startup
+    DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}
+)
+
+install(PROGRAMS ${CMAKE_SOURCE_DIR}/systemd/usr/libexec/miriway-session-shutdown
+    DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}
+)
+
+install(PROGRAMS ${CMAKE_SOURCE_DIR}/systemd/usr/lib/systemd/user/miriway-session.target
+    DESTINATION /usr/lib/systemd/user/
+)
 if(SDDM)
     configure_file(${CMAKE_SOURCE_DIR}/sddm/miriway.conf.in
         ${CMAKE_BINARY_DIR}/sddm/miriway.conf @ONLY)
