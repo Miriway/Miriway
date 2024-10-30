@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -eu
 #
 #
 # Copyright (C) 2024  Matthew Kosarek
@@ -30,21 +30,13 @@
 #  - https://systemd.io/DESKTOP_ENVIRONMENTS/
 #
 export XDG_SESSION_DESKTOP="${XDG_SESSION_DESKTOP:-Miriway}"
-VARIABLES="DESKTOP_SESSION XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE"
-VARIABLES="${VARIABLES} DISPLAY WAYLAND_DISPLAY"
+VARIABLES="DESKTOP_SESSION XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE DISPLAY WAYLAND_DISPLAY"
 SESSION_TARGET="miriway-session.target"
 
 # shellcheck disable=SC2086
 systemctl --user stop "$SESSION_TARGET"
 
-# declare cleanup handler and run it on script termination via kill or Ctrl-C
-session_cleanup () {
-    # stop the session target and unset the variables
-    systemctl --user start --job-mode=replace-irreversibly "$SESSION_SHUTDOWN_TARGET"
-    if [ -n "$VARIABLES" ]; then
-        # shellcheck disable=SC2086
-        systemctl --user unset-environment $VARIABLES
-    fi
-}
-
-session_cleanup
+# stop the session target and unset the variables
+systemctl --user start --job-mode=replace-irreversibly "$SESSION_SHUTDOWN_TARGET"
+# shellcheck disable=SC2086
+systemctl --user unset-environment $VARIABLES

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -eu
 #
 #
 # Copyright (C) 2024  Matthew Kosarek
@@ -34,7 +34,7 @@
 #    - WAYLAND_DISPLAY - similarly, this is needed for wayland-native services
 #
 # 2. `xdg-desktop-portal` requires XDG_CURRENT_DESKTOP to be set in order to
-#    select the right implementation for screenshot and screencast portals.
+#    select the right implementation for portals.
 #
 # 3. GUI applications started as a systemd service (or via xdg-autostart-generator)
 #    may rely on the XDG_SESSION_TYPE variable to select the backend.
@@ -57,8 +57,7 @@
 #
 export XDG_SESSION_DESKTOP="${XDG_SESSION_DESKTOP:-Miriway}"
 export XDG_SESSION_TYPE=wayland
-VARIABLES="DESKTOP_SESSION XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE"
-VARIABLES="${VARIABLES} DISPLAY WAYLAND_DISPLAY"
+VARIABLES="DESKTOP_SESSION XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE DISPLAY WAYLAND_DISPLAY"
 SESSION_TARGET="miriway-session.target"
 
 print_usage() {
@@ -76,12 +75,6 @@ while [ $# -gt 0 ]; do
     --help)
         print_usage
         exit 0 ;;
-    # The following flag is intentionally not exposed in the usage info:
-    #  - I don't believe that's the right or safe thing to do;
-    #  - systemd upstream is of the same opinion and has already deprecated
-    #    the ability to import the full environment (systemd/systemd#18137)
-    --all-environment)
-        VARIABLES="" ;;
     --add-env=?*)
         VARIABLES="${VARIABLES} ${1#*=}" ;;
     --add-env | -E)
@@ -101,7 +94,7 @@ done
 #
 # Ignores all other kinds of parallel or nested sessions
 # (Miriway on Gnome/KDE/X11/etc.), as the only way to detect these is to check
-# for (WAYLAND_)?DISPLAY and that is know to be broken on Arch.
+# for (WAYLAND_)?DISPLAY and that is known to be broken on Arch.
 if systemctl --user -q is-active "$SESSION_TARGET"; then
     echo "Another session found; refusing to overwrite the variables"
     exit 1
