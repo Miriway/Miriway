@@ -80,7 +80,7 @@ install(PROGRAMS
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/miriway-session.in miriway-session @ONLY)
 
-install(FILES ${CMAKE_BINARY_DIR}/miriway.desktop
+install(FILES ${CMAKE_SOURCE_DIR}/miriway.desktop
     DESTINATION ${CMAKE_INSTALL_DATADIR}/wayland-sessions/
 )
 
