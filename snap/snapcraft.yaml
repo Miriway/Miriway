@@ -30,7 +30,7 @@ apps:
   miriway:
     command-chain:
       # Workaround for classic snaps having a confinement profile
-      - usr/local/bin/miriway-unconfine
+      - bin/miriway-unconfine
     command: &_command usr/local/bin/miriway
     environment: &_environment
       # Prep for Mir
@@ -44,14 +44,14 @@ apps:
 
   vnc-server:
     command-chain:
-      - usr/local/bin/miriway-unconfine
+      - bin/miriway-unconfine
       - bin/miriway.vnc-server
     command: *_command
     environment: *_environment
 
   run:
     command-chain:
-      - usr/local/bin/miriway-unconfine
+      - bin/miriway-unconfine
     command: usr/local/bin/miriway-run
     environment: *_environment
 
