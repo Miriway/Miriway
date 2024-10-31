@@ -195,11 +195,19 @@ private:
         }
     }
 };
+
+inline auto config_path(std::filesystem::path path)
+{
+    auto const basename = path.filename() += ".config";
+    auto const miriway_shell = getenv("MIRIWAY_CONFIG_DIR");
+
+    return miriway_shell ? std::filesystem::path(miriway_shell) / basename : basename;
+}
 }
 
 int main(int argc, char const* argv[])
 {
-    MirRunner runner{argc, argv};
+    MirRunner runner{argc, argv, config_path(argv[0]).c_str()};
 
     // Change the default Wayland extensions to:
     //  1. to enable screen capture; and,
