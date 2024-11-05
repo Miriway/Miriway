@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Miriway
 Comment=Mir/Wayland desktop environment
-Exec=miriway-session
+Exec=sh -lc miriway-session
 Type=Application
 TryExec=miriway-session
