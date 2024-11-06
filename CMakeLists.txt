@@ -96,7 +96,7 @@ install(PROGRAMS ${CMAKE_SOURCE_DIR}/systemd/usr/libexec/miriway-session-shutdow
     DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}
 )
 
-install(PROGRAMS ${CMAKE_SOURCE_DIR}/systemd/usr/lib/systemd/user/miriway-session.target
+install(FILES ${CMAKE_SOURCE_DIR}/systemd/usr/lib/systemd/user/miriway-session.target
     DESTINATION /usr/lib/systemd/user/
 )
 if(SDDM)
