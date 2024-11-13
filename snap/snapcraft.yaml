@@ -11,7 +11,7 @@ description: |
   It does, however, provide a way to test Mir and other components of a desktop 
   environment that makes these “papercuts” visible and much more likely to be fixed.
 website: https://github.com/Miriway
-contact: https://github.com/Miriway/Miriway/issues
+contact: [https://github.com/Miriway/Miriway/issues, https://matrix.to/#/#miriway:matrix.org]
 source-code: https://github.com/Miriway/Miriway
 
 confinement: classic
