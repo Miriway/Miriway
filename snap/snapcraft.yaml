@@ -2,14 +2,20 @@ name: miriway
 adopt-info: miriway
 summary: "Miriway: a graphical shell to configure for your desktop environment"
 description: |
-  Miriway isn’t a full featured desktop environment but it could, in principle, 
-  be used to build one.
+  Miriway isn’t a full featured desktop environment by itself, but it could be
+  used to build one. To provide a starting point here are some setup scripts:  
 
-  It also isn’t fully “desktop ready” as there are quite a lot of “papercut” 
-  concerns that need to be fixed in Mir.
+  * /snap/miriway/current/example-configs/LXQT.bash
+  * /snap/miriway/current/example-configs/MATE.bash
+  * /snap/miriway/current/example-configs/SWAY.bash
+  * /snap/miriway/current/example-configs/XFCE.bash
+  * /snap/miriway/current/example-configs/alan_g.bash
+  
+  These are provided on a "best effort" basis as they rely on the current level 
+  of Wayland support from the corresponding components on the host OS. 
+  
+  Miriway is based on Mir: https://mir-server.io/
 
-  It does, however, provide a way to test Mir and other components of a desktop 
-  environment that makes these “papercuts” visible and much more likely to be fixed.
 website: https://github.com/Miriway
 contact: [https://github.com/Miriway/Miriway/discussions, https://matrix.to/#/#miriway:matrix.org]
 issues: https://github.com/Miriway/Miriway/issues
