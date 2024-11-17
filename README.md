@@ -53,6 +53,10 @@ of options.
 
 [![miriway](https://snapcraft.io/miriway/badge.svg)](https://snapcraft.io/miriway)
 
+It is also available in a variety of distributions, notably Fedora.
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/miriway.svg)](https://repology.org/project/miriway/versions)
+
 ## Building Miriway from source
 
 Miriway can be built and installed from source (without packaging as a Snap).
