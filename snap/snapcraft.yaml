@@ -67,6 +67,11 @@ apps:
     command: usr/bin/miriway-run
     environment: *_environment
 
+  slurp:
+    command-chain: *command_chain
+    command: usr/bin/slurp
+    environment: *_environment
+
 parts:
   miriway:
     build-attributes:
@@ -100,6 +105,7 @@ parts:
       - mir-platform-graphics-virtual
       - mir-graphics-drivers-nvidia
       - libfreetype6
+      - xdg-desktop-portal
     prime:
       - -lib/udev
       - -usr/doc
@@ -168,3 +174,18 @@ parts:
     stage:
       # Only the libraries in .../dri need to not be patched, the rest come from the mesa part
       - usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
+
+  xdg-desktop-portal-wlr:
+    plugin: meson
+    source: https://github.com/emersion/xdg-desktop-portal-wlr.git
+    source-tag: v0.5.0
+    build-packages:
+      - meson
+      - ninja-build
+      - libpipewire-0.3-dev
+      - libwayland-dev
+      - libinih-dev
+      - libsystemd-dev
+      - wayland-protocols
+    stage-packages:
+      - slurp

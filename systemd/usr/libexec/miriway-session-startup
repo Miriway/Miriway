@@ -57,7 +57,8 @@
 #
 export XDG_SESSION_DESKTOP="${XDG_SESSION_DESKTOP:-Miriway}"
 export XDG_SESSION_TYPE=wayland
-VARIABLES="DESKTOP_SESSION XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE DISPLAY WAYLAND_DISPLAY"
+export XDG_DESKTOP_PORTAL_DIR="$SNAP/usr/share/xdg-desktop-portal/portals/"
+VARIABLES="DESKTOP_SESSION XDG_CURRENT_DESKTOP XDG_DESKTOP_PORTAL_DIR XDG_SESSION_DESKTOP XDG_SESSION_TYPE DISPLAY WAYLAND_DISPLAY"
 SESSION_TARGET="miriway-session.target"
 
 print_usage() {
@@ -115,3 +116,7 @@ systemctl --user reset-failed
 # shellcheck disable=SC2086
 systemctl --user import-environment $VARIABLES
 systemctl --user start "$SESSION_TARGET"
+
+# Run portals
+systemd-run --user $SNAP/usr/libexec/xdg-desktop-portal --replace
+systemd-run --user $SNAP/usr/local/libexec/xdg-desktop-portal-wlr --replace -c $SNAP/etc/xdg/xdg-desktop-portal-wlr/config
