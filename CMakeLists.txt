@@ -16,6 +16,7 @@ include(FindPkgConfig)
 include(CheckIncludeFileCXX)
 
 option(SDDM "Install configuration for SDDM?" OFF)
+option(IS_SNAP_BUILD "Building for the snap" OFF)
 
 pkg_check_modules(MIRAL miral>=5.1 REQUIRED)
 pkg_check_modules(XKBCOMMON xkbcommon REQUIRED)
@@ -88,7 +89,13 @@ install(FILES ${CMAKE_SOURCE_DIR}/miriway-shell.config
     DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/xdg/xdg-miriway
 )
 
-install(PROGRAMS ${CMAKE_SOURCE_DIR}/systemd/usr/libexec/miriway-session-startup
+configure_file(
+    ${CMAKE_SOURCE_DIR}/systemd/usr/libexec/miriway-session-startup.in
+    ${CMAKE_BINARY_DIR}/systemd/usr/libexec/miriway-session-startup
+    @ONLY
+)
+
+install(PROGRAMS ${CMAKE_BINARY_DIR}/systemd/usr/libexec/miriway-session-startup
     DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}
 )
 

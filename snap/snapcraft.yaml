@@ -46,6 +46,12 @@ apps:
       LIBGL_DRIVERS_PATH: $SNAP/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
       LIBINPUT_QUIRKS_DIR: ${SNAP}/usr/share/libinput
       PATH: ${SNAP}/bin/:${SNAP}/usr/bin/:${SNAP}/usr/local/bin/:${PATH}
+      # Warning: This variable is used by xdg-desktop-portal to force it to look in
+      # a particular directory for .portal files. Unfortunately, xdg-desktop-portal
+      # does not respect XDG_DATA_DIRS so we are forced to use this workaround. This
+      # environment variable is only intended to be used in their testing environment
+      # but we are abusing it for our purposes here.
+      XDG_DESKTOP_PORTAL_DIR: $SNAP/usr/share/xdg-desktop-portal/portals/
       # For "reasons" this is being set despite this being a classic snap. This overwrites the nonsense
       LD_LIBRARY_PATH: ""
 
@@ -87,6 +93,7 @@ parts:
     plugin: cmake
     cmake-parameters:
       - -DCMAKE_INSTALL_PREFIX=/usr
+      - -DIS_SNAP_BUILD=ON
     source: .
     build-packages:
       - pkg-config
@@ -146,6 +153,9 @@ parts:
   systemd:
     plugin: dump
     source: systemd
+    stage:
+      # This file is installed by cmake
+      - -usr/libexec/miriway-session-startup.in
 
   mesa-patchelf:
     build-attributes:
