@@ -73,11 +73,6 @@ apps:
     command: usr/bin/miriway-run
     environment: *_environment
 
-  slurp:
-    command-chain: *command_chain
-    command: usr/bin/slurp
-    environment: *_environment
-
 parts:
   miriway:
     build-attributes:
