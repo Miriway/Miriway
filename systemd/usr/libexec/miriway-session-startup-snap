@@ -1,0 +1,10 @@
+#!/bin/sh -eu
+
+bindir=$(dirname "$0")
+if [ "${bindir}" != "" ]; then bindir="${bindir}/"; fi
+
+"${bindir}"miriway-session-startup "$@"
+
+# Run portals
+systemd-run --user --setenv=XDG_DESKTOP_PORTAL_DIR=${XDG_DESKTOP_PORTAL_DIR} $SNAP/usr/libexec/xdg-desktop-portal --replace
+systemd-run --user $SNAP/usr/local/libexec/xdg-desktop-portal-wlr --replace -c $SNAP/etc/xdg/xdg-desktop-portal-wlr/config

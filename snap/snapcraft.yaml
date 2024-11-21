@@ -88,7 +88,6 @@ parts:
     plugin: cmake
     cmake-parameters:
       - -DCMAKE_INSTALL_PREFIX=/usr
-      - -DIS_SNAP_BUILD=ON
     source: .
     build-packages:
       - pkg-config
@@ -148,9 +147,6 @@ parts:
   systemd:
     plugin: dump
     source: systemd
-    stage:
-      # This file is installed by cmake
-      - -usr/libexec/miriway-session-startup.in
 
   mesa-patchelf:
     build-attributes:
