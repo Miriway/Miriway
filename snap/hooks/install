@@ -1,9 +1,8 @@
 #!/bin/sh -e
 
-mkdir -p /usr/share/wayland-sessions/ /usr/lib/systemd/user/ /usr/libexec/
+mkdir -p /usr/share/wayland-sessions/ /usr/lib/systemd/user/
 sed -e s/miriway-session/miriway.session/ "$SNAP"/usr/share/wayland-sessions/miriway.desktop > /usr/share/wayland-sessions/miriway.desktop
 cp "$SNAP"/usr/lib/systemd/user/miriway-session.target /usr/lib/systemd/user/
-cp "$SNAP"/usr/libexec/miriway-session-startup "$SNAP"/usr/libexec/miriway-session-shutdown /usr/libexec/
 
 xdg_config=/etc/xdg/xdg-miriway
 
