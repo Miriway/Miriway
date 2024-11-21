@@ -51,7 +51,7 @@ apps:
 
   session:
     command-chain: *command_chain
-    command: usr/bin/miriway-session
+    command: bin/miriway-session
     environment: *_environment
 
   vnc-server:
@@ -116,6 +116,8 @@ parts:
       - -usr/share/man
       - -usr/share/pkgconfig
       - -etc/xdg/xdg-miriway/miriway-shell.config-snap
+      # We use another miriway-session (from snap-utils), avoid confusion
+      - -usr/bin/miriway-session
       # Do not prime the `-dev` part of libmiral-dev, we don't need it (just the libmiral<n> dependency)
       - -usr/include
       - -usr/lib/*/pkgconfig
