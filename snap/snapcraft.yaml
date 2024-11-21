@@ -46,6 +46,12 @@ apps:
       LIBGL_DRIVERS_PATH: $SNAP/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
       LIBINPUT_QUIRKS_DIR: ${SNAP}/usr/share/libinput
       PATH: ${SNAP}/bin/:${SNAP}/usr/bin/:${SNAP}/usr/local/bin/:${PATH}
+      # Warning: This variable is used by xdg-desktop-portal to force it to look in
+      # a particular directory for .portal files. Unfortunately, xdg-desktop-portal
+      # does not respect XDG_DATA_DIRS so we are forced to use this workaround. This
+      # environment variable is only intended to be used in their testing environment
+      # but we are abusing it for our purposes here.
+      XDG_DESKTOP_PORTAL_DIR: $SNAP/usr/share/xdg-desktop-portal/portals/
       # For "reasons" this is being set despite this being a classic snap. This overwrites the nonsense
       LD_LIBRARY_PATH: ""
 
@@ -100,6 +106,7 @@ parts:
       - mir-platform-graphics-virtual
       - mir-graphics-drivers-nvidia
       - libfreetype6
+      - xdg-desktop-portal
     prime:
       - -lib/udev
       - -usr/doc
@@ -168,3 +175,18 @@ parts:
     stage:
       # Only the libraries in .../dri need to not be patched, the rest come from the mesa part
       - usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
+
+  xdg-desktop-portal-wlr:
+    plugin: meson
+    source: https://github.com/emersion/xdg-desktop-portal-wlr.git
+    source-tag: v0.5.0
+    build-packages:
+      - meson
+      - ninja-build
+      - libpipewire-0.3-dev
+      - libwayland-dev
+      - libinih-dev
+      - libsystemd-dev
+      - wayland-protocols
+    stage-packages:
+      - slurp
