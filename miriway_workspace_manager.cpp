@@ -217,6 +217,15 @@ void miriway::WorkspaceManager::change_active_workspace(
     }
 }
 
+void miriway::WorkspaceManager::activate_workspace_containing(Window const& window)
+{
+    tools_.for_each_workspace_containing(window,
+        [this](std::shared_ptr<Workspace> const& workspace)
+        {
+            change_active_workspace(workspace, active_workspace(), Window{});
+        });
+}
+
 void miriway::WorkspaceManager::advise_adding_to_workspace(std::shared_ptr<Workspace> const& workspace,
                                                            std::vector<Window> const& windows)
 {
