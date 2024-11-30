@@ -54,6 +54,7 @@ public:
                                  std::shared_ptr<Workspace> const& old_active,
                                  miral::Window const& window);
 
+    void activate_workspace_containing(Window const& window);
 
     void advise_new_window(const WindowInfo &window_info);
 
@@ -126,6 +127,15 @@ protected:
         }
 
         WMStrategy::handle_modify_window(window_info, mods);
+    }
+
+    void handle_raise_window(WindowInfo& window_info) override
+    {
+        if (in_hidden_workspace(window_info))
+        {
+            activate_workspace_containing(window_info.window());
+        }
+        WMStrategy::handle_raise_window(window_info);
     }
 };
 } // miriway
