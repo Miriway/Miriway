@@ -18,6 +18,8 @@
 
 #include "miriway_workspace_manager.h"
 
+#include <mir/log.h>
+
 using namespace mir::geometry;
 using namespace miral;
 
@@ -222,7 +224,10 @@ void miriway::WorkspaceManager::activate_workspace_containing(Window const& wind
     tools_.for_each_workspace_containing(window,
         [this](std::shared_ptr<Workspace> const& workspace)
         {
-            change_active_workspace(workspace, active_workspace(), Window{});
+            auto const old_active = active_workspace_;
+            active_workspace_ = find(workspaces.begin(), workspaces.end(), workspace);
+            change_active_workspace(workspace, *old_active, Window{});
+            erase_if_empty(old_active);
         });
 }
 
