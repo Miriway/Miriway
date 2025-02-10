@@ -60,6 +60,7 @@ std::map<std::string, ShellCommands::CmdFunctor> const wm_command =
         { "dock-left", [](ShellCommands* sc, bool shift) { sc->dock_active_window_left(shift); } },
         { "dock-right", [](ShellCommands* sc, bool shift) { sc->dock_active_window_right(shift); } },
         { "toggle-maximized", [](ShellCommands* sc, bool shift) { sc->toggle_maximized_restored(shift); } },
+        { "toggle-always-on-top", [](ShellCommands* sc, bool shift) { sc->toggle_always_on_top(shift); } },
         { "workspace-begin", [](ShellCommands* sc, bool shift) { sc->workspace_begin(shift); } },
         { "workspace-end", [](ShellCommands* sc, bool shift) { sc->workspace_end(shift); } },
         { "workspace-up", [](ShellCommands* sc, bool shift) { sc->workspace_up(shift); } },
