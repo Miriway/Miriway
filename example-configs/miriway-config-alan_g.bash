@@ -88,6 +88,7 @@ lockscreen-app=miriway-unsnap swaylock -i ${background}
 ctrl-alt=d:cp ${miriway_display}~docked ${miriway_display}
 ctrl-alt=u:cp ${miriway_display}~undocked ${miriway_display}
 ctrl-alt=s:miriway-swap
+ctrl-alt=Up:@toggle-always-on-top
 shell-ctrl-alt=y:systemd-run --user --scope --slice=background.slice yambar
 
 meta=Left:@dock-left
