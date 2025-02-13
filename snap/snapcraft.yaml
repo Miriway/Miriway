@@ -128,6 +128,7 @@ parts:
       - -usr/include
       - -usr/lib/*/pkgconfig
       - -usr/lib/*/libmir*.so
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libgallium*
 
   example-configs:
     plugin: dump
@@ -168,6 +169,7 @@ parts:
       # The libraries in .../dri need no-patchelf, so they come from the mesa-unpatched part
       - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
       - usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri/libdril_dri.so
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libgallium*
 
   mesa-no-patchelf:
     plugin: nil
@@ -179,6 +181,7 @@ parts:
       # Only the libraries in .../dri need to not be patched, the rest come from the mesa part
       - usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
       - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri/libdril_dri.so
+      - usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libgallium*
 
   xdg-desktop-portal-wlr:
     plugin: meson
