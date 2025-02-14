@@ -4,6 +4,8 @@ if [ "$SNAP_NAME" == "miriway" ]; then
   unset __EGL_VENDOR_LIBRARY_DIRS
   unset LIBGL_DRIVERS_PATH
   unset LIBINPUT_QUIRKS_DIR
+  unset DRIRC_CONFIGDIR
+  unset XDG_DESKTOP_PORTAL_DIR
 
   PATH="$(echo "$PATH" | sed "s#$SNAP[^:]*:##g")"
 fi
