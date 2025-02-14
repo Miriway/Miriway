@@ -166,10 +166,11 @@ parts:
     - xwayland
     - yambar
     stage:
+      - usr
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libgallium*
       # The libraries in .../dri need no-patchelf, so they come from the mesa-unpatched part
       - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
       - usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri/libdril_dri.so
-      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libgallium*
 
   mesa-no-patchelf:
     plugin: nil
