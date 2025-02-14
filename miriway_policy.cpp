@@ -109,6 +109,40 @@ void miriway::WindowManagerPolicy::toggle_maximized_restored()
         });
 }
 
+void miriway::WindowManagerPolicy::toggle_always_on_top()
+{
+    tools.invoke_under_lock(
+        [this]
+        {
+            if (auto const w = tools.active_window())
+            {
+                auto const& info = tools.info_for(w);
+                switch (info.depth_layer())
+                {
+                case mir_depth_layer_application:
+                    {
+                        WindowSpecification modifications;
+
+                        tools.remove_tree_from_workspace(w, active_workspace());
+                        modifications.depth_layer() = mir_depth_layer_always_on_top;
+                        tools.modify_window(tools.info_for(w), modifications);
+                        return;
+                    }
+                case mir_depth_layer_always_on_top:
+                    {
+                        WindowSpecification modifications;
+
+                        modifications.depth_layer() = mir_depth_layer_application;
+                        tools.modify_window(tools.info_for(w), modifications);
+                        tools.add_tree_to_workspace(w, active_workspace());
+                        return;
+                    }
+                default:;
+                }
+            }
+        });
+}
+
 void miriway::WindowManagerPolicy::dock_active_window_right()
 {
     tools.invoke_under_lock(

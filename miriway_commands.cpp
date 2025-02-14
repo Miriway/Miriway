@@ -135,6 +135,11 @@ void miriway::ShellCommands::toggle_maximized_restored(bool) const
     wm->toggle_maximized_restored();
 }
 
+void miriway::ShellCommands::toggle_always_on_top(bool) const
+{
+    wm->toggle_always_on_top();
+}
+
 void miriway::ShellCommands::workspace_begin(bool shift) const
 {
     wm->workspace_begin(shift);

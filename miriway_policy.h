@@ -44,6 +44,7 @@ public:
     bool handle_pointer_event(const MirPointerEvent* event) override;
     void handle_request_move(WindowInfo& window_info, const MirInputEvent* input_event) override;
     void toggle_maximized_restored();
+    void toggle_always_on_top();
 
 private:
     auto place_new_window(ApplicationInfo const& app_info, WindowSpecification const& request_parameters)

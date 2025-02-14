@@ -59,6 +59,7 @@ public:
     void dock_active_window_left(bool shift) const;
     void dock_active_window_right(bool shift) const;
     void toggle_maximized_restored(bool shift) const;
+    void toggle_always_on_top(bool shift) const;
     void workspace_begin(bool shift) const;
     void workspace_end(bool shift) const;
     void workspace_up(bool shift) const;
