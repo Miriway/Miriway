@@ -106,6 +106,13 @@ parts:
       - mir-graphics-drivers-nvidia
       - libfreetype6
       - xdg-desktop-portal
+      # included in this part because they are used in the snap
+      - sway-notification-center
+      - swaybg
+      - swaylock
+      - synapse
+      - xwayland
+      - yambar
     prime:
       - -lib/udev
       - -usr/doc
@@ -128,6 +135,7 @@ parts:
       - -usr/include
       - -usr/lib/*/pkgconfig
       - -usr/lib/*/libmir*.so
+      # The libgallium* library needs no-patchelf, so it comes from the mesa-unpatched part
       - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libgallium*
 
   example-configs:
@@ -148,30 +156,6 @@ parts:
     plugin: dump
     source: systemd
 
-  mesa-patchelf:
-    build-attributes:
-      - enable-patchelf
-    plugin: nil
-    stage-packages:
-    - libgl1-mesa-dri
-    - libtinfo6
-    - libdrm2
-    - libdrm-common
-    - libgbm1
-    # included in this part because they try to pull in mesa bits
-    - sway-notification-center
-    - swaybg
-    - swaylock
-    - synapse
-    - xwayland
-    - yambar
-    stage:
-      - usr
-      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libgallium*
-      # The libraries in .../dri need no-patchelf, so they come from the mesa-unpatched part
-      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
-      - usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri/libdril_dri.so
-
   mesa-no-patchelf:
     plugin: nil
     stage-packages:
@@ -179,9 +163,6 @@ parts:
     build-attributes:
       - no-patchelf # Otherwise snapcraft may strip the build ID and cause the driver to crash
     stage:
-      # Only the libraries in .../dri need to not be patched, the rest come from the mesa part
-      - usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
-      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri/libdril_dri.so
       - usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libgallium*
 
   xdg-desktop-portal-wlr:
