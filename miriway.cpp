@@ -24,6 +24,7 @@
 #include <mir/log.h>
 #include <miral/append_event_filter.h>
 #include <miral/configuration_option.h>
+#include <miral/decorations.h>
 #include <miral/display_configuration_option.h>
 #include <miral/external_client.h>
 #include <miral/idle_listener.h>
@@ -36,6 +37,7 @@
 #include <miral/wayland_extensions.h>
 #include <miral/x11_support.h>
 
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -204,6 +206,20 @@ inline auto config_path(std::filesystem::path path)
 
     return miriway_shell ? std::filesystem::path(miriway_shell) / basename : basename;
 }
+
+auto getenv_decorations()
+{
+    if (auto const strategy = getenv("MIRIWAY_DECORATIONS"))
+    {
+        if (strcmp(strategy, "always-ssd") == 0) return Decorations::always_ssd();
+        if (strcmp(strategy, "prefer-ssd") == 0) return Decorations::prefer_ssd();
+        if (strcmp(strategy, "always-csd") == 0) return Decorations::always_csd();
+        if (strcmp(strategy, "prefer-csd") == 0) return Decorations::prefer_csd();
+
+        mir::log_warning("Unknown decoration strategy: '%s', using prefer-csd", strategy);
+    }
+    return Decorations::prefer_csd();
+}
 }
 
 int main(int argc, char const* argv[])
@@ -357,6 +373,7 @@ int main(int argc, char const* argv[])
                 [&] { is_locked = true; },
                 [&] { is_locked = false; }),
             set_window_management_policy<WindowManagerPolicy>(commands),
-            lockscreen
+            lockscreen,
+            getenv_decorations()
         });
 }
