@@ -113,6 +113,9 @@ parts:
       - synapse
       - xwayland
       - yambar
+      # And try to get _all_ the mesa drivers
+      - libgl1-mesa-dri
+      - libdrm-nouveau2
     prime:
       - -lib/udev
       - -usr/doc
@@ -159,7 +162,7 @@ parts:
   mesa-no-patchelf:
     plugin: nil
     stage-packages:
-      - libgl1-mesa-dri
+      - mesa-libgallium
     build-attributes:
       - no-patchelf # Otherwise snapcraft may strip the build ID and cause the driver to crash
     stage:
