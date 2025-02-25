@@ -23,6 +23,7 @@
 #include <mir/abnormal_exit.h>
 #include <mir/log.h>
 #include <miral/append_event_filter.h>
+#include <miral/cursor_theme.h>
 #include <miral/configuration_option.h>
 #include <miral/decorations.h>
 #include <miral/display_configuration_option.h>
@@ -374,6 +375,7 @@ int main(int argc, char const* argv[])
                 [&] { is_locked = false; }),
             set_window_management_policy<WindowManagerPolicy>(commands),
             lockscreen,
-            getenv_decorations()
+            getenv_decorations(),
+            CursorTheme{"default"}
         });
 }
