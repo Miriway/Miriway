@@ -57,7 +57,7 @@ private:
     bool handle_keyboard_event(MirKeyboardEvent const* event) override;
 
     void dock_active_window_under_lock(MirPlacementGravity placement);
-    static bool eligible_to_dock(MirWindowType window_type);
+    static bool eligible_to_dock(MirWindowType window_type, MirDepthLayer layer);
 
     ShellCommands* const commands;
 

@@ -82,7 +82,7 @@ void miriway::WindowManagerPolicy::toggle_maximized_restored()
             {
                 auto& window_info = tools.info_for(active_window);
 
-                if (!eligible_to_dock(window_info.type()))
+                if (!eligible_to_dock(window_info.type(), window_info.depth_layer()))
                 {
                     return;
                 }
@@ -243,7 +243,7 @@ void miriway::WindowManagerPolicy::dock_active_window_under_lock(MirPlacementGra
         auto const active_rect = tools.active_application_zone().extents();
         auto& window_info = tools.info_for(active_window);
 
-        if (!eligible_to_dock(window_info.type()))
+        if (!eligible_to_dock(window_info.type(), window_info.depth_layer()))
         {
             return;
         }
@@ -280,14 +280,14 @@ void miriway::WindowManagerPolicy::dock_active_window_under_lock(MirPlacementGra
     }
 }
 
-bool miriway::WindowManagerPolicy::eligible_to_dock(MirWindowType window_type)
+bool miriway::WindowManagerPolicy::eligible_to_dock(MirWindowType window_type, MirDepthLayer layer)
 {
     switch (window_type)
     {
     // Only normal (and freestyle) windows are eligible to dock.
     case mir_window_type_freestyle:
     case mir_window_type_normal:
-        return true;
+        return layer == mir_depth_layer_application;
 
     default:
         return false;
