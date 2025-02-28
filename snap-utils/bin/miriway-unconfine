@@ -1,6 +1,6 @@
 #! /bin/bash
 set -e
-if command -v $terminal > /dev/null
+if command -v aa-exec > /dev/null
 then
   exec aa-exec -p unconfined "$@"
 fi
