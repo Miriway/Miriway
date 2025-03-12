@@ -254,9 +254,12 @@ int main(int argc, char const* argv[])
             {
                 std::filesystem::path const path{std::istreambuf_iterator{cmdline}, std::istreambuf_iterator<char>{}};
                 auto filename = path.filename().string();
-                filename.erase(filename.find('\0'));
+                if (auto const eos = filename.find('\0'); eos != std::string::npos)
+                {
+                    filename.erase(eos);
 
-                return info.user_preference().value_or(filename == "firefox");
+                    return info.user_preference().value_or(filename == "firefox");
+                }
             }
             return info.user_preference().value_or(false);
         });
