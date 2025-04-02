@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 cmake_policy(SET CMP0015 NEW)
 cmake_policy(SET CMP0022 NEW)
 
@@ -22,10 +22,13 @@ pkg_check_modules(XKBCOMMON xkbcommon REQUIRED)
 
 set (CMAKE_REQUIRED_INCLUDES "${MIRAL_INCLUDE_DIRS}")
 
+add_subdirectory(wayland-generated)
+
 add_library(miriwaycommon STATIC
     miriway_child_control.cpp       miriway_child_control.h
     miriway_commands.cpp            miriway_commands.h
     miriway_workspace_manager.cpp   miriway_workspace_manager.h
+    wayland-generated/ext-workspace-v1_wrapper.cpp    wayland-generated/ext-workspace-v1_wrapper.h
 )
 
 target_include_directories(miriwaycommon PUBLIC SYSTEM ${MIRAL_INCLUDE_DIRS})
