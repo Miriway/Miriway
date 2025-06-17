@@ -18,6 +18,12 @@
 
 #include "miriway_ext_workspace_v1.h"
 
+miriway::ExtWorkspaceManagerV1::ExtWorkspaceManagerV1(wl_resource* new_ext_workspace_manager_v1) :
+    mir::wayland::ExtWorkspaceManagerV1{new_ext_workspace_manager_v1, Version<1>{}}
+{
+    new ExtWorkspaceGroupHandleV1{*this};
+}
+
 void miriway::ExtWorkspaceManagerV1::commit()
 {
 }
@@ -28,7 +34,13 @@ void miriway::ExtWorkspaceManagerV1::stop()
 
 void miriway::ExtWorkspaceManagerV1::Global::bind(wl_resource* new_ext_workspace_manager_v1)
 {
-    new ExtWorkspaceManagerV1{new_ext_workspace_manager_v1, mir::wayland::Resource::Version<1>{}};
+    new ExtWorkspaceManagerV1{new_ext_workspace_manager_v1};
+}
+
+miriway::ExtWorkspaceGroupHandleV1::ExtWorkspaceGroupHandleV1(ExtWorkspaceManagerV1& manager) :
+    mir::wayland::ExtWorkspaceGroupHandleV1{manager}
+{
+    send_capabilities_event(0);
 }
 
 void miriway::ExtWorkspaceGroupHandleV1::create_workspace(std::string const& workspace)

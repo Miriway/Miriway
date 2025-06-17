@@ -26,7 +26,7 @@ namespace miriway
 class ExtWorkspaceManagerV1 : public mir::wayland::ExtWorkspaceManagerV1
 {
 public:
-    using mir::wayland::ExtWorkspaceManagerV1::ExtWorkspaceManagerV1;
+    explicit ExtWorkspaceManagerV1(wl_resource* new_ext_workspace_manager_v1);
     void commit() override;
     void stop() override;
 
@@ -42,6 +42,10 @@ public:
 
 class ExtWorkspaceGroupHandleV1 :  public mir::wayland::ExtWorkspaceGroupHandleV1
 {
+public:
+    explicit ExtWorkspaceGroupHandleV1(ExtWorkspaceManagerV1& manager);
+
+private:
     void create_workspace(std::string const& workspace) override;
     void destroy() override;
 };
