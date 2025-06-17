@@ -36,6 +36,7 @@ public:
 class ExtWorkspaceManagerV1::Global : public mir::wayland::ExtWorkspaceManagerV1::Global
 {
 public:
+    explicit Global(wl_display* display) : mir::wayland::ExtWorkspaceManagerV1::Global(display, Version<1>{}) {}
     void bind(wl_resource* new_ext_workspace_manager_v1) override;
 };
 

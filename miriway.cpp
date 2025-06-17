@@ -19,6 +19,7 @@
 #include "miriway_child_control.h"
 #include "miriway_commands.h"
 #include "miriway_policy.h"
+#include "miriway_ext_workspace_v1.h"
 
 #include <mir/abnormal_exit.h>
 #include <mir/log.h>
@@ -263,6 +264,11 @@ int main(int argc, char const* argv[])
             }
             return info.user_preference().value_or(false);
         });
+
+    extensions.add_extension({
+        .name = ExtWorkspaceManagerV1::interface_name,
+        .build = [](auto* context) { return std::make_shared<ExtWorkspaceManagerV1::Global>(context->display()); }
+    });
 
     ChildControl child_control(runner);
 
