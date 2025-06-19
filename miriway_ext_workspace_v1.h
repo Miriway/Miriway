@@ -21,23 +21,42 @@
 
 #include "wayland-generated/ext-workspace-v1_wrapper.h"
 
+#include <miral/wayland_extensions.h>
+#include <miral/miral/minimal_window_manager.h>
+
+namespace mir::wayland { class Client; }
+namespace miral { class WaylandTools; class Output; }
 namespace miriway
 {
+class ExtWorkspaceGroupHandleV1;
+
 class ExtWorkspaceManagerV1 : public mir::wayland::ExtWorkspaceManagerV1
 {
 public:
     explicit ExtWorkspaceManagerV1(wl_resource* new_ext_workspace_manager_v1);
     void commit() override;
     void stop() override;
+    void output_added(miral::WaylandTools* wltools, miral::Output const& output);
 
     class Global;
+
+private:
+    ExtWorkspaceGroupHandleV1* the_workspace_group;
 };
 
 class ExtWorkspaceManagerV1::Global : public mir::wayland::ExtWorkspaceManagerV1::Global
 {
 public:
-    explicit Global(wl_display* display) : mir::wayland::ExtWorkspaceManagerV1::Global(display, Version<1>{}) {}
+    Global(miral::WaylandExtensions::Context const* context, miral::WaylandTools& wltools);
+    ~Global();
     void bind(wl_resource* new_ext_workspace_manager_v1) override;
+
+    static void output_created(miral::Output const& output);
+private:
+    void output_added(miral::Output const& output);
+    miral::WaylandExtensions::Context const* const context;
+    ExtWorkspaceManagerV1* the_workspace_manager;
+    miral::WaylandTools* const wltools;
 };
 
 class ExtWorkspaceGroupHandleV1 :  public mir::wayland::ExtWorkspaceGroupHandleV1

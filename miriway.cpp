@@ -37,6 +37,7 @@
 #include <miral/set_window_management_policy.h>
 #include <miral/version.h>
 #include <miral/wayland_extensions.h>
+#include <miral/wayland_tools.h>
 #include <miral/x11_support.h>
 
 #include <cstring>
@@ -265,13 +266,14 @@ int main(int argc, char const* argv[])
             return info.user_preference().value_or(false);
         });
 
+    WaylandTools wltools;
+
     extensions.add_extension({
         .name = ExtWorkspaceManagerV1::interface_name,
-        .build = [](auto* context) { return std::make_shared<ExtWorkspaceManagerV1::Global>(context->display()); }
+        .build = [&](auto* context) { return std::make_shared<ExtWorkspaceManagerV1::Global>(context, wltools); }
     });
 
     ChildControl child_control(runner);
-
 
     // Protocols we're reserving for shell components_option
     for (auto const& protocol : {
@@ -385,6 +387,7 @@ int main(int argc, char const* argv[])
             set_window_management_policy<WindowManagerPolicy>(commands),
             lockscreen,
             getenv_decorations(),
-            CursorTheme{"default"}
+            CursorTheme{"default"},
+            wltools,
         });
 }

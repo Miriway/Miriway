@@ -20,6 +20,7 @@
 #define MIRIWAY_WORKSPACE_MANAGER_H_
 
 #include <miral/window_manager_tools.h>
+#include "miriway_ext_workspace_v1.h"
 
 #include <list>
 #include <map>
@@ -154,6 +155,12 @@ protected:
             activate_workspace_containing(window_info.window());
         }
         WMStrategy::handle_raise_window(window_info);
+    }
+
+    virtual void advise_output_create(miral::Output const& output) override
+    {
+        ExtWorkspaceManagerV1::Global::output_created(output);
+        WMStrategy::advise_output_create(output);
     }
 };
 } // miriway

@@ -18,10 +18,20 @@
 
 #include "miriway_ext_workspace_v1.h"
 
-miriway::ExtWorkspaceManagerV1::ExtWorkspaceManagerV1(wl_resource* new_ext_workspace_manager_v1) :
-    mir::wayland::ExtWorkspaceManagerV1{new_ext_workspace_manager_v1, Version<1>{}}
+#include <miral/output.h>
+#include <miral/wayland_tools.h>
+
+namespace
 {
-    new ExtWorkspaceGroupHandleV1{*this};
+std::set<miriway::ExtWorkspaceManagerV1::Global*> all_the_globals;
+std::mutex all_the_outputs_mutex;
+std::set<miral::Output, decltype([](auto const& l, auto const& r){ return l.id() < r.id(); })> all_the_outputs;
+}
+
+miriway::ExtWorkspaceManagerV1::ExtWorkspaceManagerV1(wl_resource* new_ext_workspace_manager_v1) :
+    mir::wayland::ExtWorkspaceManagerV1{new_ext_workspace_manager_v1, Version<1>{}},
+    the_workspace_group{new ExtWorkspaceGroupHandleV1{*this}}
+{
 }
 
 void miriway::ExtWorkspaceManagerV1::commit()
@@ -32,9 +42,49 @@ void miriway::ExtWorkspaceManagerV1::stop()
 {
 }
 
+void miriway::ExtWorkspaceManagerV1::output_added(miral::WaylandTools* wltools, miral::Output const& output)
+{
+    wltools->for_each_binding(this->client, output, [](auto...){ puts("HERE"); });
+}
+
+miriway::ExtWorkspaceManagerV1::Global::Global(miral::WaylandExtensions::Context const* context, miral::WaylandTools& wltools) :
+    mir::wayland::ExtWorkspaceManagerV1::Global{context->display(), Version<1>{}},
+    context{context},
+    the_workspace_manager{nullptr},
+    wltools{&wltools}
+{
+    all_the_globals.insert(this);
+}
+
+miriway::ExtWorkspaceManagerV1::Global::~Global()
+{
+    all_the_globals.erase(this);
+}
+
 void miriway::ExtWorkspaceManagerV1::Global::bind(wl_resource* new_ext_workspace_manager_v1)
 {
-    new ExtWorkspaceManagerV1{new_ext_workspace_manager_v1};
+    the_workspace_manager = new ExtWorkspaceManagerV1{new_ext_workspace_manager_v1};
+    std:: lock_guard lock(all_the_outputs_mutex);
+    for (auto const& output : all_the_outputs)
+        the_workspace_manager->output_added(wltools, output);
+}
+
+void miriway::ExtWorkspaceManagerV1::Global::output_created(miral::Output const& output)
+{
+    {
+        std:: lock_guard lock(all_the_outputs_mutex);
+        all_the_outputs.insert(output);
+    }
+    for (auto const& global : all_the_globals)
+        global->output_added(output);
+}
+
+void miriway::ExtWorkspaceManagerV1::Global::output_added(miral::Output const& output)
+{
+    context->run_on_wayland_mainloop([this, output]
+    {
+        if (the_workspace_manager) the_workspace_manager->output_added(wltools, output);
+    });
 }
 
 miriway::ExtWorkspaceGroupHandleV1::ExtWorkspaceGroupHandleV1(ExtWorkspaceManagerV1& manager) :
