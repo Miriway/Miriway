@@ -3,8 +3,14 @@ set -e
 
 if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 
-shell_components="synapse swaync swaybg swaylock kgx grim gnome-keyring-daemon"
-shell_packages="synapse sway-notification-center swaybg swaylock gnome-console grim gnome-keyring"
+if  [ -e "/usr/libexec/mate-polkit/polkit-mate-authentication-agent-1" ]; then
+  polkit_agent="/usr/libexec/mate-polkit/polkit-mate-authentication-agent-1"
+else
+  polkit_agent="/usr/libexec/polkit-mate-authentication-agent-1"
+fi
+
+shell_components="synapse swaync swaybg swaylock kgx grim gnome-keyring-daemon ${polkit_agent}"
+shell_packages="synapse sway-notification-center swaybg swaylock gnome-console grim gnome-keyring mate-polkit"
 
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 yambar_config="${XDG_CONFIG_HOME:-$HOME/.config}/yambar/config.yml"
@@ -54,10 +60,17 @@ fi
 
 mkdir "$(dirname "${yambar_config}")" -p -m 700
 
+if  [ -e "/usr/libexec/mate-polkit/polkit-mate-authentication-agent-1" ]; then
+  polkit_agent="/usr/libexec/mate-polkit/polkit-mate-authentication-agent-1"
+elif  [ -e "/usr/libexec/polkit-mate-authentication-agent-1" ]; then
+  polkit_agent="/usr/libexec/polkit-mate-authentication-agent-1"
+else
+  polkit_agent="$(find /usr/lib* -name polkit-*-agent-1 | tail -n 1)"
+fi
+
 miriway_display="${miriway_config/%config/display}"
-if  [ -e "/home/${USER}/Downloads/yorkshire.jpg" ]; then
-  # fall back to Ubuntu default
-  background="/home/${USER}/Downloads/yorkshire.jpg"
+if  [ -e "/home/${USER}/Pictures/202109-Norfolk/IMG_5949.JPG" ]; then
+  background="/home/${USER}/Pictures/202109-Norfolk/IMG_5949.JPG"
 elif  [ -e "/usr/share/backgrounds/warty-final-ubuntu.png" ]; then
   # fall back to Ubuntu default
   background="/usr/share/backgrounds/warty-final-ubuntu.png"
@@ -77,6 +90,7 @@ shell-component=systemd-run --user --scope --slice=background.slice swaybg --mod
 shell-component=systemd-run --user --scope --slice=background.slice swaync
 shell-component=systemd-run --user --scope --slice=background.slice yambar
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice gnome-keyring-daemon --foreground
+shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice ${polkit_agent}
 
 ctrl-alt=t:miriway-unsnap kgx
 shell-meta=a:miriway-unsnap synapse
@@ -88,6 +102,7 @@ lockscreen-app=miriway-unsnap swaylock -i ${background}
 ctrl-alt=d:cp ${miriway_display}~docked ${miriway_display}
 ctrl-alt=u:cp ${miriway_display}~undocked ${miriway_display}
 ctrl-alt=s:miriway-swap
+ctrl-alt=k:miriway-unsnap lock-and-suspend.sh
 ctrl-alt=Up:@toggle-always-on-top
 shell-ctrl-alt=y:systemd-run --user --scope --slice=background.slice yambar
 
@@ -101,7 +116,6 @@ meta=Page_Down:@workspace-down
 ctrl-alt=BackSpace:@exit
 
 display-config=static=${miriway_display}
-composite-delay=60
 EOT
 
 # Ensure we have a config file with the fixed options
