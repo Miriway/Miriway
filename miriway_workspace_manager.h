@@ -162,6 +162,12 @@ protected:
         ExtWorkspaceManagerV1::Global::output_created(output);
         WMStrategy::advise_output_create(output);
     }
+
+    virtual void advise_output_delete(miral::Output const& output) override
+    {
+        ExtWorkspaceManagerV1::Global::output_deleted(output);
+        WMStrategy::advise_output_delete(output);
+    }
 };
 } // miriway
 

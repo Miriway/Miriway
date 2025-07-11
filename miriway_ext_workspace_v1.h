@@ -37,6 +37,7 @@ public:
     void commit() override;
     void stop() override;
     void output_added(miral::WaylandTools* wltools, miral::Output const& output);
+    void output_deleted(miral::WaylandTools* wltools, miral::Output const& output);
 
     class Global;
 
@@ -52,8 +53,10 @@ public:
     void bind(wl_resource* new_ext_workspace_manager_v1) override;
 
     static void output_created(miral::Output const& output);
+    static void output_deleted(const miral::Output &output);
 private:
     void output_added(miral::Output const& output);
+    void output_removed(const miral::Output &output);
     miral::WaylandExtensions::Context const* const context;
     ExtWorkspaceManagerV1* the_workspace_manager;
     miral::WaylandTools* const wltools;

@@ -32,6 +32,9 @@ miriway::ExtWorkspaceManagerV1::ExtWorkspaceManagerV1(wl_resource* new_ext_works
     mir::wayland::ExtWorkspaceManagerV1{new_ext_workspace_manager_v1, Version<1>{}},
     the_workspace_group{new ExtWorkspaceGroupHandleV1{*this}}
 {
+    send_workspace_group_event(the_workspace_group->resource);
+    send_done_event();
+    the_workspace_group->send_capabilities_event(0);
 }
 
 void miriway::ExtWorkspaceManagerV1::commit()
@@ -44,7 +47,26 @@ void miriway::ExtWorkspaceManagerV1::stop()
 
 void miriway::ExtWorkspaceManagerV1::output_added(miral::WaylandTools* wltools, miral::Output const& output)
 {
-    wltools->for_each_binding(this->client, output, [](auto...){ puts("HERE"); });
+    wltools->for_each_binding(client, output, [this](wl_resource* the_output)
+    {
+        the_workspace_group->send_output_enter_event(the_output);
+    });
+}
+
+void miriway::ExtWorkspaceManagerV1::Global::output_removed(const miral::Output &output)
+{
+    context->run_on_wayland_mainloop([this, output]
+    {
+        if (the_workspace_manager) the_workspace_manager->output_deleted(wltools, output);
+    });
+}
+
+void miriway::ExtWorkspaceManagerV1::output_deleted(miral::WaylandTools* wltools, miral::Output const& output)
+{
+    wltools->for_each_binding(client, output, [this](wl_resource* the_output)
+    {
+        the_workspace_group->send_output_leave_event(the_output);
+    });
 }
 
 miriway::ExtWorkspaceManagerV1::Global::Global(miral::WaylandExtensions::Context const* context, miral::WaylandTools& wltools) :
@@ -79,6 +101,17 @@ void miriway::ExtWorkspaceManagerV1::Global::output_created(miral::Output const&
         global->output_added(output);
 }
 
+void miriway::ExtWorkspaceManagerV1::Global::output_deleted(const miral::Output &output)
+{
+    {
+        std:: lock_guard lock(all_the_outputs_mutex);
+        all_the_outputs.insert(output);
+    }
+
+    for (auto const& global : all_the_globals)
+        global->output_removed(output);
+}
+
 void miriway::ExtWorkspaceManagerV1::Global::output_added(miral::Output const& output)
 {
     context->run_on_wayland_mainloop([this, output]
@@ -90,7 +123,6 @@ void miriway::ExtWorkspaceManagerV1::Global::output_added(miral::Output const& o
 miriway::ExtWorkspaceGroupHandleV1::ExtWorkspaceGroupHandleV1(ExtWorkspaceManagerV1& manager) :
     mir::wayland::ExtWorkspaceGroupHandleV1{manager}
 {
-    send_capabilities_event(0);
 }
 
 void miriway::ExtWorkspaceGroupHandleV1::create_workspace(std::string const& workspace)
