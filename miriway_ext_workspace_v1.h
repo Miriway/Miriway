@@ -25,7 +25,7 @@
 #include <miral/miral/minimal_window_manager.h>
 
 namespace mir::wayland { class Client; }
-namespace miral { class WaylandTools; class Output; }
+namespace miral { class WaylandTools; class Output; class Workspace; }
 namespace miriway
 {
 class ExtWorkspaceGroupHandleV1;
@@ -54,6 +54,10 @@ public:
 
     static void output_created(miral::Output const& output);
     static void output_deleted(const miral::Output &output);
+    static void workspace_created(std::shared_ptr<miral::Workspace> const& wksp);
+    static void workspace_activated(std::shared_ptr<miral::Workspace> const& wksp);
+    static void workspace_deactivated(std::shared_ptr<miral::Workspace> const& wksp);
+    static void workspace_destroyed(std::shared_ptr<miral::Workspace> const& wksp);
 private:
     void output_added(miral::Output const& output);
     void output_removed(const miral::Output &output);

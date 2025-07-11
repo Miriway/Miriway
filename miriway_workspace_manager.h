@@ -53,6 +53,7 @@ class WorkspaceManager
 {
 public:
     explicit WorkspaceManager(WindowManagerTools const& tools);
+    WorkspaceManager(WorkspaceObserver& observer, WindowManagerTools const& tools);
     virtual ~WorkspaceManager() = default;
 
     void workspace_begin(bool take_active);
@@ -109,14 +110,38 @@ private:
     void erase_if_empty(workspace_list::const_iterator const& old_workspace);
 };
 
+class SimpleWorkspaceObserver : public WorkspaceObserver
+{
+public:
+    void on_workspace_create(const std::shared_ptr<Workspace> &wksp) override
+    {
+        ExtWorkspaceManagerV1::Global::workspace_created(wksp);
+    }
+
+    void on_workspace_activate(const std::shared_ptr<Workspace> &wksp) override
+    {
+        ExtWorkspaceManagerV1::Global::workspace_activated(wksp);
+    }
+
+    void on_workspace_deactivate(const std::shared_ptr<Workspace> &wksp) override
+    {
+        ExtWorkspaceManagerV1::Global::workspace_deactivated(wksp);
+    }
+
+    void on_workspace_destroy(const std::shared_ptr<Workspace> &wksp) override
+    {
+        ExtWorkspaceManagerV1::Global::workspace_destroyed(wksp);
+    }
+};
+
 // Template class to hook WorkspaceManager into a window management strategy
 template<typename WMStrategy>
-class WorkspaceWMStrategy : public WMStrategy, protected WorkspaceManager
+class WorkspaceWMStrategy : public WMStrategy, protected SimpleWorkspaceObserver, protected WorkspaceManager
 {
 protected:
     explicit WorkspaceWMStrategy(WindowManagerTools const& tools) :
         WMStrategy{tools},
-        WorkspaceManager{tools}
+        WorkspaceManager{*this, tools}
     {}
 
     void advise_new_window(const WindowInfo &window_info) override

@@ -21,11 +21,17 @@
 #include <miral/output.h>
 #include <miral/wayland_tools.h>
 
+using miral::Workspace;
+
 namespace
 {
 std::set<miriway::ExtWorkspaceManagerV1::Global*> all_the_globals;
 std::mutex all_the_outputs_mutex;
 std::set<miral::Output, decltype([](auto const& l, auto const& r){ return l.id() < r.id(); })> all_the_outputs;
+
+std::mutex all_the_workspaces_mutex;
+unsigned int the_workspaces_counter = 0;
+std::map<std::shared_ptr<Workspace>, unsigned int> all_the_workspaces;
 }
 
 miriway::ExtWorkspaceManagerV1::ExtWorkspaceManagerV1(wl_resource* new_ext_workspace_manager_v1) :
@@ -118,6 +124,28 @@ void miriway::ExtWorkspaceManagerV1::Global::output_added(miral::Output const& o
     {
         if (the_workspace_manager) the_workspace_manager->output_added(wltools, output);
     });
+}
+
+void miriway::ExtWorkspaceManagerV1::Global::workspace_created(const std::shared_ptr<miral::Workspace> &wksp)
+{
+    std::lock_guard lock(all_the_workspaces_mutex);
+    all_the_workspaces.emplace(wksp, the_workspaces_counter++);
+}
+
+void miriway::ExtWorkspaceManagerV1::Global::workspace_activated(const std::shared_ptr<miral::Workspace> &wksp)
+{
+    (void)wksp;
+}
+
+void miriway::ExtWorkspaceManagerV1::Global::workspace_deactivated(const std::shared_ptr<miral::Workspace> &wksp)
+{
+    (void)wksp;
+}
+
+void miriway::ExtWorkspaceManagerV1::Global::workspace_destroyed(const std::shared_ptr<miral::Workspace> &wksp)
+{
+    std::lock_guard lock(all_the_workspaces_mutex);
+    all_the_workspaces.erase(wksp);
 }
 
 miriway::ExtWorkspaceGroupHandleV1::ExtWorkspaceGroupHandleV1(ExtWorkspaceManagerV1& manager) :
