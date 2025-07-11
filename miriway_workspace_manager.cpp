@@ -23,6 +23,17 @@
 using namespace mir::geometry;
 using namespace miral;
 
+namespace
+{
+struct NullWorkspaceObserver : miriway::WorkspaceObserver
+{
+    void on_workspace_create(const std::shared_ptr<Workspace>&) override {}
+    void on_workspace_activate(const std::shared_ptr<Workspace>&) override {}
+    void on_workspace_deactivate(const std::shared_ptr<Workspace>&) override {}
+    void on_workspace_destroy(const std::shared_ptr<Workspace>&) override {}
+} null_observer;
+}
+
 struct miriway::WorkspaceManager::WorkspaceInfo
 {
     bool in_hidden_workspace{false};
@@ -31,11 +42,10 @@ struct miriway::WorkspaceManager::WorkspaceInfo
 };
 
 miriway::WorkspaceManager::WorkspaceManager(WindowManagerTools const& tools) :
+    observer{null_observer},
     tools_{tools}
 {
-    workspaces.push_back(tools_.create_workspace());
-
-    active_workspace_ = workspaces.begin();
+    append_new_workspace();
 }
 
 void miriway::WorkspaceManager::workspace_begin(bool take_active)
@@ -48,7 +58,7 @@ void miriway::WorkspaceManager::workspace_begin(bool take_active)
                 auto const old_workspace = active_workspace_;
                 auto const& window = take_active ? tools_.active_window() : Window{};
                 auto const& old_active = *active_workspace_;
-                auto const& new_active = *(active_workspace_ = workspaces.begin());
+                auto const& new_active = *(active_workspace_ = workspaces.cbegin());
                 change_active_workspace(new_active, old_active, window);
                 erase_if_empty(old_workspace);
             }
@@ -63,8 +73,7 @@ void miriway::WorkspaceManager::workspace_end(bool take_active)
             auto const old_workspace = active_workspace_;
             auto const& window = take_active ? tools_.active_window() : Window{};
             auto const& old_active = *active_workspace_;
-            workspaces.push_back(tools_.create_workspace());
-            active_workspace_ = --workspaces.end();
+            append_new_workspace();
             auto const& new_active = *active_workspace_;
             change_active_workspace(new_active, old_active, window);
             erase_if_empty(old_workspace);
@@ -76,7 +85,7 @@ void miriway::WorkspaceManager::workspace_up(bool take_active)
     tools_.invoke_under_lock(
         [this, take_active]
         {
-            if (active_workspace_ != workspaces.begin())
+            if (active_workspace_ != workspaces.cbegin())
             {
                 auto const old_workspace = active_workspace_;
                 auto const& window = take_active ? tools_.active_window() : Window{};
@@ -96,10 +105,9 @@ void miriway::WorkspaceManager::workspace_down(bool take_active)
             auto const old_workspace = active_workspace_;
             auto const& window = take_active ? tools_.active_window() : Window{};
             auto const& old_active = *active_workspace_;
-            if (++active_workspace_ == workspaces.end())
+            if (++active_workspace_ == workspaces.cend())
             {
-                workspaces.push_back(tools_.create_workspace());
-                active_workspace_ = --workspaces.end();
+                append_new_workspace();
             }
             auto const& new_active = *active_workspace_;
             change_active_workspace(new_active, old_active, window);
@@ -107,7 +115,13 @@ void miriway::WorkspaceManager::workspace_down(bool take_active)
         });
 }
 
-void miriway::WorkspaceManager::erase_if_empty(workspace_list::iterator const& old_workspace)
+void miriway::WorkspaceManager::append_new_workspace()
+{
+    workspaces.push_back(tools_.create_workspace());
+    active_workspace_ = --workspaces.cend();
+}
+
+void miriway::WorkspaceManager::erase_if_empty(workspace_list::const_iterator const& old_workspace)
 {
     bool empty = true;
     tools_.for_each_window_in_workspace(*old_workspace, [&](auto ww)
@@ -225,7 +239,7 @@ void miriway::WorkspaceManager::activate_workspace_containing(Window const& wind
         [this](std::shared_ptr<Workspace> const& workspace)
         {
             auto const old_active = active_workspace_;
-            active_workspace_ = find(workspaces.begin(), workspaces.end(), workspace);
+            active_workspace_ = find(workspaces.cbegin(), workspaces.cend(), workspace);
             change_active_workspace(workspace, *old_active, Window{});
             erase_if_empty(old_active);
         });

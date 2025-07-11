@@ -32,6 +32,22 @@ using miral::WindowManagerTools;
 using miral::WindowSpecification;
 using miral::Workspace;
 
+class WorkspaceObserver
+{
+public:
+    WorkspaceObserver() = default;
+    virtual ~WorkspaceObserver() = default;
+
+    virtual void on_workspace_create(std::shared_ptr<Workspace> const& wksp) = 0;
+    virtual void on_workspace_activate(std::shared_ptr<Workspace> const& wksp) = 0;
+    virtual void on_workspace_deactivate(std::shared_ptr<Workspace> const& wksp) = 0;
+    virtual void on_workspace_destroy(std::shared_ptr<Workspace> const& wksp) = 0;
+
+private:
+    WorkspaceObserver(WorkspaceObserver const&) = delete;
+    WorkspaceObserver& operator=(WorkspaceObserver const&) = delete;
+};
+
 class WorkspaceManager
 {
 public:
@@ -79,15 +95,17 @@ public:
     }
 
 private:
+    WorkspaceObserver& observer;
     WindowManagerTools tools_;
 
     using workspace_list = std::list<std::shared_ptr<Workspace>>;
 
     workspace_list workspaces;
-    workspace_list::iterator active_workspace_;
+    workspace_list::const_iterator active_workspace_;
     std::map<std::shared_ptr<miral::Workspace>, miral::Window> workspace_to_active;
 
-    void erase_if_empty(workspace_list::iterator const& old_workspace);
+    void append_new_workspace();
+    void erase_if_empty(workspace_list::const_iterator const& old_workspace);
 };
 
 // Template class to hook WorkspaceManager into a window management strategy
