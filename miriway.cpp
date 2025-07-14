@@ -268,10 +268,7 @@ int main(int argc, char const* argv[])
 
     WaylandTools wltools;
 
-    extensions.add_extension({
-        .name = ExtWorkspaceManagerV1::interface_name,
-        .build = [&](auto* context) { return std::make_shared<ExtWorkspaceManagerV1::Global>(context, wltools); }
-    });
+    extensions.add_extension(ext_workspace_hooks::build_global(wltools));
 
     ChildControl child_control(runner);
 

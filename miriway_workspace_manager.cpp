@@ -46,12 +46,30 @@ miriway::WorkspaceManager::WorkspaceManager(miriway::WorkspaceObserver &observer
     observer{observer},
     tools_{tools}
 {
+    ext_workspace_hooks::workspace_activator([this](auto const& workspace)
+       {
+           tools_.invoke_under_lock([this, workspace]
+                {
+                    auto const old_active= active_workspace_;
+                    if (*old_active != workspace)
+                    {
+                        active_workspace_ = std::find(workspaces.begin(), workspaces.end(), workspace);
+                        change_active_workspace(workspace, *old_active, Window{});
+                        erase_if_empty(old_active);
+                    }
+                });
+       });
     append_new_workspace();
 }
 
 miriway::WorkspaceManager::WorkspaceManager(WindowManagerTools const& tools) :
     WorkspaceManager{null_observer, tools}
 {
+}
+
+miriway::WorkspaceManager::~WorkspaceManager()
+{
+    ext_workspace_hooks::workspace_activator([](auto...) {});
 }
 
 void miriway::WorkspaceManager::workspace_begin(bool take_active)
@@ -251,7 +269,6 @@ void miriway::WorkspaceManager::activate_workspace_containing(Window const& wind
             auto const old_active = active_workspace_;
             active_workspace_ = find(workspaces.cbegin(), workspaces.cend(), workspace);
             change_active_workspace(workspace, *old_active, Window{});
-            erase_if_empty(old_active);
         });
 }
 

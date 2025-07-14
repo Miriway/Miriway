@@ -19,72 +19,31 @@
 #ifndef MIRIWAY_EXT_WORKSPACE_V1_H
 #define MIRIWAY_EXT_WORKSPACE_V1_H
 
-#include "wayland-generated/ext-workspace-v1_wrapper.h"
-
 #include <miral/wayland_extensions.h>
-#include <miral/miral/minimal_window_manager.h>
 
-namespace mir::wayland { class Client; }
+
 namespace miral { class WaylandTools; class Output; class Workspace; }
 namespace miriway
 {
-class ExtWorkspaceGroupHandleV1;
 
-class ExtWorkspaceManagerV1 : public mir::wayland::ExtWorkspaceManagerV1
+namespace ext_workspace_hooks
 {
-public:
-    explicit ExtWorkspaceManagerV1(wl_resource* new_ext_workspace_manager_v1);
-    void commit() override;
-    void stop() override;
-    void output_added(miral::WaylandTools* wltools, miral::Output const& output);
-    void output_deleted(miral::WaylandTools* wltools, miral::Output const& output);
+void output_created(miral::Output const &output);
 
-    class Global;
+void output_deleted(const miral::Output &output);
 
-private:
-    ExtWorkspaceGroupHandleV1* the_workspace_group;
-};
+void workspace_created(std::shared_ptr<miral::Workspace> const &wksp);
 
-class ExtWorkspaceManagerV1::Global : public mir::wayland::ExtWorkspaceManagerV1::Global
-{
-public:
-    Global(miral::WaylandExtensions::Context const* context, miral::WaylandTools& wltools);
-    ~Global();
-    void bind(wl_resource* new_ext_workspace_manager_v1) override;
+void workspace_activated(std::shared_ptr<miral::Workspace> const &wksp);
 
-    static void output_created(miral::Output const& output);
-    static void output_deleted(const miral::Output &output);
-    static void workspace_created(std::shared_ptr<miral::Workspace> const& wksp);
-    static void workspace_activated(std::shared_ptr<miral::Workspace> const& wksp);
-    static void workspace_deactivated(std::shared_ptr<miral::Workspace> const& wksp);
-    static void workspace_destroyed(std::shared_ptr<miral::Workspace> const& wksp);
-private:
-    void output_added(miral::Output const& output);
-    void output_removed(const miral::Output &output);
-    miral::WaylandExtensions::Context const* const context;
-    ExtWorkspaceManagerV1* the_workspace_manager;
-    miral::WaylandTools* const wltools;
-};
+void workspace_deactivated(std::shared_ptr<miral::Workspace> const &wksp);
 
-class ExtWorkspaceGroupHandleV1 :  public mir::wayland::ExtWorkspaceGroupHandleV1
-{
-public:
-    explicit ExtWorkspaceGroupHandleV1(ExtWorkspaceManagerV1& manager);
+void workspace_destroyed(std::shared_ptr<miral::Workspace> const &wksp);
 
-private:
-    void create_workspace(std::string const& workspace) override;
-    void destroy() override;
-};
+void workspace_activator(std::function<void(std::shared_ptr<miral::Workspace> const &wksp)> f);
 
-class ExtWorkspaceHandleV1 : public mir::wayland::ExtWorkspaceHandleV1
-{
-public:
-    void destroy() override;
-    void activate() override;
-    void deactivate() override;
-    void assign(wl_resource* workspace_group) override;
-    void remove() override;
-};
+auto build_global(miral::WaylandTools &wltools) -> miral::WaylandExtensions::Builder;
+}
 } // miriway
 
 #endif //MIRIWAY_EXT_WORKSPACE_V1_H

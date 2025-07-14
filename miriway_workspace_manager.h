@@ -54,7 +54,7 @@ class WorkspaceManager
 public:
     explicit WorkspaceManager(WindowManagerTools const& tools);
     WorkspaceManager(WorkspaceObserver& observer, WindowManagerTools const& tools);
-    virtual ~WorkspaceManager() = default;
+    virtual ~WorkspaceManager();
 
     void workspace_begin(bool take_active);
 
@@ -115,22 +115,22 @@ class SimpleWorkspaceObserver : public WorkspaceObserver
 public:
     void on_workspace_create(const std::shared_ptr<Workspace> &wksp) override
     {
-        ExtWorkspaceManagerV1::Global::workspace_created(wksp);
+        ext_workspace_hooks::workspace_created(wksp);
     }
 
     void on_workspace_activate(const std::shared_ptr<Workspace> &wksp) override
     {
-        ExtWorkspaceManagerV1::Global::workspace_activated(wksp);
+        ext_workspace_hooks::workspace_activated(wksp);
     }
 
     void on_workspace_deactivate(const std::shared_ptr<Workspace> &wksp) override
     {
-        ExtWorkspaceManagerV1::Global::workspace_deactivated(wksp);
+        ext_workspace_hooks::workspace_deactivated(wksp);
     }
 
     void on_workspace_destroy(const std::shared_ptr<Workspace> &wksp) override
     {
-        ExtWorkspaceManagerV1::Global::workspace_destroyed(wksp);
+        ext_workspace_hooks::workspace_destroyed(wksp);
     }
 };
 
@@ -184,13 +184,13 @@ protected:
 
     virtual void advise_output_create(miral::Output const& output) override
     {
-        ExtWorkspaceManagerV1::Global::output_created(output);
+        ext_workspace_hooks::output_created(output);
         WMStrategy::advise_output_create(output);
     }
 
     virtual void advise_output_delete(miral::Output const& output) override
     {
-        ExtWorkspaceManagerV1::Global::output_deleted(output);
+        ext_workspace_hooks::output_deleted(output);
         WMStrategy::advise_output_delete(output);
     }
 };
