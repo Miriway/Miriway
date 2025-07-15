@@ -37,7 +37,7 @@
 #include <miral/set_window_management_policy.h>
 #include <miral/version.h>
 #include <miral/wayland_extensions.h>
-#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 4, 0)
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 5, 0)
 #define MIR_SUPPORTS_XDG_WORKSPACE
 #include <miral/wayland_tools.h>
 #endif

@@ -21,7 +21,7 @@
 
 #include <miral/output.h>
 #include <miral/version.h>
-#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 4, 0)
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 5, 0)
 #define MIR_SUPPORTS_XDG_WORKSPACE
 #include <miral/wayland_tools.h>
 #endif
