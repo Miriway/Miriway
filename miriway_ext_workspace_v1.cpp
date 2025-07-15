@@ -20,7 +20,11 @@
 #include "wayland-generated/ext-workspace-v1_wrapper.h"
 
 #include <miral/output.h>
+#include <miral/version.h>
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 4, 0)
+#define MIR_SUPPORTS_XDG_WORKSPACE
 #include <miral/wayland_tools.h>
+#endif
 
 #include <cstring>
 #include <format>
@@ -237,10 +241,15 @@ void miriway::ExtWorkspaceManagerV1::stop()
 
 void miriway::ExtWorkspaceManagerV1::output_added(miral::WaylandTools* wltools, miral::Output const& output)
 {
+#ifdef MIR_SUPPORTS_XDG_WORKSPACE
     wltools->for_each_binding(client, output, [this](wl_resource* the_output)
     {
         the_workspace_group->send_output_enter_event(the_output);
     });
+#else
+    (void)wltools;
+    (void)output;
+#endif
 }
 
 void miriway::ExtWorkspaceManagerV1::Global::output_removed(const miral::Output &output)
@@ -253,10 +262,15 @@ void miriway::ExtWorkspaceManagerV1::Global::output_removed(const miral::Output 
 
 void miriway::ExtWorkspaceManagerV1::output_deleted(miral::WaylandTools* wltools, miral::Output const& output)
 {
+#ifdef MIR_SUPPORTS_XDG_WORKSPACE
     wltools->for_each_binding(client, output, [this](wl_resource* the_output)
     {
         the_workspace_group->send_output_leave_event(the_output);
     });
+#else
+    (void)wltools;
+    (void)output;
+#endif
 }
 
 void miriway::ExtWorkspaceManagerV1::workspace_created(unsigned id)

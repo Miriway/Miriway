@@ -37,7 +37,10 @@
 #include <miral/set_window_management_policy.h>
 #include <miral/version.h>
 #include <miral/wayland_extensions.h>
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 4, 0)
+#define MIR_SUPPORTS_XDG_WORKSPACE
 #include <miral/wayland_tools.h>
+#endif
 #include <miral/x11_support.h>
 
 #include <cstring>
@@ -266,9 +269,11 @@ int main(int argc, char const* argv[])
             return info.user_preference().value_or(false);
         });
 
+#ifdef MIR_SUPPORTS_XDG_WORKSPACE
     WaylandTools wltools;
 
     extensions.add_extension(ext_workspace_hooks::build_global(wltools));
+#endif
 
     ChildControl child_control(runner);
 
@@ -385,6 +390,8 @@ int main(int argc, char const* argv[])
             lockscreen,
             getenv_decorations(),
             CursorTheme{"default"},
+#ifdef MIR_SUPPORTS_XDG_WORKSPACE
             wltools,
+#endif
         });
 }
