@@ -127,49 +127,19 @@ std::map<std::shared_ptr<Workspace>, unsigned int> all_the_workspaces;
 std::function<void(std::shared_ptr<Workspace> const& wksp)> activate = [](auto const&){};
 }
 
-void miriway::ext_workspace_hooks::output_created(miral::Output const& output)
-{
-    {
-        std:: lock_guard lock(all_the_outputs_mutex);
-        all_the_outputs.insert(output);
-    }
-    std::lock_guard lock{all_the_globals_mutex};
-    for (auto const& global : all_the_globals)
-        global->output_added(output);
-}
-
-void miriway::ext_workspace_hooks::output_deleted(const miral::Output &output)
-{
-    {
-        std:: lock_guard lock(all_the_outputs_mutex);
-        all_the_outputs.insert(output);
-    }
-
-    std::lock_guard lock{all_the_globals_mutex};
-    for (auto const& global : all_the_globals)
-        global->output_removed(output);
-}
-
-void miriway::ext_workspace_hooks::workspace_activator(
-        std::function<void(std::shared_ptr<miral::Workspace> const&)> f)
-{
-    ::activate = std::move(f);
-}
-
-void miriway::ext_workspace_hooks::workspace_created(const std::shared_ptr<miral::Workspace> &wksp)
+void miriway::ExtWorkspaceObserver::on_workspace_create(const std::shared_ptr<Workspace> &wksp)
 {
     unsigned int id;
     {
         std::lock_guard lock(all_the_workspaces_mutex);
         all_the_workspaces.emplace(wksp, id = the_workspaces_counter++);
     }
-
     std::lock_guard lock{all_the_globals_mutex};
     for (auto const& global : all_the_globals)
         global->workspace_created(id);
 }
 
-void miriway::ext_workspace_hooks::workspace_activated(const std::shared_ptr<miral::Workspace> &wksp)
+void miriway::ExtWorkspaceObserver::on_workspace_activate(const std::shared_ptr<Workspace> &wksp)
 {
     std::unique_lock lock(all_the_workspaces_mutex);
     if (auto const i = all_the_workspaces.find(wksp); i != all_the_workspaces.end())
@@ -183,7 +153,7 @@ void miriway::ext_workspace_hooks::workspace_activated(const std::shared_ptr<mir
     }
 }
 
-void miriway::ext_workspace_hooks::workspace_deactivated(const std::shared_ptr<miral::Workspace> &wksp)
+void miriway::ExtWorkspaceObserver::on_workspace_deactivate(const std::shared_ptr<Workspace> &wksp)
 {
     std::unique_lock lock(all_the_workspaces_mutex);
     if (auto const i = all_the_workspaces.find(wksp); i != all_the_workspaces.end())
@@ -197,7 +167,7 @@ void miriway::ext_workspace_hooks::workspace_deactivated(const std::shared_ptr<m
     }
 }
 
-void miriway::ext_workspace_hooks::workspace_destroyed(const std::shared_ptr<miral::Workspace> &wksp)
+void miriway::ExtWorkspaceObserver::on_workspace_destroy(const std::shared_ptr<Workspace> &wksp)
 {
     std::unique_lock lock(all_the_workspaces_mutex);
     if (auto const i = all_the_workspaces.find(wksp); i != all_the_workspaces.end())
@@ -213,13 +183,31 @@ void miriway::ext_workspace_hooks::workspace_destroyed(const std::shared_ptr<mir
     }
 }
 
-auto miriway::ext_workspace_hooks::build_global(miral::WaylandTools& wltools) -> miral::WaylandExtensions::Builder
+void miriway::ExtWorkspaceObserver::on_output_create(const Output& output)
 {
-    return miral::WaylandExtensions::Builder
     {
-        .name = ExtWorkspaceManagerV1::interface_name,
-        .build = [&](auto* context) { return std::make_shared<ExtWorkspaceManagerV1::Global>(context, wltools); }
-    };
+        std:: lock_guard lock(all_the_outputs_mutex);
+        all_the_outputs.insert(output);
+    }
+    std::lock_guard lock{all_the_globals_mutex};
+    for (auto const& global : all_the_globals)
+        global->output_added(output);
+}
+
+void miriway::ExtWorkspaceObserver::on_output_destroy(const Output& output)
+{
+    {
+        std:: lock_guard lock(all_the_outputs_mutex);
+        all_the_outputs.insert(output);
+    }
+    std::lock_guard lock{all_the_globals_mutex};
+    for (auto const& global : all_the_globals)
+        global->output_removed(output);
+}
+
+void miriway::ExtWorkspaceObserver::set_workspace_activator_callback(std::function<void(std::shared_ptr<Workspace> const& wksp)> f)
+{
+    activate = std::move(f);
 }
 
 miriway::ExtWorkspaceManagerV1::ExtWorkspaceManagerV1(wl_resource* new_ext_workspace_manager_v1) :
