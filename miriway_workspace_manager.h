@@ -19,7 +19,7 @@
 #ifndef MIRIWAY_WORKSPACE_MANAGER_H_
 #define MIRIWAY_WORKSPACE_MANAGER_H_
 
-#include "miriway_workspace_observer.h"
+#include "miriway_workspace_hooks.h"
 
 #include <miral/window_manager_tools.h>
 
@@ -40,7 +40,7 @@ class WorkspaceManager
 {
 public:
     explicit WorkspaceManager(WindowManagerTools const& tools);
-    WorkspaceManager(WorkspaceObserver& observer, WindowManagerTools const& tools);
+    WorkspaceManager(WorkspaceHooks& hooks, WindowManagerTools const& tools);
     virtual ~WorkspaceManager();
 
     void workspace_begin(bool take_active);
@@ -84,7 +84,7 @@ public:
     }
 
 private:
-    WorkspaceObserver& observer;
+    WorkspaceHooks& hooks;
     WindowManagerTools tools_;
 
     using workspace_list = std::list<std::shared_ptr<Workspace>>;
@@ -98,11 +98,11 @@ private:
 };
 
 // Template class to hook WorkspaceManager into a window management strategy
-template<typename WMStrategy, typename WMObserver>
-class WorkspaceWMStrategy : public WMStrategy, protected WMObserver, protected WorkspaceManager
+template<typename WMStrategy, typename WMHooks>
+class WorkspaceWMStrategy : public WMStrategy, protected WMHooks, protected WorkspaceManager
 {
 protected:
-    using Super = WorkspaceWMStrategy<WMStrategy, WMObserver>;
+    using Super = WorkspaceWMStrategy<WMStrategy, WMHooks>;
 
     explicit WorkspaceWMStrategy(WindowManagerTools const& tools) :
         WMStrategy{tools},
@@ -149,13 +149,13 @@ protected:
 
     virtual void advise_output_create(miral::Output const& output) override
     {
-        WMObserver::on_output_create(output);
+        WMHooks::on_output_create(output);
         WMStrategy::advise_output_create(output);
     }
 
     virtual void advise_output_delete(miral::Output const& output) override
     {
-        WMObserver::on_output_destroy(output);
+        WMHooks::on_output_destroy(output);
         WMStrategy::advise_output_delete(output);
     }
 };

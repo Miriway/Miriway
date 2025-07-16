@@ -23,22 +23,6 @@
 using namespace mir::geometry;
 using namespace miral;
 
-namespace
-{
-struct NullWorkspaceObserver : miriway::WorkspaceObserver
-{
-    void on_workspace_create(std::shared_ptr<Workspace> const&) override {}
-    void on_workspace_activate(std::shared_ptr<Workspace> const&) override {}
-    void on_workspace_deactivate(std::shared_ptr<Workspace> const&) override {}
-    void on_workspace_destroy(std::shared_ptr<Workspace> const&) override {}
-
-    void on_output_create(Output const&) override {}
-    void on_output_destroy(Output const&) override {}
-
-    void set_workspace_activator_callback(std::function<void(std::shared_ptr<Workspace> const& wksp)>) override {}
-} null_observer;
-}
-
 struct miriway::WorkspaceManager::WorkspaceInfo
 {
     bool in_hidden_workspace{false};
@@ -47,11 +31,11 @@ struct miriway::WorkspaceManager::WorkspaceInfo
 };
 
 
-miriway::WorkspaceManager::WorkspaceManager(miriway::WorkspaceObserver &observer, const WindowManagerTools &tools) :
-    observer{observer},
+miriway::WorkspaceManager::WorkspaceManager(miriway::WorkspaceHooks &hooks, const WindowManagerTools &tools) :
+    hooks{hooks},
     tools_{tools}
 {
-    observer.set_workspace_activator_callback([this](auto const& workspace)
+    hooks.set_workspace_activator_callback([this](auto const& workspace)
        {
            tools_.invoke_under_lock([this, workspace]
                 {
@@ -67,14 +51,9 @@ miriway::WorkspaceManager::WorkspaceManager(miriway::WorkspaceObserver &observer
     append_new_workspace();
 }
 
-miriway::WorkspaceManager::WorkspaceManager(WindowManagerTools const& tools) :
-    WorkspaceManager{null_observer, tools}
-{
-}
-
 miriway::WorkspaceManager::~WorkspaceManager()
 {
-    observer.set_workspace_activator_callback([](auto...) {});
+    hooks.set_workspace_activator_callback([](auto...) {});
 }
 
 void miriway::WorkspaceManager::workspace_begin(bool take_active)
@@ -148,7 +127,7 @@ void miriway::WorkspaceManager::append_new_workspace()
 {
     workspaces.push_back(tools_.create_workspace());
     active_workspace_ = --workspaces.cend();
-    observer.on_workspace_create(*active_workspace_);
+    hooks.on_workspace_create(*active_workspace_);
 }
 
 void miriway::WorkspaceManager::erase_if_empty(workspace_list::const_iterator const& old_workspace)
@@ -163,7 +142,7 @@ void miriway::WorkspaceManager::erase_if_empty(workspace_list::const_iterator co
     {
         workspace_to_active.erase(*old_workspace);
         workspaces.erase(old_workspace);
-        observer.on_workspace_destroy(*old_workspace);
+        hooks.on_workspace_destroy(*old_workspace);
     }
 }
 
@@ -203,8 +182,8 @@ void miriway::WorkspaceManager::change_active_workspace(
     Window const& window)
 {
     if (new_active == old_active) return;
-    observer.on_workspace_deactivate(old_active);
-    observer.on_workspace_activate(new_active);
+    hooks.on_workspace_deactivate(old_active);
+    hooks.on_workspace_activate(new_active);
 
     auto const old_active_window = tools_.active_window();
     auto const old_active_window_shell = old_active_window &&

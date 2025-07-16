@@ -24,7 +24,10 @@
 #if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 5, 0)
 #define MIR_SUPPORTS_XDG_WORKSPACE
 #include <miral/wayland_tools.h>
+#else
+namespace miral { class WaylandTools; }
 #endif
+#include <miral/wayland_extensions.h>
 
 #include <cstring>
 #include <format>
@@ -127,7 +130,7 @@ std::map<std::shared_ptr<Workspace>, unsigned int> all_the_workspaces;
 std::function<void(std::shared_ptr<Workspace> const& wksp)> activate = [](auto const&){};
 }
 
-void miriway::ExtWorkspaceObserver::on_workspace_create(const std::shared_ptr<Workspace> &wksp)
+void miriway::ExtWorkspaceV1::on_workspace_create(const std::shared_ptr<Workspace> &wksp)
 {
     unsigned int id;
     {
@@ -139,7 +142,7 @@ void miriway::ExtWorkspaceObserver::on_workspace_create(const std::shared_ptr<Wo
         global->workspace_created(id);
 }
 
-void miriway::ExtWorkspaceObserver::on_workspace_activate(const std::shared_ptr<Workspace> &wksp)
+void miriway::ExtWorkspaceV1::on_workspace_activate(const std::shared_ptr<Workspace> &wksp)
 {
     std::unique_lock lock(all_the_workspaces_mutex);
     if (auto const i = all_the_workspaces.find(wksp); i != all_the_workspaces.end())
@@ -153,7 +156,7 @@ void miriway::ExtWorkspaceObserver::on_workspace_activate(const std::shared_ptr<
     }
 }
 
-void miriway::ExtWorkspaceObserver::on_workspace_deactivate(const std::shared_ptr<Workspace> &wksp)
+void miriway::ExtWorkspaceV1::on_workspace_deactivate(const std::shared_ptr<Workspace> &wksp)
 {
     std::unique_lock lock(all_the_workspaces_mutex);
     if (auto const i = all_the_workspaces.find(wksp); i != all_the_workspaces.end())
@@ -167,7 +170,7 @@ void miriway::ExtWorkspaceObserver::on_workspace_deactivate(const std::shared_pt
     }
 }
 
-void miriway::ExtWorkspaceObserver::on_workspace_destroy(const std::shared_ptr<Workspace> &wksp)
+void miriway::ExtWorkspaceV1::on_workspace_destroy(const std::shared_ptr<Workspace> &wksp)
 {
     std::unique_lock lock(all_the_workspaces_mutex);
     if (auto const i = all_the_workspaces.find(wksp); i != all_the_workspaces.end())
@@ -183,7 +186,7 @@ void miriway::ExtWorkspaceObserver::on_workspace_destroy(const std::shared_ptr<W
     }
 }
 
-void miriway::ExtWorkspaceObserver::on_output_create(const Output& output)
+void miriway::ExtWorkspaceV1::on_output_create(const Output& output)
 {
     {
         std:: lock_guard lock(all_the_outputs_mutex);
@@ -194,7 +197,7 @@ void miriway::ExtWorkspaceObserver::on_output_create(const Output& output)
         global->output_added(output);
 }
 
-void miriway::ExtWorkspaceObserver::on_output_destroy(const Output& output)
+void miriway::ExtWorkspaceV1::on_output_destroy(const Output& output)
 {
     {
         std:: lock_guard lock(all_the_outputs_mutex);
@@ -205,7 +208,7 @@ void miriway::ExtWorkspaceObserver::on_output_destroy(const Output& output)
         global->output_removed(output);
 }
 
-void miriway::ExtWorkspaceObserver::set_workspace_activator_callback(std::function<void(std::shared_ptr<Workspace> const& wksp)> f)
+void miriway::ExtWorkspaceV1::set_workspace_activator_callback(std::function<void(std::shared_ptr<Workspace> const& wksp)> f)
 {
     activate = std::move(f);
 }

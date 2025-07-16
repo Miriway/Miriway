@@ -31,7 +31,7 @@ class ShellCommands;
 
 // A window management policy that adds support for docking and workspaces.
 // Co-ordinates with `ShellCommands` for the handling of related commands.
-class WindowManagerPolicy : public WorkspaceWMStrategy<MinimalWindowManager, ExtWorkspaceObserver>
+class WindowManagerPolicy : public WorkspaceWMStrategy<MinimalWindowManager, ExtWorkspaceV1>
 {
 public:
     WindowManagerPolicy(WindowManagerTools const& tools, ShellCommands& commands);

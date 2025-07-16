@@ -28,7 +28,7 @@ add_subdirectory(wayland-generated)
 add_library(miriwaycommon STATIC
     miriway_child_control.cpp       miriway_child_control.h
     miriway_commands.cpp            miriway_commands.h
-    miriway_workspace_manager.cpp   miriway_workspace_manager.h
+    miriway_workspace_manager.cpp   miriway_workspace_manager.h miriway_workspace_hooks.h
     wayland-generated/ext-workspace-v1_wrapper.cpp    wayland-generated/ext-workspace-v1_wrapper.h
     miriway_ext_workspace_v1.cpp    miriway_ext_workspace_v1.h
 )

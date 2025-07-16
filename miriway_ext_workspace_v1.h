@@ -19,14 +19,12 @@
 #ifndef MIRIWAY_EXT_WORKSPACE_V1_H
 #define MIRIWAY_EXT_WORKSPACE_V1_H
 
-#include "miriway_workspace_observer.h"
+#include "miriway_workspace_hooks.h"
 
-#include <miral/wayland_extensions.h>
-
-namespace miral { class WaylandTools; class Output; }
+namespace miral { class Output; }
 namespace miriway
 {
-class ExtWorkspaceObserver : public WorkspaceObserver
+class ExtWorkspaceV1 : public WorkspaceHooks
 {
 public:
     void on_workspace_create(const std::shared_ptr<Workspace> &wksp) override;

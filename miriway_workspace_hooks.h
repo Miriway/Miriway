@@ -16,8 +16,8 @@
  * Authored by: Alan Griffiths <alan@octopull.co.uk>
  */
 
-#ifndef MIRIWAY_WORKSPACE_OBSERVER_H_
-#define MIRIWAY_WORKSPACE_OBSERVER_H_
+#ifndef MIRIWAY_WORKSPACE_HOOKS_H_
+#define MIRIWAY_WORKSPACE_HOOKS_H_
 
 #include <functional>
 #include <memory>
@@ -29,11 +29,14 @@ namespace miriway
 using miral::Workspace;
 using miral::Output;
 
-class WorkspaceObserver
+/// An interface to "hook into" the workspace management.
+/// Mostly, this provides notifications of workspace management events via `on...` methods.
+/// It also provides a callback to request workspace activation.
+class WorkspaceHooks
 {
 public:
-    WorkspaceObserver() = default;
-    virtual ~WorkspaceObserver() = default;
+    WorkspaceHooks() = default;
+    virtual ~WorkspaceHooks() = default;
 
     virtual void on_workspace_create(std::shared_ptr<Workspace> const& wksp) = 0;
     virtual void on_workspace_activate(std::shared_ptr<Workspace> const& wksp) = 0;
@@ -46,9 +49,9 @@ public:
     virtual void set_workspace_activator_callback(std::function<void(std::shared_ptr<Workspace> const &wksp)> f) = 0;
 
 private:
-    WorkspaceObserver(WorkspaceObserver const&) = delete;
-    WorkspaceObserver& operator=(WorkspaceObserver const&) = delete;
+    WorkspaceHooks(WorkspaceHooks const&) = delete;
+    WorkspaceHooks& operator=(WorkspaceHooks const&) = delete;
 };
 } // miriway
 
-#endif //MIRIWAY_WORKSPACE_OBSERVER_H_
+#endif //MIRIWAY_WORKSPACE_HOOKS_H_
