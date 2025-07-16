@@ -72,7 +72,7 @@ fi
 
 # Ensure we have a config file with the fixed options
 cat <<EOT > "${miriway_config}"
-x11-window-title=Miriway
+x11-window-title=Sway/Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 ctrl-alt=t:miriway-unsnap kgx

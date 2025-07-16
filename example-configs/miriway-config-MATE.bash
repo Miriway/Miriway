@@ -3,8 +3,14 @@ set -e
 
 if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 
-shell_components="mate-panel mate-terminal /usr/libexec/mate-notification-daemon/mate-notification-daemon swaybg"
-shell_packages="mate-panel mate-terminal mate-notification-daemon mate-backgrounds swaybg"
+if  [ -e "/usr/libexec/mate-polkit/polkit-mate-authentication-agent-1" ]; then
+  polkit_agent="/usr/libexec/mate-polkit/polkit-mate-authentication-agent-1"
+else
+  polkit_agent="/usr/libexec/polkit-mate-authentication-agent-1"
+fi
+
+shell_components="mate-panel mate-terminal /usr/libexec/mate-notification-daemon/mate-notification-daemon ${polkit_agent} swaybg"
+shell_packages="mate-panel mate-terminal mate-notification-daemon mate-polkit mate-backgrounds swaybg"
 
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 
@@ -44,6 +50,14 @@ then
   fi
 fi
 
+if  [ -e "/usr/libexec/mate-polkit/polkit-mate-authentication-agent-1" ]; then
+  polkit_agent="/usr/libexec/mate-polkit/polkit-mate-authentication-agent-1"
+elif  [ -e "/usr/libexec/polkit-mate-authentication-agent-1" ]; then
+  polkit_agent="/usr/libexec/polkit-mate-authentication-agent-1"
+else
+  polkit_agent="$(find /usr/lib* -name polkit-*-agent-1 | tail -n 1)"
+fi
+
 if [ -e "/usr/share/backgrounds/ubuntu-mate-common/Green-Wall-Logo.png" ]; then
   # Try Ubuntu MATE wallpaper (from ubuntu-mate-wallpapers-common)
   background="/usr/share/backgrounds/ubuntu-mate-common/Green-Wall-Logo.png"
@@ -60,11 +74,12 @@ fi
 
 # Ensure we have a config file with the fixed options
 cat <<EOT > "${miriway_config}"
-x11-window-title=Miriway
+x11-window-title=MATE/Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 shell-component=miriway-unsnap /usr/libexec/mate-notification-daemon/mate-notification-daemon
 shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image '${background}'
+shell-component=miriway-unsnap ${polkit_agent}
 shell-component=miriway-unsnap mate-panel
 
 shell-meta=a:miriway-unsnap mate-panel --run-dialog
