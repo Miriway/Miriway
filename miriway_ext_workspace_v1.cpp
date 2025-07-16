@@ -454,3 +454,17 @@ miriway::ExtWorkspaceHandleV1::ExtWorkspaceHandleV1(miriway::ExtWorkspaceManager
     parent{parent}
 {
 }
+
+auto miriway::build_ext_workspace_v1_global(miral::WaylandTools& wltools) -> miral::WaylandExtensions::Builder
+{
+    return miral::WaylandExtensions::Builder
+    {
+        .name = ExtWorkspaceManagerV1::interface_name,
+        .build = [&](auto* context) { return std::make_shared<ExtWorkspaceManagerV1::Global>(context, wltools); }
+    };
+}
+
+auto miriway::ext_workspace_v1_name() -> char const*
+{
+    return ExtWorkspaceManagerV1::interface_name;
+}

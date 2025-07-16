@@ -21,7 +21,9 @@
 
 #include "miriway_workspace_hooks.h"
 
-namespace miral { class Output; }
+#include <miral/wayland_extensions.h>
+
+namespace miral { class Output; class WaylandTools; }
 namespace miriway
 {
 class ExtWorkspaceV1 : public WorkspaceHooks
@@ -35,6 +37,9 @@ public:
     void on_output_destroy(const Output& output) override;
     void set_workspace_activator_callback(std::function<void(std::shared_ptr<Workspace> const& wksp)> f) override;
 };
+
+auto ext_workspace_v1_name() -> char const*;
+auto build_ext_workspace_v1_global(miral::WaylandTools& wltools) -> miral::WaylandExtensions::Builder;
 } // miriway
 
 #endif //MIRIWAY_EXT_WORKSPACE_V1_H

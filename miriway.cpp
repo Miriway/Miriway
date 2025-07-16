@@ -269,13 +269,14 @@ int main(int argc, char const* argv[])
             return info.user_preference().value_or(false);
         });
 
+    ChildControl child_control(runner);
+
 #ifdef MIR_SUPPORTS_XDG_WORKSPACE
     WaylandTools wltools;
 
-    extensions.add_extension(ext_workspace_hooks::build_global(wltools));
+    extensions.add_extension_disabled_by_default(build_ext_workspace_v1_global(wltools));
+    child_control.enable_for_shell(extensions, ext_workspace_v1_name());
 #endif
-
-    ChildControl child_control(runner);
 
     // Protocols we're reserving for shell components_option
     for (auto const& protocol : {
