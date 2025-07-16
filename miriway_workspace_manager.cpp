@@ -27,10 +27,15 @@ namespace
 {
 struct NullWorkspaceObserver : miriway::WorkspaceObserver
 {
-    void on_workspace_create(const std::shared_ptr<Workspace>&) override {}
-    void on_workspace_activate(const std::shared_ptr<Workspace>&) override {}
-    void on_workspace_deactivate(const std::shared_ptr<Workspace>&) override {}
-    void on_workspace_destroy(const std::shared_ptr<Workspace>&) override {}
+    void on_workspace_create(std::shared_ptr<Workspace> const&) override {}
+    void on_workspace_activate(std::shared_ptr<Workspace> const&) override {}
+    void on_workspace_deactivate(std::shared_ptr<Workspace> const&) override {}
+    void on_workspace_destroy(std::shared_ptr<Workspace> const&) override {}
+
+    void on_output_create(Output const&) override {}
+    void on_output_destroy(Output const&) override {}
+
+    void set_workspace_activator_callback(std::function<void(std::shared_ptr<Workspace> const& wksp)>) override {}
 } null_observer;
 }
 
@@ -46,7 +51,7 @@ miriway::WorkspaceManager::WorkspaceManager(miriway::WorkspaceObserver &observer
     observer{observer},
     tools_{tools}
 {
-    ext_workspace_hooks::workspace_activator([this](auto const& workspace)
+    observer.set_workspace_activator_callback([this](auto const& workspace)
        {
            tools_.invoke_under_lock([this, workspace]
                 {
@@ -69,7 +74,7 @@ miriway::WorkspaceManager::WorkspaceManager(WindowManagerTools const& tools) :
 
 miriway::WorkspaceManager::~WorkspaceManager()
 {
-    ext_workspace_hooks::workspace_activator([](auto...) {});
+    observer.set_workspace_activator_callback([](auto...) {});
 }
 
 void miriway::WorkspaceManager::workspace_begin(bool take_active)

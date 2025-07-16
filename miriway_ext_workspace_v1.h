@@ -19,10 +19,11 @@
 #ifndef MIRIWAY_EXT_WORKSPACE_V1_H
 #define MIRIWAY_EXT_WORKSPACE_V1_H
 
+#include "miriway_workspace_observer.h"
+
 #include <miral/wayland_extensions.h>
 
-
-namespace miral { class WaylandTools; class Output; class Workspace; }
+namespace miral { class WaylandTools; class Output; }
 namespace miriway
 {
 
@@ -44,6 +45,45 @@ void workspace_activator(std::function<void(std::shared_ptr<miral::Workspace> co
 
 auto build_global(miral::WaylandTools &wltools) -> miral::WaylandExtensions::Builder;
 }
+
+class ExtWorkspaceObserver : public WorkspaceObserver
+{
+public:
+    void on_workspace_create(const std::shared_ptr<Workspace> &wksp) override
+    {
+        ext_workspace_hooks::workspace_created(wksp);
+    }
+
+    void on_workspace_activate(const std::shared_ptr<Workspace> &wksp) override
+    {
+        ext_workspace_hooks::workspace_activated(wksp);
+    }
+
+    void on_workspace_deactivate(const std::shared_ptr<Workspace> &wksp) override
+    {
+        ext_workspace_hooks::workspace_deactivated(wksp);
+    }
+
+    void on_workspace_destroy(const std::shared_ptr<Workspace> &wksp) override
+    {
+        ext_workspace_hooks::workspace_destroyed(wksp);
+    }
+
+    void on_output_create(const Output& output) override
+    {
+        ext_workspace_hooks::output_created(output);
+    }
+
+    void on_output_destroy(const Output& output) override
+    {
+        ext_workspace_hooks::output_deleted(output);
+    }
+
+    void set_workspace_activator_callback(std::function<void(std::shared_ptr<Workspace> const& wksp)> f) override
+    {
+        ext_workspace_hooks::workspace_activator(f);
+    }
+};
 } // miriway
 
 #endif //MIRIWAY_EXT_WORKSPACE_V1_H

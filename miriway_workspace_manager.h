@@ -19,11 +19,14 @@
 #ifndef MIRIWAY_WORKSPACE_MANAGER_H_
 #define MIRIWAY_WORKSPACE_MANAGER_H_
 
+#include "miriway_workspace_observer.h"
+
 #include <miral/window_manager_tools.h>
-#include "miriway_ext_workspace_v1.h"
 
 #include <list>
 #include <map>
+
+namespace miral { class Workspace; }
 
 namespace miriway
 {
@@ -32,22 +35,6 @@ using miral::WindowInfo;
 using miral::WindowManagerTools;
 using miral::WindowSpecification;
 using miral::Workspace;
-
-class WorkspaceObserver
-{
-public:
-    WorkspaceObserver() = default;
-    virtual ~WorkspaceObserver() = default;
-
-    virtual void on_workspace_create(std::shared_ptr<Workspace> const& wksp) = 0;
-    virtual void on_workspace_activate(std::shared_ptr<Workspace> const& wksp) = 0;
-    virtual void on_workspace_deactivate(std::shared_ptr<Workspace> const& wksp) = 0;
-    virtual void on_workspace_destroy(std::shared_ptr<Workspace> const& wksp) = 0;
-
-private:
-    WorkspaceObserver(WorkspaceObserver const&) = delete;
-    WorkspaceObserver& operator=(WorkspaceObserver const&) = delete;
-};
 
 class WorkspaceManager
 {
@@ -110,35 +97,13 @@ private:
     void erase_if_empty(workspace_list::const_iterator const& old_workspace);
 };
 
-class SimpleWorkspaceObserver : public WorkspaceObserver
-{
-public:
-    void on_workspace_create(const std::shared_ptr<Workspace> &wksp) override
-    {
-        ext_workspace_hooks::workspace_created(wksp);
-    }
-
-    void on_workspace_activate(const std::shared_ptr<Workspace> &wksp) override
-    {
-        ext_workspace_hooks::workspace_activated(wksp);
-    }
-
-    void on_workspace_deactivate(const std::shared_ptr<Workspace> &wksp) override
-    {
-        ext_workspace_hooks::workspace_deactivated(wksp);
-    }
-
-    void on_workspace_destroy(const std::shared_ptr<Workspace> &wksp) override
-    {
-        ext_workspace_hooks::workspace_destroyed(wksp);
-    }
-};
-
 // Template class to hook WorkspaceManager into a window management strategy
-template<typename WMStrategy>
-class WorkspaceWMStrategy : public WMStrategy, protected SimpleWorkspaceObserver, protected WorkspaceManager
+template<typename WMStrategy, typename WMObserver>
+class WorkspaceWMStrategy : public WMStrategy, protected WMObserver, protected WorkspaceManager
 {
 protected:
+    using Super = WorkspaceWMStrategy<WMStrategy, WMObserver>;
+
     explicit WorkspaceWMStrategy(WindowManagerTools const& tools) :
         WMStrategy{tools},
         WorkspaceManager{*this, tools}
@@ -184,13 +149,13 @@ protected:
 
     virtual void advise_output_create(miral::Output const& output) override
     {
-        ext_workspace_hooks::output_created(output);
+        WMObserver::on_output_create(output);
         WMStrategy::advise_output_create(output);
     }
 
     virtual void advise_output_delete(miral::Output const& output) override
     {
-        ext_workspace_hooks::output_deleted(output);
+        WMObserver::on_output_destroy(output);
         WMStrategy::advise_output_delete(output);
     }
 };
