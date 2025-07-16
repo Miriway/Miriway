@@ -21,6 +21,7 @@
 
 #include "miriway_workspace_hooks.h"
 
+#include <miral/window_management_policy.h>
 #include <miral/window_manager_tools.h>
 
 #include <list>
@@ -99,6 +100,11 @@ private:
 
 // Template class to hook WorkspaceManager into a window management strategy
 template<typename WMStrategy, typename WMHooks>
+requires requires
+{
+    { std::derived_from<WMStrategy, miral::WindowManagementPolicy> };
+    { std::derived_from<WMHooks, WorkspaceHooks> };
+}
 class WorkspaceWMStrategy : public WMStrategy, protected WMHooks, protected WorkspaceManager
 {
 protected:
