@@ -218,7 +218,6 @@ miriway::ExtWorkspaceManagerV1::ExtWorkspaceManagerV1(wl_resource* new_ext_works
     the_workspace_group{new ExtWorkspaceGroupHandleV1{*this}}
 {
     send_workspace_group_event(the_workspace_group->resource);
-    send_done_event();
     the_workspace_group->send_capabilities_event(0);
 }
 
@@ -247,7 +246,11 @@ void miriway::ExtWorkspaceManagerV1::Global::output_removed(const miral::Output 
 {
     context->run_on_wayland_mainloop([this, output]
     {
-        if (the_workspace_manager) the_workspace_manager->output_deleted(wltools, output);
+        if (the_workspace_manager)
+        {
+            the_workspace_manager->output_deleted(wltools, output);
+            the_workspace_manager->send_done_event();
+        }
     });
 }
 
@@ -376,7 +379,11 @@ void miriway::ExtWorkspaceManagerV1::Global::output_added(miral::Output const& o
 {
     context->run_on_wayland_mainloop([this, output]
     {
-        if (the_workspace_manager) the_workspace_manager->output_added(wltools, output);
+        if (the_workspace_manager)
+        {
+            the_workspace_manager->output_added(wltools, output);
+            the_workspace_manager->send_done_event();
+        }
     });
 }
 
@@ -384,7 +391,11 @@ void miriway::ExtWorkspaceManagerV1::Global::workspace_destroyed(unsigned int id
 {
     context->run_on_wayland_mainloop([this, id]
         {
-            if (the_workspace_manager) the_workspace_manager->workspace_destroyed(id);
+            if (the_workspace_manager)
+            {
+                the_workspace_manager->workspace_destroyed(id);
+                the_workspace_manager->send_done_event();
+            }
         });
 }
 
@@ -392,7 +403,11 @@ void miriway::ExtWorkspaceManagerV1::Global::workspace_deactivated(unsigned int 
 {
     context->run_on_wayland_mainloop([this, id]
         {
-            if (the_workspace_manager) the_workspace_manager->workspace_deactivated(id);
+            if (the_workspace_manager)
+            {
+                the_workspace_manager->workspace_deactivated(id);
+                the_workspace_manager->send_done_event();
+            }
         });
 }
 
@@ -400,7 +415,11 @@ void miriway::ExtWorkspaceManagerV1::Global::workspace_activated(unsigned int id
 {
     context->run_on_wayland_mainloop([this, id]
         {
-            if (the_workspace_manager) the_workspace_manager->workspace_activated(id);
+            if (the_workspace_manager)
+            {
+                the_workspace_manager->workspace_activated(id);
+                the_workspace_manager->send_done_event();
+            }
         });
 }
 
@@ -408,7 +427,11 @@ void miriway::ExtWorkspaceManagerV1::Global::workspace_created(unsigned int id)
 {
     context->run_on_wayland_mainloop([this, id]
         {
-            if (the_workspace_manager) the_workspace_manager->workspace_created(id);
+            if (the_workspace_manager)
+            {
+                the_workspace_manager->workspace_created(id);
+                the_workspace_manager->send_done_event();
+            }
         });
 }
 
