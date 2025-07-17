@@ -19,10 +19,15 @@
 #ifndef MIRIWAY_WORKSPACE_MANAGER_H_
 #define MIRIWAY_WORKSPACE_MANAGER_H_
 
+#include "miriway_workspace_hooks.h"
+
+#include <miral/window_management_policy.h>
 #include <miral/window_manager_tools.h>
 
 #include <list>
 #include <map>
+
+namespace miral { class Workspace; }
 
 namespace miriway
 {
@@ -36,7 +41,8 @@ class WorkspaceManager
 {
 public:
     explicit WorkspaceManager(WindowManagerTools const& tools);
-    virtual ~WorkspaceManager() = default;
+    WorkspaceManager(WorkspaceHooks& hooks, WindowManagerTools const& tools);
+    virtual ~WorkspaceManager();
 
     void workspace_begin(bool take_active);
 
@@ -79,25 +85,34 @@ public:
     }
 
 private:
+    WorkspaceHooks& hooks;
     WindowManagerTools tools_;
 
     using workspace_list = std::list<std::shared_ptr<Workspace>>;
 
     workspace_list workspaces;
-    workspace_list::iterator active_workspace_;
+    workspace_list::const_iterator active_workspace_;
     std::map<std::shared_ptr<miral::Workspace>, miral::Window> workspace_to_active;
 
-    void erase_if_empty(workspace_list::iterator const& old_workspace);
+    void append_new_workspace();
+    void erase_if_empty(workspace_list::const_iterator const& old_workspace);
 };
 
 // Template class to hook WorkspaceManager into a window management strategy
-template<typename WMStrategy>
-class WorkspaceWMStrategy : public WMStrategy, protected WorkspaceManager
+template<typename WMStrategy, typename WMHooks>
+requires requires
+{
+    { std::derived_from<WMStrategy, miral::WindowManagementPolicy> };
+    { std::derived_from<WMHooks, WorkspaceHooks> };
+}
+class WorkspaceWMStrategy : public WMStrategy, protected WMHooks, protected WorkspaceManager
 {
 protected:
+    using Super = WorkspaceWMStrategy<WMStrategy, WMHooks>;
+
     explicit WorkspaceWMStrategy(WindowManagerTools const& tools) :
         WMStrategy{tools},
-        WorkspaceManager{tools}
+        WorkspaceManager{*this, tools}
     {}
 
     void advise_new_window(const WindowInfo &window_info) override
@@ -136,6 +151,18 @@ protected:
             activate_workspace_containing(window_info.window());
         }
         WMStrategy::handle_raise_window(window_info);
+    }
+
+    virtual void advise_output_create(miral::Output const& output) override
+    {
+        WMHooks::on_output_create(output);
+        WMStrategy::advise_output_create(output);
+    }
+
+    virtual void advise_output_delete(miral::Output const& output) override
+    {
+        WMHooks::on_output_destroy(output);
+        WMStrategy::advise_output_delete(output);
     }
 };
 } // miriway

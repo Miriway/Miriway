@@ -155,7 +155,7 @@ void miriway::WindowManagerPolicy::dock_active_window_right()
 
 bool miriway::WindowManagerPolicy::handle_pointer_event(const MirPointerEvent* event)
 {
-    bool result = WorkspaceWMStrategy<MinimalWindowManager>::handle_pointer_event(event);
+    bool result = Super::handle_pointer_event(event);
 
     if (moving_window)
     {
@@ -228,7 +228,7 @@ void miriway::WindowManagerPolicy::handle_request_move(WindowInfo& window_info, 
 {
     moving_window = true;
     window_moved = false;
-    WorkspaceWMStrategy<MinimalWindowManager>::handle_request_move(window_info, input_event);
+    Super::handle_request_move(window_info, input_event);
 }
 
 bool miriway::WindowManagerPolicy::handle_keyboard_event(MirKeyboardEvent const* event)

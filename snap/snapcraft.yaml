@@ -91,6 +91,8 @@ parts:
     build-packages:
       - pkg-config
       - libmiral-dev
+      - libmirwayland-dev
+      - libboost-exception-dev
       - libboost-filesystem-dev
       - libfreetype6-dev
       - libwayland-dev

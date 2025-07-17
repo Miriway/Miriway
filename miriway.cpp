@@ -19,6 +19,7 @@
 #include "miriway_child_control.h"
 #include "miriway_commands.h"
 #include "miriway_policy.h"
+#include "miriway_ext_workspace_v1.h"
 
 #include <mir/abnormal_exit.h>
 #include <mir/log.h>
@@ -36,6 +37,10 @@
 #include <miral/set_window_management_policy.h>
 #include <miral/version.h>
 #include <miral/wayland_extensions.h>
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 5, 0)
+#define MIR_SUPPORTS_XDG_WORKSPACE
+#include <miral/wayland_tools.h>
+#endif
 #include <miral/x11_support.h>
 
 #include <cstring>
@@ -266,6 +271,12 @@ int main(int argc, char const* argv[])
 
     ChildControl child_control(runner);
 
+#ifdef MIR_SUPPORTS_XDG_WORKSPACE
+    WaylandTools wltools;
+
+    extensions.add_extension_disabled_by_default(build_ext_workspace_v1_global(wltools));
+    child_control.enable_for_shell(extensions, ext_workspace_v1_name());
+#endif
 
     // Protocols we're reserving for shell components_option
     for (auto const& protocol : {
@@ -379,6 +390,9 @@ int main(int argc, char const* argv[])
             set_window_management_policy<WindowManagerPolicy>(commands),
             lockscreen,
             getenv_decorations(),
-            CursorTheme{"default"}
+            CursorTheme{"default"},
+#ifdef MIR_SUPPORTS_XDG_WORKSPACE
+            wltools,
+#endif
         });
 }

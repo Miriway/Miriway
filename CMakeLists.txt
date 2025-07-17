@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 cmake_policy(SET CMP0015 NEW)
 cmake_policy(SET CMP0022 NEW)
 
@@ -18,18 +18,23 @@ include(CheckIncludeFileCXX)
 option(SDDM "Install configuration for SDDM?" OFF)
 
 pkg_check_modules(MIRAL miral>=5.1 REQUIRED)
+pkg_check_modules(MIRWAYLAND mirwayland REQUIRED)
 pkg_check_modules(XKBCOMMON xkbcommon REQUIRED)
 
 set (CMAKE_REQUIRED_INCLUDES "${MIRAL_INCLUDE_DIRS}")
 
+add_subdirectory(wayland-generated)
+
 add_library(miriwaycommon STATIC
     miriway_child_control.cpp       miriway_child_control.h
     miriway_commands.cpp            miriway_commands.h
-    miriway_workspace_manager.cpp   miriway_workspace_manager.h
+    miriway_workspace_manager.cpp   miriway_workspace_manager.h miriway_workspace_hooks.h
+    wayland-generated/ext-workspace-v1_wrapper.cpp    wayland-generated/ext-workspace-v1_wrapper.h
+    miriway_ext_workspace_v1.cpp    miriway_ext_workspace_v1.h
 )
 
-target_include_directories(miriwaycommon PUBLIC SYSTEM ${MIRAL_INCLUDE_DIRS})
-target_link_libraries(     miriwaycommon PUBLIC        ${MIRAL_LDFLAGS} ${XKBCOMMON_LIBRARIES})
+target_include_directories(miriwaycommon PUBLIC SYSTEM ${MIRAL_INCLUDE_DIRS} ${MIRWAYLAND_INCLUDE_DIRS})
+target_link_libraries(     miriwaycommon PUBLIC        ${MIRAL_LDFLAGS} ${MIRWAYLAND_LDFLAGS} ${XKBCOMMON_LIBRARIES})
 target_compile_definitions(miriwaycommon PRIVATE MIR_LOG_COMPONENT="miriway")
 
 add_executable(miriway-shell
