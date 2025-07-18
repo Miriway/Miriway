@@ -128,6 +128,7 @@ void miriway::WorkspaceManager::append_new_workspace()
     workspaces.push_back(tools_.create_workspace());
     active_workspace_ = --workspaces.cend();
     hooks.on_workspace_create(*active_workspace_);
+    hooks.on_workspace_activate(*active_workspace_);
 }
 
 void miriway::WorkspaceManager::erase_if_empty(workspace_list::const_iterator const& old_workspace)
