@@ -313,6 +313,7 @@ void miriway::ExtWorkspaceManagerV1::workspace_deactivated(std::shared_ptr<Works
 
 void miriway::ExtWorkspaceManagerV1::workspace_destroyed(std::shared_ptr<Workspace> const& wksp)
 {
+    auto searching = true;
     unsigned int i = 0;
     for (auto it = workspaces.begin(); it != workspaces.end();)
     {
@@ -321,11 +322,15 @@ void miriway::ExtWorkspaceManagerV1::workspace_destroyed(std::shared_ptr<Workspa
             the_workspace_group->send_workspace_leave_event(it->second->resource);
             it->second->send_removed_event();
             it = workspaces.erase(it);
+            searching = false;
         }
         else
         {
             ++i;
-            update_workspace_info(it->second, i);
+            if (!searching)
+            {
+                update_workspace_info(it->second, i);
+            }
             ++it;
         }
     }
