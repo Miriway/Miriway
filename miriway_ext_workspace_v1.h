@@ -29,12 +29,12 @@ namespace miriway
 class ExtWorkspaceV1 : public WorkspaceHooks
 {
 public:
-    void on_workspace_create(const std::shared_ptr<Workspace> &wksp) override;
-    void on_workspace_activate(const std::shared_ptr<Workspace> &wksp) override;
-    void on_workspace_deactivate(const std::shared_ptr<Workspace> &wksp) override;
-    void on_workspace_destroy(const std::shared_ptr<Workspace> &wksp) override;
-    void on_output_create(const Output& output) override;
-    void on_output_destroy(const Output& output) override;
+    void on_workspace_create(std::shared_ptr<Workspace> const& wksp) override;
+    void on_workspace_activate(std::shared_ptr<Workspace> const& wksp) override;
+    void on_workspace_deactivate(std::shared_ptr<Workspace> const& wksp) override;
+    void on_workspace_destroy(std::shared_ptr<Workspace> const& wksp) override;
+    void on_output_create(Output const& output) override;
+    void on_output_destroy(Output const& output) override;
     void set_workspace_activator_callback(std::function<void(std::shared_ptr<Workspace> const& wksp)> f) override;
 };
 
