@@ -29,7 +29,6 @@ namespace miral { class WaylandTools; }
 #endif
 #include <miral/wayland_extensions.h>
 
-#include <condition_variable>
 #include <cstring>
 #include <format>
 #include <list>
@@ -413,27 +412,14 @@ void miriway::ExtWorkspaceManagerV1::Global::output_added(miral::Output const& o
 
 void miriway::ExtWorkspaceManagerV1::Global::workspace_destroyed(std::shared_ptr<Workspace> const& wksp)
 {
-    bool done = false;
-    std::condition_variable cv;
-    std::mutex m;
-    context->run_on_wayland_mainloop([this, &wksp, &cv, &done, &m]
+    context->run_on_wayland_mainloop([this, wksp=std::weak_ptr<Workspace>{wksp}]
         {
             if (the_workspace_manager)
             {
                 the_workspace_manager->workspace_destroyed(wksp);
                 the_workspace_manager->send_done_event();
             }
-
-            {
-                std::lock_guard lock(m);
-                done = true;
-            }
-
-            cv.notify_one();
         });
-
-    std::unique_lock lock(m);
-    cv.wait(lock, [&done] { return done; });
 }
 
 void miriway::ExtWorkspaceManagerV1::Global::workspace_deactivated(std::shared_ptr<Workspace> const& wksp)
