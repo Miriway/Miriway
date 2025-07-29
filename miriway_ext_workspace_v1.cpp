@@ -347,14 +347,8 @@ void miriway::ExtWorkspaceManagerV1::on_activate(miriway::ExtWorkspaceHandleV1* 
     auto p = std::find_if(workspaces.begin(), workspaces.end(), [wh](auto const& e) { return e.second == wh; });
     if (p != workspaces.end())
     {
-        auto const wksp = p->first.lock();
-        std::unique_lock lock(all_the_workspaces_mutex);
-
-        if (auto q = all_the_workspaces.find(wksp); q != all_the_workspaces.end())
+        if (auto const wksp = p->first.lock())
         {
-            auto const wksp = q->first;
-            lock.unlock();
-
             ::activate(wksp);
         }
     }
