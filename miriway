@@ -4,18 +4,29 @@ set -e
 bindir=$(dirname "$0")
 if [ "${bindir}" != "" ]; then bindir="${bindir}/"; fi
 
+if [ -n "${XDG_CURRENT_DESKTOP+x}" ]
+then
+  unset MIRIWAY_SESSION_STARTUP MIRIWAY_SESSION_SHUTDOWN
+
+  if [ -n "${DISPLAY+x}" ]
+  then
+    echo "Info: X11 server '${DISPLAY}' already exists, using it as host"
+    export MIR_SERVER_PLATFORM_DISPLAY_LIBS=mir:x11
+    unset WAYLAND_DISPLAY
+  elif [ -n "${WAYLAND_DISPLAY}" ] && [ -O "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}" ]
+  then
+    echo "Info: wayland endpoint '${WAYLAND_DISPLAY}' already exists, using it as host"
+    export MIR_SERVER_PLATFORM_DISPLAY_LIBS=mir:wayland
+    export MIR_SERVER_WAYLAND_HOST="${WAYLAND_DISPLAY}"
+    unset WAYLAND_DISPLAY
+    unset DISPLAY
+  fi
+fi
+
 if [ ! -d "${XDG_RUNTIME_DIR}" ]
 then
   echo "Error: XDG_RUNTIME_DIR '${XDG_RUNTIME_DIR}' does not exists"
   exit 1
-fi
-
-if [ -n "${WAYLAND_DISPLAY}" ] && [ -O "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}" ]
-then
-  echo "Info: wayland endpoint '${WAYLAND_DISPLAY}' already exists, using it as host"
-  export MIR_SERVER_WAYLAND_HOST="${WAYLAND_DISPLAY}"
-  unset WAYLAND_DISPLAY
-  unset DISPLAY
 fi
 
 if [ -e "/etc/xdg/xdg-miriway" ] && [ "${XDG_CONFIG_DIRS#*/etc/xdg/xdg-miriway}" = "${XDG_CONFIG_DIRS}" ]
