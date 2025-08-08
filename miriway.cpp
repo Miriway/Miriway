@@ -39,6 +39,7 @@
 #include <miral/wayland_extensions.h>
 #if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 5, 0)
 #define MIR_SUPPORTS_XDG_WORKSPACE
+#define MIR_SUPPORTS_LOCALE1_KEYMAP
 #include <miral/wayland_tools.h>
 #endif
 #include <miral/x11_support.h>
@@ -363,6 +364,12 @@ int main(int argc, char const* argv[])
             }
         });
 
+#ifdef MIR_SUPPORTS_LOCALE1_KEYMAP
+    Keymap keymap = getenv("MIRIWAY_SYSTEM_LOCALE1_KEYMAP") ? Keymap::system_locale1() : Keymap{};
+#else
+    Keymap keymap{};
+#endif
+
     return runner.run_with(
         {
             X11Support{},
@@ -377,7 +384,7 @@ int main(int argc, char const* argv[])
             ctrl_alt,
             meta,
             alt,
-            Keymap{},
+            keymap,
             AppendEventFilter{[&](MirEvent const* e) {
                 if (is_locked)
                     return false;
