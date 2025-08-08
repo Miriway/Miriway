@@ -40,6 +40,17 @@
 #if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 5, 0)
 #define MIR_SUPPORTS_XDG_WORKSPACE
 #define MIR_SUPPORTS_LOCALE1_KEYMAP
+#define MIR_SUPPORTS_LIVE_CONFIG
+#include <miral/bounce_keys.h>
+#include <miral/config_file.h>
+#include <miral/cursor_scale.h>
+#include <miral/hover_click.h>
+#include <miral/input_configuration.h>
+#include <miral/live_config.h>
+#include <miral/live_config_ini_file.h>
+#include <miral/output_filter.h>
+#include <miral/slow_keys.h>
+#include <miral/sticky_keys.h>
 #include <miral/wayland_tools.h>
 #endif
 #include <miral/x11_support.h>
@@ -364,10 +375,30 @@ int main(int argc, char const* argv[])
             }
         });
 
+#ifdef MIR_SUPPORTS_LIVE_CONFIG
+    live_config::IniFile config_store;
+
+    CursorScale cursor_scale{config_store};
+    OutputFilter output_filter{config_store};
+    InputConfiguration input_configuration{config_store};
+    BounceKeys bounce_keys{config_store};
+    SlowKeys slow_keys{config_store};
+    StickyKeys sticky_keys{config_store};
+    HoverClick hover_click{config_store};
+#endif
+
 #ifdef MIR_SUPPORTS_LOCALE1_KEYMAP
-    Keymap keymap = getenv("MIRIWAY_SYSTEM_LOCALE1_KEYMAP") ? Keymap::system_locale1() : Keymap{};
+    Keymap keymap = getenv("MIRIWAY_SYSTEM_LOCALE1_KEYMAP") ? Keymap::system_locale1() : Keymap{config_store};
 #else
     Keymap keymap{};
+#endif
+
+#ifdef MIR_SUPPORTS_LIVE_CONFIG
+    ConfigFile config_file{
+        runner,
+        runner.config_file() + "-live",
+        ConfigFile::Mode::reload_on_change,
+        [&config_store](auto&... args){ config_store.load_file(args...); }};
 #endif
 
     return runner.run_with(
@@ -400,6 +431,15 @@ int main(int argc, char const* argv[])
             CursorTheme{"default"},
 #ifdef MIR_SUPPORTS_XDG_WORKSPACE
             wltools,
+#endif
+#ifdef MIR_SUPPORTS_LIVE_CONFIG
+            cursor_scale,
+            output_filter,
+            input_configuration,
+            bounce_keys,
+            slow_keys,
+            sticky_keys,
+            hover_click,
 #endif
         });
 }
