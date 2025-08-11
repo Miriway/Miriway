@@ -2,6 +2,7 @@
 set -e
 if [ "$SNAP_NAME" == "miriway" ]; then
   unset __EGL_VENDOR_LIBRARY_DIRS
+  unset GBM_BACKENDS_PATH
   unset LIBGL_DRIVERS_PATH
   unset LIBINPUT_QUIRKS_DIR
   unset DRIRC_CONFIGDIR
