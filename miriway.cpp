@@ -239,7 +239,138 @@ auto getenv_decorations()
     return Decorations::prefer_csd();
 }
 
-#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 5, 0)
+#ifdef MIR_SUPPORTS_LIVE_CONFIG
+/// Documents the available options
+class LoggingStore : public live_config::Store
+{
+public:
+    explicit LoggingStore(Store& underlying) : underlying{underlying} {}
+
+    void add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler) override;
+    void add_ints_attribute(const live_config::Key& key, std::string_view description, HandleInts handler) override;
+    void add_bool_attribute(const live_config::Key& key, std::string_view description, HandleBool handler) override;
+    void add_float_attribute(const live_config::Key& key, std::string_view description, HandleFloat handler) override;
+    void add_floats_attribute(const live_config::Key& key, std::string_view description, HandleFloats handler) override;
+    void add_string_attribute(const live_config::Key& key, std::string_view description, HandleString handler) override;
+    void add_strings_attribute(const live_config::Key& key, std::string_view description,
+        HandleStrings handler) override;
+    void add_int_attribute(const live_config::Key& key, std::string_view description, int preset,
+        HandleInt handler) override;
+    void add_ints_attribute(const live_config::Key& key, std::string_view description, std::span<int const> preset,
+        HandleInts handler) override;
+    void add_bool_attribute(const live_config::Key& key, std::string_view description, bool preset,
+        HandleBool handler) override;
+    void add_float_attribute(const live_config::Key& key, std::string_view description, float preset,
+        HandleFloat handler) override;
+    void add_floats_attribute(const live_config::Key& key, std::string_view description, std::span<float const> preset,
+        HandleFloats handler) override;
+    void add_string_attribute(const live_config::Key& key, std::string_view description, std::string_view preset,
+        HandleString handler) override;
+    void add_strings_attribute(const live_config::Key& key, std::string_view description,
+        std::span<std::string const> preset, HandleStrings handler) override;
+    void on_done(HandleDone handler) override;
+
+private:
+    Store& underlying;
+};
+
+void LoggingStore::add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler)
+{
+    mir::log_info("%s int : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    underlying.add_int_attribute(key, description, handler);
+}
+
+void LoggingStore::add_ints_attribute(const live_config::Key& key, std::string_view description, HandleInts handler)
+{
+    mir::log_info("%s int[] : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    underlying.add_ints_attribute(key, description, handler);
+}
+
+void LoggingStore::add_bool_attribute(const live_config::Key& key, std::string_view description, HandleBool handler)
+{
+    mir::log_info("%s bool : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    underlying.add_bool_attribute(key, description, handler);
+}
+
+void LoggingStore::add_float_attribute(const live_config::Key& key, std::string_view description, HandleFloat handler)
+{
+    mir::log_info("%s float : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    underlying.add_float_attribute(key, description, handler);
+}
+
+void LoggingStore::add_floats_attribute(const live_config::Key& key, std::string_view description, HandleFloats handler)
+{
+    mir::log_info("%s float[] : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    underlying.add_floats_attribute(key, description, handler);
+}
+
+void LoggingStore::add_string_attribute(const live_config::Key& key, std::string_view description, HandleString handler)
+{
+    mir::log_info("%s string : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    underlying.add_string_attribute(key, description, handler);
+}
+
+void LoggingStore::add_strings_attribute(const live_config::Key& key, std::string_view description,
+    HandleStrings handler)
+{
+    mir::log_info("%s string[] : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    underlying.add_strings_attribute(key, description, handler);
+}
+
+void LoggingStore::add_int_attribute(const live_config::Key& key, std::string_view description, int preset,
+    HandleInt handler)
+{
+    mir::log_info("%s int = %d : %s", key.to_string().c_str(), preset, std::format("{}", description).c_str());
+    underlying.add_int_attribute(key, description, handler);
+}
+
+void LoggingStore::add_ints_attribute(const live_config::Key& key, std::string_view description,
+    std::span<int const> preset, HandleInts handler)
+{
+    mir::log_info("%s int[] = ... : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    underlying.add_ints_attribute(key, description, preset, handler);
+}
+
+void LoggingStore::add_bool_attribute(const live_config::Key& key, std::string_view description, bool preset,
+    HandleBool handler)
+{
+    mir::log_info("%s bool = %d : %s", key.to_string().c_str(), preset, std::format("{}", description).c_str());
+    underlying.add_bool_attribute(key, description, preset, handler);
+}
+
+void LoggingStore::add_float_attribute(const live_config::Key& key, std::string_view description, float preset,
+    HandleFloat handler)
+{
+    mir::log_info("%s float = %f : %s", key.to_string().c_str(), preset, std::format("{}", description).c_str());
+    underlying.add_float_attribute(key, description, preset, handler);
+}
+
+void LoggingStore::add_floats_attribute(const live_config::Key& key, std::string_view description,
+    std::span<float const> preset, HandleFloats handler)
+{
+    mir::log_info("%s float[] = ... : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    underlying.add_floats_attribute(key, description, preset, handler);
+}
+
+void LoggingStore::add_string_attribute(const live_config::Key& key, std::string_view description,
+    std::string_view preset, HandleString handler)
+{
+    mir::log_info("%s string = %s", key.to_string().c_str(), std::format("{} : {}", preset, description).c_str());
+    underlying.add_string_attribute(key, description, preset, handler);
+}
+
+void LoggingStore::add_strings_attribute(const live_config::Key& key, std::string_view description,
+    std::span<std::string const> preset, HandleStrings handler)
+{
+    mir::log_info("%s string[] = ... : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    underlying.add_strings_attribute(key, description, preset, handler);
+}
+
+void LoggingStore::on_done(HandleDone handler)
+{
+    underlying.on_done(handler);
+}
+
 /// Inserts a scope within an underlying store
 class ConfigScope : public live_config::Store
 {
@@ -278,7 +409,7 @@ private:
 auto ConfigScope::create_new_key(live_config::Key const& key) -> live_config::Key
 {
     // This implementation is UGLY. There should be a better way in the MirAL API
-    live_config::Key new_key{};
+    std::optional<live_config::Key> new_key;
     key.with_key([&new_key, this](auto& key_elements)
     {
         switch (key_elements.size())
@@ -311,7 +442,7 @@ auto ConfigScope::create_new_key(live_config::Key const& key) -> live_config::Ke
         }
     });
 
-    return new_key;
+    return new_key.value();
 }
 
 void ConfigScope::add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler)
@@ -536,8 +667,8 @@ int main(int argc, char const* argv[])
 
 #ifdef MIR_SUPPORTS_LIVE_CONFIG
     live_config::IniFile config_store;
-
-    ConfigScope mir_store{config_store, "mir"};
+    LoggingStore ls{config_store};
+    ConfigScope mir_store{ls, "mir"};
 
     CursorScale cursor_scale{mir_store};
     OutputFilter output_filter{mir_store};
