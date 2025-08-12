@@ -238,6 +238,165 @@ auto getenv_decorations()
     }
     return Decorations::prefer_csd();
 }
+
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 5, 0)
+/// Inserts a scope within an underlying store
+class ConfigScope : public live_config::Store
+{
+public:
+    ConfigScope(Store& underlying, std::string_view scope) : underlying{underlying}, scope{scope} {}
+    void add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler) override;
+    void add_ints_attribute(const live_config::Key& key, std::string_view description, HandleInts handler) override;
+    void add_bool_attribute(const live_config::Key& key, std::string_view description, HandleBool handler) override;
+    void add_float_attribute(const live_config::Key& key, std::string_view description, HandleFloat handler) override;
+    void add_floats_attribute(const live_config::Key& key, std::string_view description, HandleFloats handler) override;
+    void add_string_attribute(const live_config::Key& key, std::string_view description, HandleString handler) override;
+    void add_strings_attribute(const live_config::Key& key, std::string_view description,
+        HandleStrings handler) override;
+    void add_int_attribute(const live_config::Key& key, std::string_view description, int preset,
+        HandleInt handler) override;
+    void add_ints_attribute(const live_config::Key& key, std::string_view description, std::span<int const> preset,
+        HandleInts handler) override;
+    void add_bool_attribute(const live_config::Key& key, std::string_view description, bool preset,
+        HandleBool handler) override;
+    void add_float_attribute(const live_config::Key& key, std::string_view description, float preset,
+        HandleFloat handler) override;
+    void add_floats_attribute(const live_config::Key& key, std::string_view description, std::span<float const> preset,
+        HandleFloats handler) override;
+    void add_string_attribute(const live_config::Key& key, std::string_view description, std::string_view preset,
+        HandleString handler) override;
+    void add_strings_attribute(const live_config::Key& key, std::string_view description,
+        std::span<std::string const> preset, HandleStrings handler) override;
+    void on_done(HandleDone handler) override;
+
+private:
+    auto create_new_key(live_config::Key const& key) -> live_config::Key;
+    Store& underlying;
+    std::string const scope;
+};
+
+auto ConfigScope::create_new_key(live_config::Key const& key) -> live_config::Key
+{
+    // This implementation is UGLY. There should be a better way in the MirAL API
+    live_config::Key new_key{};
+    key.with_key([&new_key, this](auto& key_elements)
+    {
+        switch (key_elements.size())
+        {
+        case 0:
+            new_key = live_config::Key{scope};
+            break;
+        case 1:
+            new_key = live_config::Key{scope, key_elements[0]};
+            break;
+        case 2:
+            new_key = live_config::Key{scope, key_elements[0], key_elements[1]};
+            break;
+        case 3:
+            new_key = live_config::Key{scope, key_elements[0], key_elements[1], key_elements[2]};
+            break;
+        case 4:
+            new_key = live_config::Key{scope, key_elements[0], key_elements[1], key_elements[2], key_elements[3]};
+            break;
+        case 5:
+            new_key = live_config::Key{scope, key_elements[0], key_elements[1], key_elements[2], key_elements[3], key_elements[4]
+            };
+            break;
+        case 6:
+            new_key = live_config::Key{scope, key_elements[0], key_elements[1], key_elements[2], key_elements[3], key_elements[4], key_elements[5]
+            };
+            break;
+        default:
+            new_key = live_config::Key{scope, key_elements[0], key_elements[1], key_elements[2], key_elements[3], key_elements[4], key_elements[5], key_elements[6]};
+        }
+    });
+
+    return new_key;
+}
+
+void ConfigScope::add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler)
+{
+    underlying.add_int_attribute(create_new_key(key), description, handler);
+}
+
+void ConfigScope::add_ints_attribute(const live_config::Key& key, std::string_view description, HandleInts handler)
+{
+    underlying.add_ints_attribute(create_new_key(key), description, handler);
+}
+
+void ConfigScope::add_bool_attribute(const live_config::Key& key, std::string_view description, HandleBool handler)
+{
+    underlying.add_bool_attribute(create_new_key(key), description, handler);
+}
+
+void ConfigScope::add_float_attribute(const live_config::Key& key, std::string_view description, HandleFloat handler)
+{
+    underlying.add_float_attribute(create_new_key(key), description, handler);
+}
+
+void ConfigScope::add_floats_attribute(const live_config::Key& key, std::string_view description, HandleFloats handler)
+{
+    underlying.add_floats_attribute(create_new_key(key), description, handler);
+}
+
+void ConfigScope::add_string_attribute(const live_config::Key& key, std::string_view description, HandleString handler)
+{
+    underlying.add_string_attribute(create_new_key(key), description, handler);
+}
+
+void ConfigScope::add_strings_attribute(const live_config::Key& key, std::string_view description,
+    HandleStrings handler)
+{
+    underlying.add_strings_attribute(create_new_key(key), description, handler);
+}
+
+void ConfigScope::add_int_attribute(const live_config::Key& key, std::string_view description, int preset,
+    HandleInt handler)
+{
+    underlying.add_int_attribute(create_new_key(key), description, preset, handler);
+}
+
+void ConfigScope::add_ints_attribute(const live_config::Key& key, std::string_view description,
+    std::span<int const> preset, HandleInts handler)
+{
+    underlying.add_ints_attribute(create_new_key(key), description, preset, handler);
+}
+
+void ConfigScope::add_bool_attribute(const live_config::Key& key, std::string_view description, bool preset,
+    HandleBool handler)
+{
+    underlying.add_bool_attribute(create_new_key(key), description, preset, handler);
+}
+
+void ConfigScope::add_float_attribute(const live_config::Key& key, std::string_view description, float preset,
+    HandleFloat handler)
+{
+    underlying.add_float_attribute(create_new_key(key), description, preset, handler);
+}
+
+void ConfigScope::add_floats_attribute(const live_config::Key& key, std::string_view description,
+    std::span<float const> preset, HandleFloats handler)
+{
+    underlying.add_floats_attribute(create_new_key(key), description, preset, handler);
+}
+
+void ConfigScope::add_string_attribute(const live_config::Key& key, std::string_view description,
+    std::string_view preset, HandleString handler)
+{
+    underlying.add_string_attribute(create_new_key(key), description, preset, handler);
+}
+
+void ConfigScope::add_strings_attribute(const live_config::Key& key, std::string_view description,
+    std::span<std::string const> preset, HandleStrings handler)
+{
+    underlying.add_strings_attribute(create_new_key(key), description, preset, handler);
+}
+
+void ConfigScope::on_done(HandleDone handler)
+{
+    underlying.on_done(handler);
+}
+#endif
 }
 
 int main(int argc, char const* argv[])
@@ -378,13 +537,15 @@ int main(int argc, char const* argv[])
 #ifdef MIR_SUPPORTS_LIVE_CONFIG
     live_config::IniFile config_store;
 
-    CursorScale cursor_scale{config_store};
-    OutputFilter output_filter{config_store};
-    InputConfiguration input_configuration{config_store};
-    BounceKeys bounce_keys{config_store};
-    SlowKeys slow_keys{config_store};
-    StickyKeys sticky_keys{config_store};
-    HoverClick hover_click{config_store};
+    ConfigScope mir_store{config_store, "mir"};
+
+    CursorScale cursor_scale{mir_store};
+    OutputFilter output_filter{mir_store};
+    InputConfiguration input_configuration{mir_store};
+    BounceKeys bounce_keys{mir_store};
+    SlowKeys slow_keys{mir_store};
+    StickyKeys sticky_keys{mir_store};
+    HoverClick hover_click{mir_store};
 #endif
 
 #ifdef MIR_SUPPORTS_LOCALE1_KEYMAP
