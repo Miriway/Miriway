@@ -396,7 +396,7 @@ int main(int argc, char const* argv[])
 #ifdef MIR_SUPPORTS_LIVE_CONFIG
     ConfigFile config_file{
         runner,
-        runner.config_file() + "-live",
+        std::filesystem::path{runner.config_file()}.replace_extension("settings"),
         ConfigFile::Mode::reload_on_change,
         [&config_store](auto&... args){ config_store.load_file(args...); }};
 #endif
