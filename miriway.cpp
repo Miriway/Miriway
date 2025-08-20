@@ -272,97 +272,118 @@ public:
 
 private:
     Store& underlying;
+    std::ofstream log{"log-template.txt"};
 };
 
 void LoggingStore::add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler)
 {
-    mir::log_info("%s int : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    log << "# int: " << description << '\n';
+    log << "#" << key.to_string() << "=\n\n";
     underlying.add_int_attribute(key, description, handler);
 }
 
 void LoggingStore::add_ints_attribute(const live_config::Key& key, std::string_view description, HandleInts handler)
 {
-    mir::log_info("%s int[] : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    log << "# int[]: " << description << '\n';
+    log << "#" << key.to_string() << "=\n\n";
     underlying.add_ints_attribute(key, description, handler);
 }
 
 void LoggingStore::add_bool_attribute(const live_config::Key& key, std::string_view description, HandleBool handler)
 {
-    mir::log_info("%s bool : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    log << "# bool: " << description << '\n';
+    log << "#" << key.to_string() << "=\n\n";
     underlying.add_bool_attribute(key, description, handler);
 }
 
 void LoggingStore::add_float_attribute(const live_config::Key& key, std::string_view description, HandleFloat handler)
 {
-    mir::log_info("%s float : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    log << "# float: " << description << '\n';
+    log << "#" << key.to_string() << "=\n\n";
     underlying.add_float_attribute(key, description, handler);
 }
 
 void LoggingStore::add_floats_attribute(const live_config::Key& key, std::string_view description, HandleFloats handler)
 {
-    mir::log_info("%s float[] : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    log << "# float[]: " << description << '\n';
+    log << "#" << key.to_string() << "=\n\n";
     underlying.add_floats_attribute(key, description, handler);
 }
 
 void LoggingStore::add_string_attribute(const live_config::Key& key, std::string_view description, HandleString handler)
 {
-    mir::log_info("%s string : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    log << "# string: " << description << '\n';
+    log << "#" << key.to_string() << "=\n\n";
     underlying.add_string_attribute(key, description, handler);
 }
 
 void LoggingStore::add_strings_attribute(const live_config::Key& key, std::string_view description,
     HandleStrings handler)
 {
-    mir::log_info("%s string[] : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    log << "# string[]: " << description << '\n';
+    log << "#" << key.to_string() << "=\n\n";
     underlying.add_strings_attribute(key, description, handler);
 }
 
 void LoggingStore::add_int_attribute(const live_config::Key& key, std::string_view description, int preset,
     HandleInt handler)
 {
-    mir::log_info("%s int = %d : %s", key.to_string().c_str(), preset, std::format("{}", description).c_str());
+    log << "# int: " << description << '\n';
+    log << "#" << key.to_string() << '=' << preset << "\n\n";
     underlying.add_int_attribute(key, description, handler);
 }
 
 void LoggingStore::add_ints_attribute(const live_config::Key& key, std::string_view description,
     std::span<int const> preset, HandleInts handler)
 {
-    mir::log_info("%s int[] = ... : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    log << "# int[]: " << description << '\n';
+    for (auto const& p : preset)
+        log << "#" << key.to_string() << '=' << p << '\n';
+    log << '\n';
     underlying.add_ints_attribute(key, description, preset, handler);
 }
 
 void LoggingStore::add_bool_attribute(const live_config::Key& key, std::string_view description, bool preset,
     HandleBool handler)
 {
-    mir::log_info("%s bool = %d : %s", key.to_string().c_str(), preset, std::format("{}", description).c_str());
+    log << "# bool: " << description << '\n';
+    log << "#" << key.to_string() << '=' << (preset ? "true" : "false") << "\n\n";
     underlying.add_bool_attribute(key, description, preset, handler);
 }
 
 void LoggingStore::add_float_attribute(const live_config::Key& key, std::string_view description, float preset,
     HandleFloat handler)
 {
-    mir::log_info("%s float = %f : %s", key.to_string().c_str(), preset, std::format("{}", description).c_str());
+    log << "# float: " << description << '\n';
+    log << "#" << key.to_string() << '=' << preset << "\n\n";
     underlying.add_float_attribute(key, description, preset, handler);
 }
 
 void LoggingStore::add_floats_attribute(const live_config::Key& key, std::string_view description,
     std::span<float const> preset, HandleFloats handler)
 {
-    mir::log_info("%s float[] = ... : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    log << "# float[]: " << description << '\n';
+    for (auto const& p : preset)
+        log << "#" << key.to_string() << '=' << p << '\n';
+    log << '\n';
     underlying.add_floats_attribute(key, description, preset, handler);
 }
 
 void LoggingStore::add_string_attribute(const live_config::Key& key, std::string_view description,
     std::string_view preset, HandleString handler)
 {
-    mir::log_info("%s string = %s", key.to_string().c_str(), std::format("{} : {}", preset, description).c_str());
+    log << "# string: " << description << '\n';
+    log << "#" << key.to_string() << '=' << preset << "\n\n";
     underlying.add_string_attribute(key, description, preset, handler);
 }
 
 void LoggingStore::add_strings_attribute(const live_config::Key& key, std::string_view description,
     std::span<std::string const> preset, HandleStrings handler)
 {
-    mir::log_info("%s string[] = ... : %s", key.to_string().c_str(), std::format("{}", description).c_str());
+    log << "# string[]: " << description << '\n';
+    for (auto const& p : preset)
+        log << "#" << key.to_string() << '=' << p << '\n';
+    log << '\n';
     underlying.add_strings_attribute(key, description, preset, handler);
 }
 
@@ -509,16 +530,17 @@ int main(int argc, char const* argv[])
         });
 
 #ifdef MIR_SUPPORTS_LIVE_CONFIG
+    auto const settings_file = std::filesystem::path{runner.config_file()}.replace_extension("settings");
     live_config::IniFile config_store;
-    LoggingStore mir_store{config_store};
+    LoggingStore settings_store{config_store};
 
-    CursorScale cursor_scale{mir_store};
-    OutputFilter output_filter{mir_store};
-    InputConfiguration input_configuration{mir_store};
-    BounceKeys bounce_keys{mir_store};
-    SlowKeys slow_keys{mir_store};
-    StickyKeys sticky_keys{mir_store};
-    HoverClick hover_click{mir_store};
+    CursorScale cursor_scale{settings_store};
+    OutputFilter output_filter{settings_store};
+    InputConfiguration input_configuration{settings_store};
+    BounceKeys bounce_keys{settings_store};
+    SlowKeys slow_keys{settings_store};
+    StickyKeys sticky_keys{settings_store};
+    HoverClick hover_click{settings_store};
 #endif
 
 #ifdef MIR_SUPPORTS_LOCALE1_KEYMAP
@@ -530,7 +552,7 @@ int main(int argc, char const* argv[])
 #ifdef MIR_SUPPORTS_LIVE_CONFIG
     ConfigFile config_file{
         runner,
-        std::filesystem::path{runner.config_file()}.replace_extension("settings"),
+        settings_file,
         ConfigFile::Mode::reload_on_change,
         [&config_store](auto&... args){ config_store.load_file(args...); }};
 #endif
