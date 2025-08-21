@@ -225,6 +225,22 @@ inline auto config_path(std::filesystem::path path)
     return miriway_shell ? std::filesystem::path(miriway_shell) / basename : basename;
 }
 
+#ifdef MIR_SUPPORTS_LIVE_CONFIG
+auto const config_home = []() -> std::filesystem::path
+{
+    if (auto config_home = getenv("XDG_CONFIG_HOME"))
+    {
+        return config_home;
+    }
+    else if (auto home = getenv("HOME"))
+    {
+        return std::filesystem::path(home) / ".config";
+    }
+
+    return "/dev/null";
+}();
+#endif
+
 auto getenv_decorations()
 {
     if (auto const strategy = getenv("MIRIWAY_DECORATIONS"))
@@ -244,7 +260,11 @@ auto getenv_decorations()
 class DocumentingStore : public live_config::Store
 {
 public:
-    explicit DocumentingStore(Store& underlying, std::filesystem::path target) : underlying{underlying}, doc{target} {}
+    explicit DocumentingStore(Store& underlying, std::filesystem::path target) :
+        underlying{underlying},
+        doc{exists(target) ? std::ofstream{} : std::ofstream(target)}
+    {
+    }
 
     void add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler) override;
     void add_ints_attribute(const live_config::Key& key, std::string_view description, HandleInts handler) override;
@@ -531,22 +551,9 @@ int main(int argc, char const* argv[])
 
 #ifdef MIR_SUPPORTS_LIVE_CONFIG
     auto const settings_file = std::filesystem::path{runner.config_file()}.replace_extension("settings");
-    auto const config_home = []() -> std::filesystem::path
-    {
-        if (auto config_home = getenv("XDG_CONFIG_HOME"))
-        {
-            return config_home;
-        }
-        else if (auto home = getenv("HOME"))
-        {
-            return std::filesystem::path(home) / ".config";
-        }
-
-        return "/dev/null";
-    }();
 
     live_config::IniFile config_store;
-    DocumentingStore settings_store{config_store, (config_home / settings_file) += "~doc"};
+    DocumentingStore settings_store{config_store, config_home / settings_file};
 
     CursorScale cursor_scale{settings_store};
     OutputFilter output_filter{settings_store};
