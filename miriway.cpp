@@ -241,10 +241,10 @@ auto getenv_decorations()
 
 #ifdef MIR_SUPPORTS_LIVE_CONFIG
 /// Documents the available options
-class LoggingStore : public live_config::Store
+class DocumentingStore : public live_config::Store
 {
 public:
-    explicit LoggingStore(Store& underlying) : underlying{underlying} {}
+    explicit DocumentingStore(Store& underlying, std::filesystem::path target) : underlying{underlying}, doc{target} {}
 
     void add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler) override;
     void add_ints_attribute(const live_config::Key& key, std::string_view description, HandleInts handler) override;
@@ -272,122 +272,122 @@ public:
 
 private:
     Store& underlying;
-    std::ofstream log{"log-template.txt"};
+    std::ofstream doc;
 };
 
-void LoggingStore::add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler)
+void DocumentingStore::add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler)
 {
-    log << "# int: " << description << '\n';
-    log << "#" << key.to_string() << "=\n\n";
+    doc << "# int: " << description << '\n';
+    doc << "#" << key.to_string() << "=\n\n";
     underlying.add_int_attribute(key, description, handler);
 }
 
-void LoggingStore::add_ints_attribute(const live_config::Key& key, std::string_view description, HandleInts handler)
+void DocumentingStore::add_ints_attribute(const live_config::Key& key, std::string_view description, HandleInts handler)
 {
-    log << "# int[]: " << description << '\n';
-    log << "#" << key.to_string() << "=\n\n";
+    doc << "# int[]: " << description << '\n';
+    doc << "#" << key.to_string() << "=\n\n";
     underlying.add_ints_attribute(key, description, handler);
 }
 
-void LoggingStore::add_bool_attribute(const live_config::Key& key, std::string_view description, HandleBool handler)
+void DocumentingStore::add_bool_attribute(const live_config::Key& key, std::string_view description, HandleBool handler)
 {
-    log << "# bool: " << description << '\n';
-    log << "#" << key.to_string() << "=\n\n";
+    doc << "# bool: " << description << '\n';
+    doc << "#" << key.to_string() << "=\n\n";
     underlying.add_bool_attribute(key, description, handler);
 }
 
-void LoggingStore::add_float_attribute(const live_config::Key& key, std::string_view description, HandleFloat handler)
+void DocumentingStore::add_float_attribute(const live_config::Key& key, std::string_view description, HandleFloat handler)
 {
-    log << "# float: " << description << '\n';
-    log << "#" << key.to_string() << "=\n\n";
+    doc << "# float: " << description << '\n';
+    doc << "#" << key.to_string() << "=\n\n";
     underlying.add_float_attribute(key, description, handler);
 }
 
-void LoggingStore::add_floats_attribute(const live_config::Key& key, std::string_view description, HandleFloats handler)
+void DocumentingStore::add_floats_attribute(const live_config::Key& key, std::string_view description, HandleFloats handler)
 {
-    log << "# float[]: " << description << '\n';
-    log << "#" << key.to_string() << "=\n\n";
+    doc << "# float[]: " << description << '\n';
+    doc << "#" << key.to_string() << "=\n\n";
     underlying.add_floats_attribute(key, description, handler);
 }
 
-void LoggingStore::add_string_attribute(const live_config::Key& key, std::string_view description, HandleString handler)
+void DocumentingStore::add_string_attribute(const live_config::Key& key, std::string_view description, HandleString handler)
 {
-    log << "# string: " << description << '\n';
-    log << "#" << key.to_string() << "=\n\n";
+    doc << "# string: " << description << '\n';
+    doc << "#" << key.to_string() << "=\n\n";
     underlying.add_string_attribute(key, description, handler);
 }
 
-void LoggingStore::add_strings_attribute(const live_config::Key& key, std::string_view description,
+void DocumentingStore::add_strings_attribute(const live_config::Key& key, std::string_view description,
     HandleStrings handler)
 {
-    log << "# string[]: " << description << '\n';
-    log << "#" << key.to_string() << "=\n\n";
+    doc << "# string[]: " << description << '\n';
+    doc << "#" << key.to_string() << "=\n\n";
     underlying.add_strings_attribute(key, description, handler);
 }
 
-void LoggingStore::add_int_attribute(const live_config::Key& key, std::string_view description, int preset,
+void DocumentingStore::add_int_attribute(const live_config::Key& key, std::string_view description, int preset,
     HandleInt handler)
 {
-    log << "# int: " << description << '\n';
-    log << "#" << key.to_string() << '=' << preset << "\n\n";
+    doc << "# int: " << description << '\n';
+    doc << "#" << key.to_string() << '=' << preset << "\n\n";
     underlying.add_int_attribute(key, description, handler);
 }
 
-void LoggingStore::add_ints_attribute(const live_config::Key& key, std::string_view description,
+void DocumentingStore::add_ints_attribute(const live_config::Key& key, std::string_view description,
     std::span<int const> preset, HandleInts handler)
 {
-    log << "# int[]: " << description << '\n';
+    doc << "# int[]: " << description << '\n';
     for (auto const& p : preset)
-        log << "#" << key.to_string() << '=' << p << '\n';
-    log << '\n';
+        doc << "#" << key.to_string() << '=' << p << '\n';
+    doc << '\n';
     underlying.add_ints_attribute(key, description, preset, handler);
 }
 
-void LoggingStore::add_bool_attribute(const live_config::Key& key, std::string_view description, bool preset,
+void DocumentingStore::add_bool_attribute(const live_config::Key& key, std::string_view description, bool preset,
     HandleBool handler)
 {
-    log << "# bool: " << description << '\n';
-    log << "#" << key.to_string() << '=' << (preset ? "true" : "false") << "\n\n";
+    doc << "# bool: " << description << '\n';
+    doc << "#" << key.to_string() << '=' << (preset ? "true" : "false") << "\n\n";
     underlying.add_bool_attribute(key, description, preset, handler);
 }
 
-void LoggingStore::add_float_attribute(const live_config::Key& key, std::string_view description, float preset,
+void DocumentingStore::add_float_attribute(const live_config::Key& key, std::string_view description, float preset,
     HandleFloat handler)
 {
-    log << "# float: " << description << '\n';
-    log << "#" << key.to_string() << '=' << preset << "\n\n";
+    doc << "# float: " << description << '\n';
+    doc << "#" << key.to_string() << '=' << preset << "\n\n";
     underlying.add_float_attribute(key, description, preset, handler);
 }
 
-void LoggingStore::add_floats_attribute(const live_config::Key& key, std::string_view description,
+void DocumentingStore::add_floats_attribute(const live_config::Key& key, std::string_view description,
     std::span<float const> preset, HandleFloats handler)
 {
-    log << "# float[]: " << description << '\n';
+    doc << "# float[]: " << description << '\n';
     for (auto const& p : preset)
-        log << "#" << key.to_string() << '=' << p << '\n';
-    log << '\n';
+        doc << "#" << key.to_string() << '=' << p << '\n';
+    doc << '\n';
     underlying.add_floats_attribute(key, description, preset, handler);
 }
 
-void LoggingStore::add_string_attribute(const live_config::Key& key, std::string_view description,
+void DocumentingStore::add_string_attribute(const live_config::Key& key, std::string_view description,
     std::string_view preset, HandleString handler)
 {
-    log << "# string: " << description << '\n';
-    log << "#" << key.to_string() << '=' << preset << "\n\n";
+    doc << "# string: " << description << '\n';
+    doc << "#" << key.to_string() << '=' << preset << "\n\n";
     underlying.add_string_attribute(key, description, preset, handler);
 }
 
-void LoggingStore::add_strings_attribute(const live_config::Key& key, std::string_view description,
+void DocumentingStore::add_strings_attribute(const live_config::Key& key, std::string_view description,
     std::span<std::string const> preset, HandleStrings handler)
 {
-    log << "# string[]: " << description << '\n';
+    doc << "# string[]: " << description << '\n';
     for (auto const& p : preset)
-        log << "#" << key.to_string() << '=' << p << '\n';
-    log << '\n';
+        doc << "#" << key.to_string() << '=' << p << '\n';
+    doc << '\n';
     underlying.add_strings_attribute(key, description, preset, handler);
 }
 
-void LoggingStore::on_done(HandleDone handler)
+void DocumentingStore::on_done(HandleDone handler)
 {
     underlying.on_done(handler);
 }
@@ -531,8 +531,22 @@ int main(int argc, char const* argv[])
 
 #ifdef MIR_SUPPORTS_LIVE_CONFIG
     auto const settings_file = std::filesystem::path{runner.config_file()}.replace_extension("settings");
+    auto const config_home = []() -> std::filesystem::path
+    {
+        if (auto config_home = getenv("XDG_CONFIG_HOME"))
+        {
+            return config_home;
+        }
+        else if (auto home = getenv("HOME"))
+        {
+            return std::filesystem::path(home) / ".config";
+        }
+
+        return "/dev/null";
+    }();
+
     live_config::IniFile config_store;
-    LoggingStore settings_store{config_store};
+    DocumentingStore settings_store{config_store, (config_home / settings_file) += "~doc"};
 
     CursorScale cursor_scale{settings_store};
     OutputFilter output_filter{settings_store};
