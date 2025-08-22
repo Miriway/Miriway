@@ -299,6 +299,7 @@ void DocumentingStore::add_int_attribute(const live_config::Key& key, std::strin
 {
     doc << "# int: " << description << '\n';
     doc << "#" << key.to_string() << "=\n\n";
+    doc.flush();
     underlying.add_int_attribute(key, description, handler);
 }
 
@@ -306,6 +307,7 @@ void DocumentingStore::add_ints_attribute(const live_config::Key& key, std::stri
 {
     doc << "# int[]: " << description << '\n';
     doc << "#" << key.to_string() << "=\n\n";
+    doc.flush();
     underlying.add_ints_attribute(key, description, handler);
 }
 
@@ -313,6 +315,7 @@ void DocumentingStore::add_bool_attribute(const live_config::Key& key, std::stri
 {
     doc << "# bool: " << description << '\n';
     doc << "#" << key.to_string() << "=\n\n";
+    doc.flush();
     underlying.add_bool_attribute(key, description, handler);
 }
 
@@ -320,6 +323,7 @@ void DocumentingStore::add_float_attribute(const live_config::Key& key, std::str
 {
     doc << "# float: " << description << '\n';
     doc << "#" << key.to_string() << "=\n\n";
+    doc.flush();
     underlying.add_float_attribute(key, description, handler);
 }
 
@@ -327,6 +331,7 @@ void DocumentingStore::add_floats_attribute(const live_config::Key& key, std::st
 {
     doc << "# float[]: " << description << '\n';
     doc << "#" << key.to_string() << "=\n\n";
+    doc.flush();
     underlying.add_floats_attribute(key, description, handler);
 }
 
@@ -334,6 +339,7 @@ void DocumentingStore::add_string_attribute(const live_config::Key& key, std::st
 {
     doc << "# string: " << description << '\n';
     doc << "#" << key.to_string() << "=\n\n";
+    doc.flush();
     underlying.add_string_attribute(key, description, handler);
 }
 
@@ -342,6 +348,7 @@ void DocumentingStore::add_strings_attribute(const live_config::Key& key, std::s
 {
     doc << "# string[]: " << description << '\n';
     doc << "#" << key.to_string() << "=\n\n";
+    doc.flush();
     underlying.add_strings_attribute(key, description, handler);
 }
 
@@ -350,6 +357,7 @@ void DocumentingStore::add_int_attribute(const live_config::Key& key, std::strin
 {
     doc << "# int: " << description << '\n';
     doc << "#" << key.to_string() << '=' << preset << "\n\n";
+    doc.flush();
     underlying.add_int_attribute(key, description, handler);
 }
 
@@ -360,6 +368,7 @@ void DocumentingStore::add_ints_attribute(const live_config::Key& key, std::stri
     for (auto const& p : preset)
         doc << "#" << key.to_string() << '=' << p << '\n';
     doc << '\n';
+    doc.flush();
     underlying.add_ints_attribute(key, description, preset, handler);
 }
 
@@ -368,6 +377,7 @@ void DocumentingStore::add_bool_attribute(const live_config::Key& key, std::stri
 {
     doc << "# bool: " << description << '\n';
     doc << "#" << key.to_string() << '=' << (preset ? "true" : "false") << "\n\n";
+    doc.flush();
     underlying.add_bool_attribute(key, description, preset, handler);
 }
 
@@ -376,6 +386,7 @@ void DocumentingStore::add_float_attribute(const live_config::Key& key, std::str
 {
     doc << "# float: " << description << '\n';
     doc << "#" << key.to_string() << '=' << preset << "\n\n";
+    doc.flush();
     underlying.add_float_attribute(key, description, preset, handler);
 }
 
@@ -386,6 +397,7 @@ void DocumentingStore::add_floats_attribute(const live_config::Key& key, std::st
     for (auto const& p : preset)
         doc << "#" << key.to_string() << '=' << p << '\n';
     doc << '\n';
+    doc.flush();
     underlying.add_floats_attribute(key, description, preset, handler);
 }
 
@@ -394,6 +406,7 @@ void DocumentingStore::add_string_attribute(const live_config::Key& key, std::st
 {
     doc << "# string: " << description << '\n';
     doc << "#" << key.to_string() << '=' << preset << "\n\n";
+    doc.flush();
     underlying.add_string_attribute(key, description, preset, handler);
 }
 
@@ -404,6 +417,7 @@ void DocumentingStore::add_strings_attribute(const live_config::Key& key, std::s
     for (auto const& p : preset)
         doc << "#" << key.to_string() << '=' << p << '\n';
     doc << '\n';
+    doc.flush();
     underlying.add_strings_attribute(key, description, preset, handler);
 }
 
