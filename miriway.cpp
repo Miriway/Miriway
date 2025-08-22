@@ -579,7 +579,7 @@ int main(int argc, char const* argv[])
 #endif
 
 #ifdef MIR_SUPPORTS_LOCALE1_KEYMAP
-    Keymap keymap = getenv("MIRIWAY_SYSTEM_LOCALE1_KEYMAP") ? Keymap::system_locale1() : Keymap{config_store};
+    Keymap keymap = getenv("MIRIWAY_SYSTEM_LOCALE1_KEYMAP") ? Keymap::system_locale1() : Keymap{settings_store};
 #else
     Keymap keymap{};
 #endif
