@@ -39,6 +39,18 @@
 #include <miral/wayland_extensions.h>
 #if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 5, 0)
 #define MIR_SUPPORTS_XDG_WORKSPACE
+#define MIR_SUPPORTS_LOCALE1_KEYMAP
+#define MIR_SUPPORTS_LIVE_CONFIG
+#include <miral/bounce_keys.h>
+#include <miral/config_file.h>
+#include <miral/cursor_scale.h>
+#include <miral/hover_click.h>
+#include <miral/input_configuration.h>
+#include <miral/live_config.h>
+#include <miral/live_config_ini_file.h>
+#include <miral/output_filter.h>
+#include <miral/slow_keys.h>
+#include <miral/sticky_keys.h>
 #include <miral/wayland_tools.h>
 #endif
 #include <miral/x11_support.h>
@@ -213,6 +225,22 @@ inline auto config_path(std::filesystem::path path)
     return miriway_shell ? std::filesystem::path(miriway_shell) / basename : basename;
 }
 
+#ifdef MIR_SUPPORTS_LIVE_CONFIG
+auto const config_home = []() -> std::filesystem::path
+{
+    if (auto config_home = getenv("XDG_CONFIG_HOME"))
+    {
+        return config_home;
+    }
+    else if (auto home = getenv("HOME"))
+    {
+        return std::filesystem::path(home) / ".config";
+    }
+
+    return "/dev/null";
+}();
+#endif
+
 auto getenv_decorations()
 {
     if (auto const strategy = getenv("MIRIWAY_DECORATIONS"))
@@ -226,6 +254,178 @@ auto getenv_decorations()
     }
     return Decorations::prefer_csd();
 }
+
+#ifdef MIR_SUPPORTS_LIVE_CONFIG
+/// Documents the available options
+class DocumentingStore : public live_config::Store
+{
+public:
+    explicit DocumentingStore(Store& underlying, std::filesystem::path target) :
+        underlying{underlying},
+        doc{exists(target) ? std::ofstream{} : std::ofstream(target)}
+    {
+    }
+
+    void add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler) override;
+    void add_ints_attribute(const live_config::Key& key, std::string_view description, HandleInts handler) override;
+    void add_bool_attribute(const live_config::Key& key, std::string_view description, HandleBool handler) override;
+    void add_float_attribute(const live_config::Key& key, std::string_view description, HandleFloat handler) override;
+    void add_floats_attribute(const live_config::Key& key, std::string_view description, HandleFloats handler) override;
+    void add_string_attribute(const live_config::Key& key, std::string_view description, HandleString handler) override;
+    void add_strings_attribute(const live_config::Key& key, std::string_view description,
+        HandleStrings handler) override;
+    void add_int_attribute(const live_config::Key& key, std::string_view description, int preset,
+        HandleInt handler) override;
+    void add_ints_attribute(const live_config::Key& key, std::string_view description, std::span<int const> preset,
+        HandleInts handler) override;
+    void add_bool_attribute(const live_config::Key& key, std::string_view description, bool preset,
+        HandleBool handler) override;
+    void add_float_attribute(const live_config::Key& key, std::string_view description, float preset,
+        HandleFloat handler) override;
+    void add_floats_attribute(const live_config::Key& key, std::string_view description, std::span<float const> preset,
+        HandleFloats handler) override;
+    void add_string_attribute(const live_config::Key& key, std::string_view description, std::string_view preset,
+        HandleString handler) override;
+    void add_strings_attribute(const live_config::Key& key, std::string_view description,
+        std::span<std::string const> preset, HandleStrings handler) override;
+    void on_done(HandleDone handler) override;
+
+private:
+    Store& underlying;
+    std::ofstream doc;
+};
+
+void DocumentingStore::add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler)
+{
+    doc << "# int: " << description << '\n';
+    doc << "#" << key.to_string() << "=\n\n";
+    doc.flush();
+    underlying.add_int_attribute(key, description, handler);
+}
+
+void DocumentingStore::add_ints_attribute(const live_config::Key& key, std::string_view description, HandleInts handler)
+{
+    doc << "# int[]: " << description << '\n';
+    doc << "#" << key.to_string() << "=\n\n";
+    doc.flush();
+    underlying.add_ints_attribute(key, description, handler);
+}
+
+void DocumentingStore::add_bool_attribute(const live_config::Key& key, std::string_view description, HandleBool handler)
+{
+    doc << "# bool: " << description << '\n';
+    doc << "#" << key.to_string() << "=\n\n";
+    doc.flush();
+    underlying.add_bool_attribute(key, description, handler);
+}
+
+void DocumentingStore::add_float_attribute(const live_config::Key& key, std::string_view description, HandleFloat handler)
+{
+    doc << "# float: " << description << '\n';
+    doc << "#" << key.to_string() << "=\n\n";
+    doc.flush();
+    underlying.add_float_attribute(key, description, handler);
+}
+
+void DocumentingStore::add_floats_attribute(const live_config::Key& key, std::string_view description, HandleFloats handler)
+{
+    doc << "# float[]: " << description << '\n';
+    doc << "#" << key.to_string() << "=\n\n";
+    doc.flush();
+    underlying.add_floats_attribute(key, description, handler);
+}
+
+void DocumentingStore::add_string_attribute(const live_config::Key& key, std::string_view description, HandleString handler)
+{
+    doc << "# string: " << description << '\n';
+    doc << "#" << key.to_string() << "=\n\n";
+    doc.flush();
+    underlying.add_string_attribute(key, description, handler);
+}
+
+void DocumentingStore::add_strings_attribute(const live_config::Key& key, std::string_view description,
+    HandleStrings handler)
+{
+    doc << "# string[]: " << description << '\n';
+    doc << "#" << key.to_string() << "=\n\n";
+    doc.flush();
+    underlying.add_strings_attribute(key, description, handler);
+}
+
+void DocumentingStore::add_int_attribute(const live_config::Key& key, std::string_view description, int preset,
+    HandleInt handler)
+{
+    doc << "# int: " << description << '\n';
+    doc << "#" << key.to_string() << '=' << preset << "\n\n";
+    doc.flush();
+    underlying.add_int_attribute(key, description, handler);
+}
+
+void DocumentingStore::add_ints_attribute(const live_config::Key& key, std::string_view description,
+    std::span<int const> preset, HandleInts handler)
+{
+    doc << "# int[]: " << description << '\n';
+    for (auto const& p : preset)
+        doc << "#" << key.to_string() << '=' << p << '\n';
+    doc << '\n';
+    doc.flush();
+    underlying.add_ints_attribute(key, description, preset, handler);
+}
+
+void DocumentingStore::add_bool_attribute(const live_config::Key& key, std::string_view description, bool preset,
+    HandleBool handler)
+{
+    doc << "# bool: " << description << '\n';
+    doc << "#" << key.to_string() << '=' << (preset ? "true" : "false") << "\n\n";
+    doc.flush();
+    underlying.add_bool_attribute(key, description, preset, handler);
+}
+
+void DocumentingStore::add_float_attribute(const live_config::Key& key, std::string_view description, float preset,
+    HandleFloat handler)
+{
+    doc << "# float: " << description << '\n';
+    doc << "#" << key.to_string() << '=' << preset << "\n\n";
+    doc.flush();
+    underlying.add_float_attribute(key, description, preset, handler);
+}
+
+void DocumentingStore::add_floats_attribute(const live_config::Key& key, std::string_view description,
+    std::span<float const> preset, HandleFloats handler)
+{
+    doc << "# float[]: " << description << '\n';
+    for (auto const& p : preset)
+        doc << "#" << key.to_string() << '=' << p << '\n';
+    doc << '\n';
+    doc.flush();
+    underlying.add_floats_attribute(key, description, preset, handler);
+}
+
+void DocumentingStore::add_string_attribute(const live_config::Key& key, std::string_view description,
+    std::string_view preset, HandleString handler)
+{
+    doc << "# string: " << description << '\n';
+    doc << "#" << key.to_string() << '=' << preset << "\n\n";
+    doc.flush();
+    underlying.add_string_attribute(key, description, preset, handler);
+}
+
+void DocumentingStore::add_strings_attribute(const live_config::Key& key, std::string_view description,
+    std::span<std::string const> preset, HandleStrings handler)
+{
+    doc << "# string[]: " << description << '\n';
+    for (auto const& p : preset)
+        doc << "#" << key.to_string() << '=' << p << '\n';
+    doc << '\n';
+    doc.flush();
+    underlying.add_strings_attribute(key, description, preset, handler);
+}
+
+void DocumentingStore::on_done(HandleDone handler)
+{
+    underlying.on_done(handler);
+}
+#endif
 }
 
 int main(int argc, char const* argv[])
@@ -363,6 +563,35 @@ int main(int argc, char const* argv[])
             }
         });
 
+#ifdef MIR_SUPPORTS_LIVE_CONFIG
+    auto const settings_file = std::filesystem::path{runner.config_file()}.replace_extension("settings");
+
+    live_config::IniFile config_store;
+    DocumentingStore settings_store{config_store, config_home / settings_file};
+
+    CursorScale cursor_scale{settings_store};
+    OutputFilter output_filter{settings_store};
+    InputConfiguration input_configuration{settings_store};
+    BounceKeys bounce_keys{settings_store};
+    SlowKeys slow_keys{settings_store};
+    StickyKeys sticky_keys{settings_store};
+    HoverClick hover_click{settings_store};
+#endif
+
+#ifdef MIR_SUPPORTS_LOCALE1_KEYMAP
+    Keymap keymap = getenv("MIRIWAY_SYSTEM_LOCALE1_KEYMAP") ? Keymap::system_locale1() : Keymap{settings_store};
+#else
+    Keymap keymap{};
+#endif
+
+#ifdef MIR_SUPPORTS_LIVE_CONFIG
+    ConfigFile config_file{
+        runner,
+        settings_file,
+        ConfigFile::Mode::reload_on_change,
+        [&config_store](auto&... args){ config_store.load_file(args...); }};
+#endif
+
     return runner.run_with(
         {
             X11Support{},
@@ -377,7 +606,7 @@ int main(int argc, char const* argv[])
             ctrl_alt,
             meta,
             alt,
-            Keymap{},
+            keymap,
             AppendEventFilter{[&](MirEvent const* e) {
                 if (is_locked)
                     return false;
@@ -393,6 +622,15 @@ int main(int argc, char const* argv[])
             CursorTheme{"default"},
 #ifdef MIR_SUPPORTS_XDG_WORKSPACE
             wltools,
+#endif
+#ifdef MIR_SUPPORTS_LIVE_CONFIG
+            cursor_scale,
+            output_filter,
+            input_configuration,
+            bounce_keys,
+            slow_keys,
+            sticky_keys,
+            hover_click,
 #endif
         });
 }
