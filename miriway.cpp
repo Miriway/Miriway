@@ -41,6 +41,9 @@
 #define MIR_SUPPORTS_XDG_WORKSPACE
 #define MIR_SUPPORTS_LOCALE1_KEYMAP
 #define MIR_SUPPORTS_LIVE_CONFIG
+#if MIRAL_VERSION < MIR_VERSION_NUMBER(5, 6, 0)
+#define MIRAL_HAS_BROKEN_INPUT_CONFIGURATION
+#endif
 #include <miral/bounce_keys.h>
 #include <miral/config_file.h>
 #include <miral/cursor_scale.h>
@@ -425,6 +428,139 @@ void DocumentingStore::on_done(HandleDone handler)
 {
     underlying.on_done(handler);
 }
+
+#ifdef MIRAL_HAS_BROKEN_INPUT_CONFIGURATION
+class FixedInputConfiguration
+{
+public:
+    FixedInputConfiguration(live_config::Store& store);
+
+    void operator()(mir::Server& server);
+
+private:
+    struct Self
+    {
+        Self(live_config::Store& store) : ic{store} {}
+
+        InputConfiguration::Keyboard keyboard;
+        InputConfiguration::Mouse mouse;
+        InputConfiguration::Touchpad touchpad;
+
+        InputConfiguration ic;
+
+        void done()
+        {
+            ic.keyboard(keyboard); keyboard = { };
+            ic.mouse(mouse); mouse = { };
+            ic.touchpad(touchpad); touchpad = { };
+        }
+
+        void acceleration(live_config::Key const& key, std::optional<std::string_view> opt_val)
+        {
+            if (opt_val.has_value())
+            {
+                auto val = *opt_val;
+
+                if (val == "none")
+                {
+                    mouse.acceleration(mir_pointer_acceleration_none);
+                }
+                else if (val == "adaptive")
+                {
+                    mouse.acceleration(mir_pointer_acceleration_adaptive);
+                }
+                else
+                {
+                    mir::log_warning(
+                        "Config key '%s' has invalid string value: %s",
+                        key.to_string().c_str(),
+                        std::format("{}",val).c_str());
+                }
+            }
+        };
+
+        void acceleration_bias(live_config::Key const&, std::optional<float> opt_val)
+        {
+            if (opt_val.has_value())
+            {
+                mouse.acceleration_bias(std::clamp(*opt_val, -1.0f, 1.0f));
+            }
+        };
+
+        void scroll_mode(live_config::Key const& key, std::optional<std::string_view> opt_val)
+        {
+            if (opt_val.has_value())
+            {
+                auto val = *opt_val;
+
+                if (val == "none")
+                {
+                    touchpad.scroll_mode(mir_touchpad_scroll_mode_none);
+                }
+                else if (val == "edge")
+                {
+                    touchpad.scroll_mode(mir_touchpad_scroll_mode_edge_scroll);
+                }
+                else if (val == "two-finger")
+                {
+                    touchpad.scroll_mode(mir_touchpad_scroll_mode_two_finger_scroll);
+                }
+                else if (val == "button-down")
+                {
+                    touchpad.scroll_mode(mir_touchpad_scroll_mode_button_down_scroll);
+                }
+                else
+                {
+                    mir::log_warning(
+                        "Config key '%s' has invalid string value: %s",
+                        key.to_string().c_str(),
+                        std::format("{}",val).c_str());
+                }
+            }
+        };
+
+        void tap_to_click(live_config::Key const&, std::optional<bool> opt_val)
+        {
+            if (opt_val.has_value())
+            {
+                touchpad.tap_to_click(*opt_val);
+            }
+        }
+    };
+    std::shared_ptr<Self> self;
+};
+
+void FixedInputConfiguration::operator()(mir::Server& server)
+{
+    self->ic(server);
+}
+
+FixedInputConfiguration::FixedInputConfiguration(live_config::Store& store) :
+    self{std::make_shared<Self>(store)}
+{
+    store.on_done([self=self]() { self->done(); });
+
+    store.add_string_attribute(
+        live_config::Key{"pointer", "acceleration"},
+        "Acceleration profile for mice and trackballs [none, adaptive]",
+        [self=self](auto... args) { self->acceleration(args...); });
+
+    store.add_float_attribute(
+        live_config::Key{"pointer", "acceleration_bias"},
+        "Acceleration speed of mice within a range of [-1.0, 1.0]",
+        [self=self](auto... args) { self->acceleration_bias(args...); });
+
+    store.add_string_attribute(
+        live_config::Key{"touchpad", "scroll_mode"},
+        "Scroll mode for touchpads: [edge, two-finger, button-down]",
+        [self=self](auto... args) { self->scroll_mode(args...); });
+
+    store.add_bool_attribute(
+        live_config::Key{"touchpad", "tap_to_click"},
+        "1, 2, 3 finger tap mapping to left, right, middle click, respectively [true, false]",
+        [self=self](auto... args) { self->tap_to_click(args...); });
+}
+#endif
 #endif
 }
 
@@ -564,6 +700,9 @@ int main(int argc, char const* argv[])
         });
 
 #ifdef MIR_SUPPORTS_LIVE_CONFIG
+#ifdef MIRAL_HAS_BROKEN_INPUT_CONFIGURATION
+    using InputConfiguration = ::FixedInputConfiguration;
+#endif
     auto const settings_file = std::filesystem::path{runner.config_file()}.replace_extension("settings");
 
     live_config::IniFile config_store;
@@ -571,6 +710,7 @@ int main(int argc, char const* argv[])
 
     CursorScale cursor_scale{settings_store};
     OutputFilter output_filter{settings_store};
+
     InputConfiguration input_configuration{settings_store};
     BounceKeys bounce_keys{settings_store};
     SlowKeys slow_keys{settings_store};
