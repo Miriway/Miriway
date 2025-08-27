@@ -24,44 +24,40 @@
 #include <mir/abnormal_exit.h>
 #include <mir/log.h>
 #include <miral/append_event_filter.h>
-#include <miral/cursor_theme.h>
+#include <miral/bounce_keys.h>
+#include <miral/config_file.h>
 #include <miral/configuration_option.h>
+#include <miral/cursor_scale.h>
+#include <miral/cursor_theme.h>
 #include <miral/decorations.h>
 #include <miral/display_configuration_option.h>
 #include <miral/external_client.h>
+#include <miral/hover_click.h>
 #include <miral/idle_listener.h>
+#include <miral/input_configuration.h>
 #include <miral/keymap.h>
+#include <miral/live_config.h>
+#include <miral/live_config_ini_file.h>
+#include <miral/output_filter.h>
 #include <miral/prepend_event_filter.h>
 #include <miral/runner.h>
 #include <miral/session_lock_listener.h>
 #include <miral/set_window_management_policy.h>
-#include <miral/version.h>
-#include <miral/wayland_extensions.h>
-#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 5, 0)
-#define MIR_SUPPORTS_XDG_WORKSPACE
-#define MIR_SUPPORTS_LOCALE1_KEYMAP
-#define MIR_SUPPORTS_LIVE_CONFIG
-#if MIRAL_VERSION < MIR_VERSION_NUMBER(5, 6, 0)
-#define MIRAL_HAS_BROKEN_INPUT_CONFIGURATION
-#endif
-#include <miral/bounce_keys.h>
-#include <miral/config_file.h>
-#include <miral/cursor_scale.h>
-#include <miral/hover_click.h>
-#include <miral/input_configuration.h>
-#include <miral/live_config.h>
-#include <miral/live_config_ini_file.h>
-#include <miral/output_filter.h>
 #include <miral/slow_keys.h>
 #include <miral/sticky_keys.h>
+#include <miral/version.h>
+#include <miral/wayland_extensions.h>
 #include <miral/wayland_tools.h>
-#endif
 #include <miral/x11_support.h>
 
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <functional>
+
+#if MIRAL_VERSION < MIR_VERSION_NUMBER(5, 6, 0)
+#define MIRAL_HAS_BROKEN_INPUT_CONFIGURATION
+#endif
 
 using namespace miral;
 using namespace miriway;
@@ -228,7 +224,6 @@ inline auto config_path(std::filesystem::path path)
     return miriway_shell ? std::filesystem::path(miriway_shell) / basename : basename;
 }
 
-#ifdef MIR_SUPPORTS_LIVE_CONFIG
 auto const config_home = []() -> std::filesystem::path
 {
     if (auto config_home = getenv("XDG_CONFIG_HOME"))
@@ -242,7 +237,6 @@ auto const config_home = []() -> std::filesystem::path
 
     return "/dev/null";
 }();
-#endif
 
 auto getenv_decorations()
 {
@@ -258,7 +252,6 @@ auto getenv_decorations()
     return Decorations::prefer_csd();
 }
 
-#ifdef MIR_SUPPORTS_LIVE_CONFIG
 /// Documents the available options
 class DocumentingStore : public live_config::Store
 {
@@ -561,7 +554,6 @@ FixedInputConfiguration::FixedInputConfiguration(live_config::Store& store) :
         [self=self](auto... args) { self->tap_to_click(args...); });
 }
 #endif
-#endif
 }
 
 int main(int argc, char const* argv[])
@@ -607,12 +599,10 @@ int main(int argc, char const* argv[])
 
     ChildControl child_control(runner);
 
-#ifdef MIR_SUPPORTS_XDG_WORKSPACE
     WaylandTools wltools;
 
     extensions.add_extension_disabled_by_default(build_ext_workspace_v1_global(wltools));
     child_control.enable_for_shell(extensions, ext_workspace_v1_name());
-#endif
 
     // Protocols we're reserving for shell components_option
     for (auto const& protocol : {
@@ -699,7 +689,6 @@ int main(int argc, char const* argv[])
             }
         });
 
-#ifdef MIR_SUPPORTS_LIVE_CONFIG
 #ifdef MIRAL_HAS_BROKEN_INPUT_CONFIGURATION
     using InputConfiguration = ::FixedInputConfiguration;
 #endif
@@ -716,21 +705,14 @@ int main(int argc, char const* argv[])
     SlowKeys slow_keys{settings_store};
     StickyKeys sticky_keys{settings_store};
     HoverClick hover_click{settings_store};
-#endif
 
-#ifdef MIR_SUPPORTS_LOCALE1_KEYMAP
     Keymap keymap = getenv("MIRIWAY_SYSTEM_LOCALE1_KEYMAP") ? Keymap::system_locale1() : Keymap{settings_store};
-#else
-    Keymap keymap{};
-#endif
 
-#ifdef MIR_SUPPORTS_LIVE_CONFIG
     ConfigFile config_file{
         runner,
         settings_file,
         ConfigFile::Mode::reload_on_change,
         [&config_store](auto&... args){ config_store.load_file(args...); }};
-#endif
 
     return runner.run_with(
         {
@@ -760,10 +742,7 @@ int main(int argc, char const* argv[])
             lockscreen,
             getenv_decorations(),
             CursorTheme{"default"},
-#ifdef MIR_SUPPORTS_XDG_WORKSPACE
             wltools,
-#endif
-#ifdef MIR_SUPPORTS_LIVE_CONFIG
             cursor_scale,
             output_filter,
             input_configuration,
@@ -771,6 +750,5 @@ int main(int argc, char const* argv[])
             slow_keys,
             sticky_keys,
             hover_click,
-#endif
         });
 }
