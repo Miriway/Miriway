@@ -31,6 +31,8 @@ add_library(miriwaycommon STATIC
     miriway_workspace_manager.cpp   miriway_workspace_manager.h miriway_workspace_hooks.h
     wayland-generated/ext-workspace-v1_wrapper.cpp    wayland-generated/ext-workspace-v1_wrapper.h
     miriway_ext_workspace_v1.cpp    miriway_ext_workspace_v1.h
+        miriway_documenting_store.cpp
+        miriway_documenting_store.h
 )
 
 target_include_directories(miriwaycommon PUBLIC SYSTEM ${MIRAL_INCLUDE_DIRS} ${MIRWAYLAND_INCLUDE_DIRS})

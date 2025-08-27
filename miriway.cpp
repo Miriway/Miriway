@@ -18,6 +18,7 @@
 
 #include "miriway_child_control.h"
 #include "miriway_commands.h"
+#include "miriway_documenting_store.h"
 #include "miriway_policy.h"
 #include "miriway_ext_workspace_v1.h"
 
@@ -39,7 +40,6 @@
 #include <miral/live_config.h>
 #include <miral/live_config_ini_file.h>
 #include <miral/output_filter.h>
-#include <miral/prepend_event_filter.h>
 #include <miral/runner.h>
 #include <miral/session_lock_listener.h>
 #include <miral/set_window_management_policy.h>
@@ -250,176 +250,6 @@ auto getenv_decorations()
         mir::log_warning("Unknown decoration strategy: '%s', using prefer-csd", strategy);
     }
     return Decorations::prefer_csd();
-}
-
-/// Documents the available options
-class DocumentingStore : public live_config::Store
-{
-public:
-    explicit DocumentingStore(Store& underlying, std::filesystem::path target) :
-        underlying{underlying},
-        doc{exists(target) ? std::ofstream{} : std::ofstream(target)}
-    {
-    }
-
-    void add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler) override;
-    void add_ints_attribute(const live_config::Key& key, std::string_view description, HandleInts handler) override;
-    void add_bool_attribute(const live_config::Key& key, std::string_view description, HandleBool handler) override;
-    void add_float_attribute(const live_config::Key& key, std::string_view description, HandleFloat handler) override;
-    void add_floats_attribute(const live_config::Key& key, std::string_view description, HandleFloats handler) override;
-    void add_string_attribute(const live_config::Key& key, std::string_view description, HandleString handler) override;
-    void add_strings_attribute(const live_config::Key& key, std::string_view description,
-        HandleStrings handler) override;
-    void add_int_attribute(const live_config::Key& key, std::string_view description, int preset,
-        HandleInt handler) override;
-    void add_ints_attribute(const live_config::Key& key, std::string_view description, std::span<int const> preset,
-        HandleInts handler) override;
-    void add_bool_attribute(const live_config::Key& key, std::string_view description, bool preset,
-        HandleBool handler) override;
-    void add_float_attribute(const live_config::Key& key, std::string_view description, float preset,
-        HandleFloat handler) override;
-    void add_floats_attribute(const live_config::Key& key, std::string_view description, std::span<float const> preset,
-        HandleFloats handler) override;
-    void add_string_attribute(const live_config::Key& key, std::string_view description, std::string_view preset,
-        HandleString handler) override;
-    void add_strings_attribute(const live_config::Key& key, std::string_view description,
-        std::span<std::string const> preset, HandleStrings handler) override;
-    void on_done(HandleDone handler) override;
-
-private:
-    Store& underlying;
-    std::ofstream doc;
-};
-
-void DocumentingStore::add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler)
-{
-    doc << "# int: " << description << '\n';
-    doc << "#" << key.to_string() << "=\n\n";
-    doc.flush();
-    underlying.add_int_attribute(key, description, handler);
-}
-
-void DocumentingStore::add_ints_attribute(const live_config::Key& key, std::string_view description, HandleInts handler)
-{
-    doc << "# int[]: " << description << '\n';
-    doc << "#" << key.to_string() << "=\n\n";
-    doc.flush();
-    underlying.add_ints_attribute(key, description, handler);
-}
-
-void DocumentingStore::add_bool_attribute(const live_config::Key& key, std::string_view description, HandleBool handler)
-{
-    doc << "# bool: " << description << '\n';
-    doc << "#" << key.to_string() << "=\n\n";
-    doc.flush();
-    underlying.add_bool_attribute(key, description, handler);
-}
-
-void DocumentingStore::add_float_attribute(const live_config::Key& key, std::string_view description, HandleFloat handler)
-{
-    doc << "# float: " << description << '\n';
-    doc << "#" << key.to_string() << "=\n\n";
-    doc.flush();
-    underlying.add_float_attribute(key, description, handler);
-}
-
-void DocumentingStore::add_floats_attribute(const live_config::Key& key, std::string_view description, HandleFloats handler)
-{
-    doc << "# float[]: " << description << '\n';
-    doc << "#" << key.to_string() << "=\n\n";
-    doc.flush();
-    underlying.add_floats_attribute(key, description, handler);
-}
-
-void DocumentingStore::add_string_attribute(const live_config::Key& key, std::string_view description, HandleString handler)
-{
-    doc << "# string: " << description << '\n';
-    doc << "#" << key.to_string() << "=\n\n";
-    doc.flush();
-    underlying.add_string_attribute(key, description, handler);
-}
-
-void DocumentingStore::add_strings_attribute(const live_config::Key& key, std::string_view description,
-    HandleStrings handler)
-{
-    doc << "# string[]: " << description << '\n';
-    doc << "#" << key.to_string() << "=\n\n";
-    doc.flush();
-    underlying.add_strings_attribute(key, description, handler);
-}
-
-void DocumentingStore::add_int_attribute(const live_config::Key& key, std::string_view description, int preset,
-    HandleInt handler)
-{
-    doc << "# int: " << description << '\n';
-    doc << "#" << key.to_string() << '=' << preset << "\n\n";
-    doc.flush();
-    underlying.add_int_attribute(key, description, handler);
-}
-
-void DocumentingStore::add_ints_attribute(const live_config::Key& key, std::string_view description,
-    std::span<int const> preset, HandleInts handler)
-{
-    doc << "# int[]: " << description << '\n';
-    for (auto const& p : preset)
-        doc << "#" << key.to_string() << '=' << p << '\n';
-    doc << '\n';
-    doc.flush();
-    underlying.add_ints_attribute(key, description, preset, handler);
-}
-
-void DocumentingStore::add_bool_attribute(const live_config::Key& key, std::string_view description, bool preset,
-    HandleBool handler)
-{
-    doc << "# bool: " << description << '\n';
-    doc << "#" << key.to_string() << '=' << (preset ? "true" : "false") << "\n\n";
-    doc.flush();
-    underlying.add_bool_attribute(key, description, preset, handler);
-}
-
-void DocumentingStore::add_float_attribute(const live_config::Key& key, std::string_view description, float preset,
-    HandleFloat handler)
-{
-    doc << "# float: " << description << '\n';
-    doc << "#" << key.to_string() << '=' << preset << "\n\n";
-    doc.flush();
-    underlying.add_float_attribute(key, description, preset, handler);
-}
-
-void DocumentingStore::add_floats_attribute(const live_config::Key& key, std::string_view description,
-    std::span<float const> preset, HandleFloats handler)
-{
-    doc << "# float[]: " << description << '\n';
-    for (auto const& p : preset)
-        doc << "#" << key.to_string() << '=' << p << '\n';
-    doc << '\n';
-    doc.flush();
-    underlying.add_floats_attribute(key, description, preset, handler);
-}
-
-void DocumentingStore::add_string_attribute(const live_config::Key& key, std::string_view description,
-    std::string_view preset, HandleString handler)
-{
-    doc << "# string: " << description << '\n';
-    doc << "#" << key.to_string() << '=' << preset << "\n\n";
-    doc.flush();
-    underlying.add_string_attribute(key, description, preset, handler);
-}
-
-void DocumentingStore::add_strings_attribute(const live_config::Key& key, std::string_view description,
-    std::span<std::string const> preset, HandleStrings handler)
-{
-    doc << "# string[]: " << description << '\n';
-    for (auto const& p : preset)
-        doc << "#" << key.to_string() << '=' << p << '\n';
-    doc << '\n';
-    doc.flush();
-    underlying.add_strings_attribute(key, description, preset, handler);
-}
-
-void DocumentingStore::on_done(HandleDone handler)
-{
-    underlying.on_done(handler);
 }
 
 #ifdef MIRAL_HAS_BROKEN_INPUT_CONFIGURATION
