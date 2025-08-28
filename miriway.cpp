@@ -18,35 +18,46 @@
 
 #include "miriway_child_control.h"
 #include "miriway_commands.h"
+#include "miriway_documenting_store.h"
 #include "miriway_policy.h"
 #include "miriway_ext_workspace_v1.h"
 
 #include <mir/abnormal_exit.h>
 #include <mir/log.h>
 #include <miral/append_event_filter.h>
-#include <miral/cursor_theme.h>
+#include <miral/bounce_keys.h>
+#include <miral/config_file.h>
 #include <miral/configuration_option.h>
+#include <miral/cursor_scale.h>
+#include <miral/cursor_theme.h>
 #include <miral/decorations.h>
 #include <miral/display_configuration_option.h>
 #include <miral/external_client.h>
+#include <miral/hover_click.h>
 #include <miral/idle_listener.h>
+#include <miral/input_configuration.h>
 #include <miral/keymap.h>
-#include <miral/prepend_event_filter.h>
+#include <miral/live_config.h>
+#include <miral/live_config_ini_file.h>
+#include <miral/output_filter.h>
 #include <miral/runner.h>
 #include <miral/session_lock_listener.h>
 #include <miral/set_window_management_policy.h>
+#include <miral/slow_keys.h>
+#include <miral/sticky_keys.h>
 #include <miral/version.h>
 #include <miral/wayland_extensions.h>
-#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 5, 0)
-#define MIR_SUPPORTS_XDG_WORKSPACE
 #include <miral/wayland_tools.h>
-#endif
 #include <miral/x11_support.h>
 
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <functional>
+
+#if MIRAL_VERSION < MIR_VERSION_NUMBER(5, 6, 0)
+#define MIRAL_HAS_BROKEN_INPUT_CONFIGURATION
+#endif
 
 using namespace miral;
 using namespace miriway;
@@ -213,6 +224,20 @@ inline auto config_path(std::filesystem::path path)
     return miriway_shell ? std::filesystem::path(miriway_shell) / basename : basename;
 }
 
+auto const config_home = []() -> std::filesystem::path
+{
+    if (auto config_home = getenv("XDG_CONFIG_HOME"))
+    {
+        return config_home;
+    }
+    else if (auto home = getenv("HOME"))
+    {
+        return std::filesystem::path(home) / ".config";
+    }
+
+    return "/dev/null";
+}();
+
 auto getenv_decorations()
 {
     if (auto const strategy = getenv("MIRIWAY_DECORATIONS"))
@@ -226,6 +251,139 @@ auto getenv_decorations()
     }
     return Decorations::prefer_csd();
 }
+
+#ifdef MIRAL_HAS_BROKEN_INPUT_CONFIGURATION
+class FixedInputConfiguration
+{
+public:
+    FixedInputConfiguration(live_config::Store& store);
+
+    void operator()(mir::Server& server);
+
+private:
+    struct Self
+    {
+        Self(live_config::Store& store) : ic{store} {}
+
+        InputConfiguration::Keyboard keyboard;
+        InputConfiguration::Mouse mouse;
+        InputConfiguration::Touchpad touchpad;
+
+        InputConfiguration ic;
+
+        void done()
+        {
+            ic.keyboard(keyboard); keyboard = { };
+            ic.mouse(mouse); mouse = { };
+            ic.touchpad(touchpad); touchpad = { };
+        }
+
+        void acceleration(live_config::Key const& key, std::optional<std::string_view> opt_val)
+        {
+            if (opt_val.has_value())
+            {
+                auto val = *opt_val;
+
+                if (val == "none")
+                {
+                    mouse.acceleration(mir_pointer_acceleration_none);
+                }
+                else if (val == "adaptive")
+                {
+                    mouse.acceleration(mir_pointer_acceleration_adaptive);
+                }
+                else
+                {
+                    mir::log_warning(
+                        "Config key '%s' has invalid string value: %s",
+                        key.to_string().c_str(),
+                        std::format("{}",val).c_str());
+                }
+            }
+        };
+
+        void acceleration_bias(live_config::Key const&, std::optional<float> opt_val)
+        {
+            if (opt_val.has_value())
+            {
+                mouse.acceleration_bias(std::clamp(*opt_val, -1.0f, 1.0f));
+            }
+        };
+
+        void scroll_mode(live_config::Key const& key, std::optional<std::string_view> opt_val)
+        {
+            if (opt_val.has_value())
+            {
+                auto val = *opt_val;
+
+                if (val == "none")
+                {
+                    touchpad.scroll_mode(mir_touchpad_scroll_mode_none);
+                }
+                else if (val == "edge")
+                {
+                    touchpad.scroll_mode(mir_touchpad_scroll_mode_edge_scroll);
+                }
+                else if (val == "two-finger")
+                {
+                    touchpad.scroll_mode(mir_touchpad_scroll_mode_two_finger_scroll);
+                }
+                else if (val == "button-down")
+                {
+                    touchpad.scroll_mode(mir_touchpad_scroll_mode_button_down_scroll);
+                }
+                else
+                {
+                    mir::log_warning(
+                        "Config key '%s' has invalid string value: %s",
+                        key.to_string().c_str(),
+                        std::format("{}",val).c_str());
+                }
+            }
+        };
+
+        void tap_to_click(live_config::Key const&, std::optional<bool> opt_val)
+        {
+            if (opt_val.has_value())
+            {
+                touchpad.tap_to_click(*opt_val);
+            }
+        }
+    };
+    std::shared_ptr<Self> self;
+};
+
+void FixedInputConfiguration::operator()(mir::Server& server)
+{
+    self->ic(server);
+}
+
+FixedInputConfiguration::FixedInputConfiguration(live_config::Store& store) :
+    self{std::make_shared<Self>(store)}
+{
+    store.on_done([self=self]() { self->done(); });
+
+    store.add_string_attribute(
+        live_config::Key{"pointer", "acceleration"},
+        "Acceleration profile for mice and trackballs [none, adaptive]",
+        [self=self](auto... args) { self->acceleration(args...); });
+
+    store.add_float_attribute(
+        live_config::Key{"pointer", "acceleration_bias"},
+        "Acceleration speed of mice within a range of [-1.0, 1.0]",
+        [self=self](auto... args) { self->acceleration_bias(args...); });
+
+    store.add_string_attribute(
+        live_config::Key{"touchpad", "scroll_mode"},
+        "Scroll mode for touchpads: [edge, two-finger, button-down]",
+        [self=self](auto... args) { self->scroll_mode(args...); });
+
+    store.add_bool_attribute(
+        live_config::Key{"touchpad", "tap_to_click"},
+        "1, 2, 3 finger tap mapping to left, right, middle click, respectively [true, false]",
+        [self=self](auto... args) { self->tap_to_click(args...); });
+}
+#endif
 }
 
 int main(int argc, char const* argv[])
@@ -271,12 +429,10 @@ int main(int argc, char const* argv[])
 
     ChildControl child_control(runner);
 
-#ifdef MIR_SUPPORTS_XDG_WORKSPACE
     WaylandTools wltools;
 
     extensions.add_extension_disabled_by_default(build_ext_workspace_v1_global(wltools));
     child_control.enable_for_shell(extensions, ext_workspace_v1_name());
-#endif
 
     // Protocols we're reserving for shell components_option
     for (auto const& protocol : {
@@ -363,6 +519,31 @@ int main(int argc, char const* argv[])
             }
         });
 
+#ifdef MIRAL_HAS_BROKEN_INPUT_CONFIGURATION
+    using InputConfiguration = ::FixedInputConfiguration;
+#endif
+    auto const settings_file = std::filesystem::path{runner.config_file()}.replace_extension("settings");
+
+    live_config::IniFile config_store;
+    DocumentingStore settings_store{config_store, config_home / settings_file};
+
+    CursorScale cursor_scale{settings_store};
+    OutputFilter output_filter{settings_store};
+
+    InputConfiguration input_configuration{settings_store};
+    BounceKeys bounce_keys{settings_store};
+    SlowKeys slow_keys{settings_store};
+    StickyKeys sticky_keys{settings_store};
+    HoverClick hover_click{settings_store};
+
+    Keymap keymap = getenv("MIRIWAY_SYSTEM_LOCALE1_KEYMAP") ? Keymap::system_locale1() : Keymap{settings_store};
+
+    ConfigFile config_file{
+        runner,
+        settings_file,
+        ConfigFile::Mode::reload_on_change,
+        [&config_store](auto&... args){ config_store.load_file(args...); }};
+
     return runner.run_with(
         {
             X11Support{},
@@ -377,7 +558,7 @@ int main(int argc, char const* argv[])
             ctrl_alt,
             meta,
             alt,
-            Keymap{},
+            keymap,
             AppendEventFilter{[&](MirEvent const* e) {
                 if (is_locked)
                     return false;
@@ -391,8 +572,13 @@ int main(int argc, char const* argv[])
             lockscreen,
             getenv_decorations(),
             CursorTheme{"default"},
-#ifdef MIR_SUPPORTS_XDG_WORKSPACE
             wltools,
-#endif
+            cursor_scale,
+            output_filter,
+            input_configuration,
+            bounce_keys,
+            slow_keys,
+            sticky_keys,
+            hover_click,
         });
 }
