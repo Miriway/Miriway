@@ -190,3 +190,10 @@ parts:
       - libinih1
       - libwayland-cursor0
       - libcairo2
+
+  wayvnc:
+    plugin: nil
+    stage-packages:
+      - wayvnc
+    build-attributes:
+      - enable-patchelf
