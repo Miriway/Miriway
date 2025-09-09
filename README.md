@@ -1,7 +1,8 @@
 # Miriway
 
 ## Introducing Miriway
-Miriway is a starting point for creating a Wayland based desktop environment using Mir.
+Miriway is a generic compositor using Mir that can be customised to serve the 
+needs of a range of desktop environments. 
 
 Miriway has been tested with shell components from several desktop environments 
 and comes with some scripts to help set up a variety of example configurations.
