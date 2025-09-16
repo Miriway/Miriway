@@ -42,9 +42,9 @@ apps:
     environment: &_environment
       # Prep for Mir
       MIR_SERVER_PLATFORM_PATH: ${SNAP}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/mir/server-platform
-      __EGL_VENDOR_LIBRARY_DIRS: $SNAP/etc/glvnd/egl_vendor.d:$SNAP/usr/share/glvnd/egl_vendor.d
-      GBM_BACKENDS_PATH: $SNAP/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/gbm
-      LIBGL_DRIVERS_PATH: $SNAP/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
+      __EGL_VENDOR_LIBRARY_DIRS: ${SNAP}/etc/glvnd/egl_vendor.d:${SNAP}/usr/share/glvnd/egl_vendor.d
+      GBM_BACKENDS_PATH: ${SNAP}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/gbm
+      LIBGL_DRIVERS_PATH: ${SNAP}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
       LIBINPUT_QUIRKS_DIR: ${SNAP}/usr/share/libinput
       PATH: ${SNAP}/bin/:${SNAP}/usr/bin/:${SNAP}/usr/local/bin/:${PATH}
       # Warning: This variable is used by xdg-desktop-portal to force it to look in
@@ -52,7 +52,7 @@ apps:
       # does not respect XDG_DATA_DIRS so we are forced to use this workaround. This
       # environment variable is only intended to be used in their testing environment
       # but we are abusing it for our purposes here.
-      XDG_DESKTOP_PORTAL_DIR: $SNAP/usr/share/xdg-desktop-portal/portals/
+      XDG_DESKTOP_PORTAL_DIR: ${SNAP}/usr/share/xdg-desktop-portal/portals/
       DRIRC_CONFIGDIR: ${SNAP}/usr/share/drirc.d
 
   session:
