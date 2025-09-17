@@ -1,10 +1,13 @@
 #!/bin/bash -l
 
-if ! command -v ubuntu-frame-vnc > /dev/null
+if command -v ubuntu-frame-vnc > /dev/null
 then
-  echo "Error: ubuntu-frame-vnc is NOT installed. Please run the following:"
+  vnc_server=ubuntu-frame-vnc
+else
+  echo "Warning: ubuntu-frame-vnc is NOT installed. Please run the following:"
   echo "  sudo snap install ubuntu-frame-vnc && sudo snap connect ubuntu-frame-vnc:wayland"
-  exit 1
+  echo "  falling back to wayvnc defaults"
+  vnc_server=wayvnc
 fi
 
 miriway_local_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
@@ -19,6 +22,6 @@ virtual_output="$(snapctl get virtual-output)"
 
 sed --quiet -e "s#^shell-component=\(.*\)#--shell-component=\'\1\'#p" \
 -e "s#^shell-add-wayland-extension=\(.*\)#--shell-add-wayland-extension=\'\1\'#p" "${miriway_config_file}"| \
-exec xargs env -u WAYLAND_DISPLAY -u DISPLAY "$@" --shell-component=ubuntu-frame-vnc \
+exec xargs env -u WAYLAND_DISPLAY -u DISPLAY "$@" --shell-component="${vnc-server}" \
 --platform-display-libs=mir:virtual --virtual-output="${virtual_output:-1280x1024}" \
 --shell-add-wayland-extension=zwp_virtual_keyboard_manager_v1 --shell-add-wayland-extension=zwlr_virtual_pointer_manager_v1
