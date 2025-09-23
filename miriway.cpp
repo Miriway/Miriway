@@ -459,17 +459,17 @@ int main(int argc, char const* argv[])
     // corresponding configuration options. These processes are added to `shell_pids`
     CommandIndex shell_meta{
         "shell-meta",
-        "meta <key>:<command> shortcut with shell priviledges (may be specified multiple times)",
+        "meta <key>:<command> shortcut with shell privileges (may be specified multiple times)",
         [&child_control](auto cmd) { child_control.run_shell(cmd); }};
 
     CommandIndex shell_ctrl_alt{
         "shell-ctrl-alt",
-        "ctrl-alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)",
+        "ctrl-alt <key>:<command> shortcut with shell privileges (may be specified multiple times)",
         [&child_control](auto cmd) { child_control.run_shell(cmd); }};
 
     CommandIndex shell_alt{
         "shell-alt",
-        "alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)",
+        "alt <key>:<command> shortcut with shell privileges (may be specified multiple times)",
         [&child_control](auto cmd) { child_control.run_shell(cmd); }};
 
     // `meta`, `alt` and `ctrl_alt` provide a lookup to execute the commands configured by the corresponding
