@@ -525,18 +525,19 @@ int main(int argc, char const* argv[])
     auto const settings_file = std::filesystem::path{runner.config_file()}.replace_extension("settings");
 
     live_config::IniFile config_store;
-    DocumentingStore settings_store{config_store, config_home / settings_file};
+    auto settings_store = std::make_unique<DocumentingStore>(config_store, config_home / settings_file);
 
-    CursorScale cursor_scale{settings_store};
-    OutputFilter output_filter{settings_store};
+    CursorScale cursor_scale{*settings_store};
+    OutputFilter output_filter{*settings_store};
 
-    InputConfiguration input_configuration{settings_store};
-    BounceKeys bounce_keys{settings_store};
-    SlowKeys slow_keys{settings_store};
-    StickyKeys sticky_keys{settings_store};
-    HoverClick hover_click{settings_store};
+    InputConfiguration input_configuration{*settings_store};
+    BounceKeys bounce_keys{*settings_store};
+    SlowKeys slow_keys{*settings_store};
+    StickyKeys sticky_keys{*settings_store};
+    HoverClick hover_click{*settings_store};
 
-    Keymap keymap = getenv("MIRIWAY_SYSTEM_LOCALE1_KEYMAP") ? Keymap::system_locale1() : Keymap{settings_store};
+    Keymap keymap = getenv("MIRIWAY_SYSTEM_LOCALE1_KEYMAP") ? Keymap::system_locale1() : Keymap{*settings_store};
+    settings_store.reset();
 
     ConfigFile config_file{
         runner,
