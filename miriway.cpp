@@ -261,6 +261,130 @@ public:
     void operator()(mir::Server& server);
 
 private:
+    class DeduplicatingStore : public live_config::Store
+    {
+    public:
+        explicit DeduplicatingStore(Store& underlying) :
+            underlying{underlying}
+        {
+        }
+
+        void add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler) override
+        {
+            if (known_keys.insert(key).second)
+            {
+                underlying.add_int_attribute(key, description, handler);
+            }
+        }
+        void add_ints_attribute(const live_config::Key& key, std::string_view description, HandleInts handler) override
+        {
+            if (known_keys.insert(key).second)
+            {
+                underlying.add_ints_attribute(key, description, handler);
+            }
+        }
+        void add_bool_attribute(const live_config::Key& key, std::string_view description, HandleBool handler) override
+        {
+            if (known_keys.insert(key).second)
+            {
+                underlying.add_bool_attribute(key, description, handler);
+            }
+        }
+        void add_float_attribute(const live_config::Key& key, std::string_view description, HandleFloat handler) override
+        {
+            if (known_keys.insert(key).second)
+            {
+                underlying.add_float_attribute(key, description, handler);
+            }
+        }
+        void add_floats_attribute(const live_config::Key& key, std::string_view description, HandleFloats handler) override
+        {
+            if (known_keys.insert(key).second)
+            {
+                underlying.add_floats_attribute(key, description, handler);
+            }
+        }
+        void add_string_attribute(const live_config::Key& key, std::string_view description, HandleString handler) override
+        {
+            if (known_keys.insert(key).second)
+            {
+                underlying.add_string_attribute(key, description, handler);
+            }
+        }
+        void add_strings_attribute(const live_config::Key& key, std::string_view description,
+            HandleStrings handler) override
+        {
+            if (known_keys.insert(key).second)
+            {
+                underlying.add_strings_attribute(key, description, handler);
+            }
+        }
+        void add_int_attribute(const live_config::Key& key, std::string_view description, int preset,
+            HandleInt handler) override
+        {
+            if (known_keys.insert(key).second)
+            {
+                underlying.add_int_attribute(key, description, preset, handler);
+            }
+        }
+        void add_ints_attribute(const live_config::Key& key, std::string_view description, std::span<int const> preset,
+            HandleInts handler) override
+        {
+            if (known_keys.insert(key).second)
+            {
+                underlying.add_ints_attribute(key, description, preset, handler);
+            }
+        }
+        void add_bool_attribute(const live_config::Key& key, std::string_view description, bool preset,
+            HandleBool handler) override
+        {
+            if (known_keys.insert(key).second)
+            {
+                underlying.add_bool_attribute(key, description, preset, handler);
+            }
+        }
+        void add_float_attribute(const live_config::Key& key, std::string_view description, float preset,
+            HandleFloat handler) override
+        {
+            if (known_keys.insert(key).second)
+            {
+                underlying.add_float_attribute(key, description, preset, handler);
+            }
+        }
+        void add_floats_attribute(const live_config::Key& key, std::string_view description, std::span<float const> preset,
+            HandleFloats handler) override
+        {
+            if (known_keys.insert(key).second)
+            {
+                underlying.add_floats_attribute(key, description, preset, handler);
+            }
+        }
+        void add_string_attribute(const live_config::Key& key, std::string_view description, std::string_view preset,
+            HandleString handler) override
+        {
+            if (known_keys.insert(key).second)
+            {
+                underlying.add_string_attribute(key, description, preset, handler);
+            }
+        }
+        void add_strings_attribute(const live_config::Key& key, std::string_view description,
+            std::span<std::string const> preset, HandleStrings handler) override
+        {
+            if (known_keys.insert(key).second)
+            {
+                underlying.add_strings_attribute(key, description, preset, handler);
+            }
+        }
+        void on_done(HandleDone handler) override
+        {
+            underlying.on_done(handler);
+        }
+
+    private:
+        Store& underlying;
+        std::set<live_config::Key> known_keys;
+    };
+
     struct Self
     {
         Self(live_config::Store& store) : ic{store} {}
@@ -350,6 +474,7 @@ private:
             }
         }
     };
+    std::shared_ptr<DeduplicatingStore> dedup_store;
     std::shared_ptr<Self> self;
 };
 
@@ -359,26 +484,27 @@ void FixedInputConfiguration::operator()(mir::Server& server)
 }
 
 FixedInputConfiguration::FixedInputConfiguration(live_config::Store& store) :
-    self{std::make_shared<Self>(store)}
+    dedup_store(std::make_shared<DeduplicatingStore>(store)),
+    self{std::make_shared<Self>(*dedup_store)}
 {
-    store.on_done([self=self]() { self->done(); });
+    dedup_store->on_done([self=self]() { self->done(); });
 
-    store.add_string_attribute(
+    dedup_store->add_string_attribute(
         live_config::Key{"pointer", "acceleration"},
         "Acceleration profile for mice and trackballs [none, adaptive]",
         [self=self](auto... args) { self->acceleration(args...); });
 
-    store.add_float_attribute(
+    dedup_store->add_float_attribute(
         live_config::Key{"pointer", "acceleration_bias"},
         "Acceleration speed of mice within a range of [-1.0, 1.0]",
         [self=self](auto... args) { self->acceleration_bias(args...); });
 
-    store.add_string_attribute(
+    dedup_store->add_string_attribute(
         live_config::Key{"touchpad", "scroll_mode"},
         "Scroll mode for touchpads: [edge, two-finger, button-down]",
         [self=self](auto... args) { self->scroll_mode(args...); });
 
-    store.add_bool_attribute(
+    dedup_store->add_bool_attribute(
         live_config::Key{"touchpad", "tap_to_click"},
         "1, 2, 3 finger tap mapping to left, right, middle click, respectively [true, false]",
         [self=self](auto... args) { self->tap_to_click(args...); });
@@ -459,17 +585,17 @@ int main(int argc, char const* argv[])
     // corresponding configuration options. These processes are added to `shell_pids`
     CommandIndex shell_meta{
         "shell-meta",
-        "meta <key>:<command> shortcut with shell priviledges (may be specified multiple times)",
+        "meta <key>:<command> shortcut with shell privileges (may be specified multiple times)",
         [&child_control](auto cmd) { child_control.run_shell(cmd); }};
 
     CommandIndex shell_ctrl_alt{
         "shell-ctrl-alt",
-        "ctrl-alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)",
+        "ctrl-alt <key>:<command> shortcut with shell privileges (may be specified multiple times)",
         [&child_control](auto cmd) { child_control.run_shell(cmd); }};
 
     CommandIndex shell_alt{
         "shell-alt",
-        "alt <key>:<command> shortcut with shell priviledges (may be specified multiple times)",
+        "alt <key>:<command> shortcut with shell privileges (may be specified multiple times)",
         [&child_control](auto cmd) { child_control.run_shell(cmd); }};
 
     // `meta`, `alt` and `ctrl_alt` provide a lookup to execute the commands configured by the corresponding
@@ -525,18 +651,19 @@ int main(int argc, char const* argv[])
     auto const settings_file = std::filesystem::path{runner.config_file()}.replace_extension("settings");
 
     live_config::IniFile config_store;
-    DocumentingStore settings_store{config_store, config_home / settings_file};
+    auto settings_store = std::make_unique<DocumentingStore>(config_store, config_home / settings_file);
 
-    CursorScale cursor_scale{settings_store};
-    OutputFilter output_filter{settings_store};
+    CursorScale cursor_scale{*settings_store};
+    OutputFilter output_filter{*settings_store};
 
-    InputConfiguration input_configuration{settings_store};
-    BounceKeys bounce_keys{settings_store};
-    SlowKeys slow_keys{settings_store};
-    StickyKeys sticky_keys{settings_store};
-    HoverClick hover_click{settings_store};
+    InputConfiguration input_configuration{*settings_store};
+    BounceKeys bounce_keys{*settings_store};
+    SlowKeys slow_keys{*settings_store};
+    StickyKeys sticky_keys{*settings_store};
+    HoverClick hover_click{*settings_store};
 
-    Keymap keymap = getenv("MIRIWAY_SYSTEM_LOCALE1_KEYMAP") ? Keymap::system_locale1() : Keymap{settings_store};
+    Keymap keymap = getenv("MIRIWAY_SYSTEM_LOCALE1_KEYMAP") ? Keymap::system_locale1() : Keymap{*settings_store};
+    settings_store.reset();
 
     ConfigFile config_file{
         runner,
