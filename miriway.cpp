@@ -23,7 +23,6 @@
 #include "miriway_ext_workspace_v1.h"
 
 #include <mir/abnormal_exit.h>
-#include <mir/log.h>
 #include <miral/append_event_filter.h>
 #include <miral/bounce_keys.h>
 #include <miral/config_file.h>
@@ -52,8 +51,10 @@
 
 #include <cstring>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <functional>
+#include <iostream>
 
 #if MIRAL_VERSION < MIR_VERSION_NUMBER(5, 6, 0)
 #define MIRAL_HAS_BROKEN_INPUT_CONFIGURATION
@@ -247,7 +248,9 @@ auto getenv_decorations()
         if (strcmp(strategy, "always-csd") == 0) return Decorations::always_csd();
         if (strcmp(strategy, "prefer-csd") == 0) return Decorations::prefer_csd();
 
-        mir::log_warning("Unknown decoration strategy: '%s', using prefer-csd", strategy);
+        std::cerr <<
+            std::format("Miriway [Warning]: Unknown decoration strategy: '{}', using prefer-csd", strategy) <<
+            std::endl;
     }
     return Decorations::prefer_csd();
 }
@@ -418,10 +421,9 @@ private:
                 }
                 else
                 {
-                    mir::log_warning(
-                        "Config key '%s' has invalid string value: %s",
-                        key.to_string().c_str(),
-                        std::format("{}",val).c_str());
+                    std::cerr <<
+                        std::format("Miriway [Warning]: Config key '{}' has invalid value:{}", key.to_string(), val) <<
+                        std::endl;
                 }
             }
         };
@@ -458,10 +460,9 @@ private:
                 }
                 else
                 {
-                    mir::log_warning(
-                        "Config key '%s' has invalid string value: %s",
-                        key.to_string().c_str(),
-                        std::format("{}",val).c_str());
+                    std::cerr <<
+                        std::format("Miriway [Warning]: Config key '{}' has invalid value:{}", key.to_string(), val) <<
+                        std::endl;
                 }
             }
         };
