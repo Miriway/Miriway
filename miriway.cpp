@@ -19,6 +19,7 @@
 #include "miriway_child_control.h"
 #include "miriway_commands.h"
 #include "miriway_documenting_store.h"
+#include "miriway_magnifier.h"
 #include "miriway_policy.h"
 #include "miriway_ext_workspace_v1.h"
 
@@ -646,6 +647,7 @@ int main(int argc, char const* argv[])
             }
         });
 
+    using miriway::Magnifier;   // We want our Magnifier not the miral Magnifier
 #ifdef MIRAL_HAS_BROKEN_INPUT_CONFIGURATION
     using InputConfiguration = ::FixedInputConfiguration;
 #endif
@@ -657,6 +659,7 @@ int main(int argc, char const* argv[])
     CursorScale cursor_scale{*settings_store};
     OutputFilter output_filter{*settings_store};
 
+    Magnifier magnifier{*settings_store};
     InputConfiguration input_configuration{*settings_store};
     BounceKeys bounce_keys{*settings_store};
     SlowKeys slow_keys{*settings_store};
@@ -708,5 +711,6 @@ int main(int argc, char const* argv[])
             slow_keys,
             sticky_keys,
             hover_click,
+            magnifier,
         });
 }
