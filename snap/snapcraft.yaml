@@ -101,6 +101,8 @@ parts:
       - g++
       - make
       - git
+      # This is needed to satisfy the incorrect mirwayland.pc - see https://github.com/canonical/mir/pull/4313
+      - libmircommon-dev
     stage-packages:
       # Stage libmiral<n> indirectly as we cannot (since core22) do `try:/else:`
       - libmiral-dev
