@@ -22,13 +22,13 @@
 #include <miral/runner.h>
 #include <miral/wayland_extensions.h>
 
-#include <mir/log.h>
-
 #include <sys/wait.h>
 #include <sys/timerfd.h>
 
 #include <algorithm>
 #include <ctime>
+#include <format>
+#include <iostream>
 #include <map>
 #include <numeric>
 
@@ -171,7 +171,9 @@ public:
                 // After max_too_short_reruns_in_a_row is hit, we stop trying to rerun
                 if (info->runs_in_quick_succession >= max_too_short_reruns_in_a_row)
                 {
-                    mir::log_warning("No longer restarting app: %s", get_cmd_string(cmd).c_str());
+                    std::cerr <<
+                        std::format("Miriway [Warning]: No longer restarting app: '{}'", get_cmd_string(cmd)) <<
+                        std::endl;
                     return;
                 }
 
@@ -179,7 +181,9 @@ public:
                 auto const timer_fd = timerfd_create(CLOCK_REALTIME, 0);
                 if (timer_fd == -1)
                 {
-                    mir::log_error("timerfd_create failed, unable to restart application: %s", get_cmd_string(cmd).c_str());
+                    std::cerr <<
+                        std::format("Miriway [ERROR]: timerfd_create failed, unable to restart app: '{}'", get_cmd_string(cmd)) <<
+                        std::endl;
                     return;
                 }
 
@@ -191,7 +195,9 @@ public:
 
                 if (timerfd_settime(timer_fd, 0, &spec, NULL) == -1)
                 {
-                    mir::log_error("timerfd_settime failed, unable to restart application: %s", get_cmd_string(cmd).c_str());
+                    std::cerr <<
+                        std::format("Miriway [ERROR]: timerfd_settime failed, unable to restart app: '{}'", get_cmd_string(cmd)) <<
+                        std::endl;
                     return;
                 }
 

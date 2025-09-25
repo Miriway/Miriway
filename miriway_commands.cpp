@@ -24,7 +24,6 @@
 #include <xkbcommon/xkbcommon-keysyms.h>
 
 #include <utility>
-#include <mir/log.h>
 
 miriway::ShellCommands::ShellCommands(
     MirRunner& runner, CommandFunctor meta_command, CommandFunctor ctrl_alt_command, CommandFunctor alt_command) :
