@@ -31,6 +31,7 @@ add_library(miriwaycommon STATIC
     wayland-generated/ext-workspace-v1_wrapper.cpp    wayland-generated/ext-workspace-v1_wrapper.h
     miriway_ext_workspace_v1.cpp    miriway_ext_workspace_v1.h
     miriway_documenting_store.cpp   miriway_documenting_store.h
+    miriway_magnifier.cpp           miriway_magnifier.h
 )
 target_link_libraries(miriwaycommon
     PUBLIC
