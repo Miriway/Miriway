@@ -46,3 +46,9 @@ bool miriway::Magnifier::check_on_off(MirKeyboardEvent const* key_event)
 
     return false;
 }
+
+void miriway::Magnifier::operator()(mir::Server& server)
+{
+    miral::Magnifier::operator()(server);
+    magnifier_filter(server);
+}

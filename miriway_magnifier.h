@@ -32,11 +32,7 @@ class Magnifier : miral::Magnifier
 public:
     using miral::Magnifier::Magnifier;
 
-    void operator()(mir::Server& server)
-    {
-        miral::Magnifier::operator()(server);
-        magnifier_filter(server);
-    }
+    void operator()(mir::Server& server);
 };
 }
 
