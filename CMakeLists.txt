@@ -45,7 +45,7 @@ add_executable(miriway-shell miriway.cpp miriway_policy.cpp miriway_policy.h)
 target_link_libraries(miriway-shell miriwaycommon)
 
 add_executable(miriway-run-shell miriway-run-shell.cpp)
-target_link_libraries(miriway-run-shell PkgConfig::MIRAL)
+target_link_libraries(miriway-run-shell PkgConfig::MIRAL PkgConfig::XKBCOMMON)
 
 add_custom_target(miriway ALL
     cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway ${CMAKE_BINARY_DIR}
