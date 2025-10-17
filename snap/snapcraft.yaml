@@ -150,11 +150,12 @@ parts:
     plugin: dump
     source: example-configs
     organize:
-      miriway-config-alan_g.bash: example-configs/alan_g.bash
-      miriway-config-LXQT.bash: example-configs/LXQT.bash
+      miriway-config-Budgie.bash: example-configs/Budgie.bash
+      miriway-config-LXQt.bash: example-configs/LXQt.bash
       miriway-config-MATE.bash: example-configs/MATE.bash
       miriway-config-SWAY.bash: example-configs/SWAY.bash
       miriway-config-XFCE.bash: example-configs/XFCE.bash
+      miriway-config-alan_g.bash: example-configs/alan_g.bash
 
   snap-utils:
     plugin: dump
