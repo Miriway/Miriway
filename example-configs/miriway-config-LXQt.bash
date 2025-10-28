@@ -49,6 +49,7 @@ fi
 cat <<EOT > "${miriway_config}"
 x11-window-title=LXQt/Miriway
 idle-timeout=600
+env-hacks=MIR_ANCHOR_RECTANGLE_UNCONSTRAINED=1
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 
 shell-component=swaybg --mode fill --output '*' --image /usr/share/lubuntu/wallpapers/lubuntu-default-wallpaper.jpg
