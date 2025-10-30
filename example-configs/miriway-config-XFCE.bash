@@ -49,7 +49,7 @@ fi
 cat <<EOT > "${miriway_config}"
 x11-window-title=XFCE/Miriway
 idle-timeout=600
-app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
+app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=XFCE:GTK_A11Y=none
 
 shell-component=miriway-unsnap xfdesktop
 shell-component=miriway-unsnap /usr/lib/$(uname -i)-linux-gnu/xfce4/notifyd/xfce4-notifyd

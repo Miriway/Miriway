@@ -74,7 +74,7 @@ fi
 cat <<EOT > "${miriway_config}"
 x11-window-title=Sway/Miriway
 idle-timeout=600
-app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
+app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Sway:GTK_A11Y=none
 ctrl-alt=t:miriway-unsnap kgx
 shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image ${background}
 shell-component=systemd-run --user --scope --slice=background.slice swaync
