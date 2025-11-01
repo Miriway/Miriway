@@ -78,7 +78,7 @@ public:
 
 private:
     miral::WaylandExtensions::Context const* const context;
-    ExtWorkspaceManagerV1* the_workspace_manager;
+    std::vector<ExtWorkspaceManagerV1*> the_workspace_managers;
     miral::WaylandTools* const wltools;
 };
 
@@ -231,7 +231,7 @@ void miriway::ExtWorkspaceManagerV1::Global::output_removed(const miral::Output 
 {
     context->run_on_wayland_mainloop([this, output]
     {
-        if (the_workspace_manager)
+        for (auto const& the_workspace_manager : the_workspace_managers)
         {
             the_workspace_manager->output_deleted(wltools, output);
             the_workspace_manager->send_done_event();
@@ -341,7 +341,7 @@ void miriway::ExtWorkspaceManagerV1::on_activate(miriway::ExtWorkspaceHandleV1* 
 miriway::ExtWorkspaceManagerV1::Global::Global(miral::WaylandExtensions::Context const* context, miral::WaylandTools& wltools) :
     mir::wayland::ExtWorkspaceManagerV1::Global{context->display(), Version<1>{}},
     context{context},
-    the_workspace_manager{nullptr},
+    the_workspace_managers{},
     wltools{&wltools}
 {
     std::lock_guard lock{all_the_globals_mutex};
@@ -356,31 +356,43 @@ miriway::ExtWorkspaceManagerV1::Global::~Global()
 
 void miriway::ExtWorkspaceManagerV1::Global::bind(wl_resource* new_ext_workspace_manager_v1)
 {
-    the_workspace_manager = new ExtWorkspaceManagerV1{new_ext_workspace_manager_v1};
+    the_workspace_managers.emplace_back(new ExtWorkspaceManagerV1{new_ext_workspace_manager_v1});
     {
         std::lock_guard lock(all_the_outputs_mutex);
         for (auto const &output: all_the_outputs)
-            the_workspace_manager->output_added(wltools, output);
+        {
+            for (auto const& the_workspace_manager : the_workspace_managers)
+            {
+                the_workspace_manager->output_added(wltools, output);
+            }
+        }
     }
     {
         std::lock_guard lock(all_the_workspaces_mutex);
         for (auto const& [wksp, state]: all_the_workspaces)
         {
-            the_workspace_manager->workspace_created(wksp);
-            if (state == WkspState::active)
-                the_workspace_manager->workspace_activated(wksp);
-            else
-                the_workspace_manager->workspace_deactivated(wksp);
+            for (auto const& the_workspace_manager : the_workspace_managers)
+            {
+                the_workspace_manager->workspace_created(wksp);
+                if (state == WkspState::active)
+                    the_workspace_manager->workspace_activated(wksp);
+                else
+                    the_workspace_manager->workspace_deactivated(wksp);
+            }
         }
     }
-    the_workspace_manager->send_done_event();
+
+    for (auto const& the_workspace_manager : the_workspace_managers)
+    {
+        the_workspace_manager->send_done_event();
+    }
 }
 
 void miriway::ExtWorkspaceManagerV1::Global::output_added(miral::Output const& output)
 {
     context->run_on_wayland_mainloop([this, output]
     {
-        if (the_workspace_manager)
+        for (auto const& the_workspace_manager : the_workspace_managers)
         {
             the_workspace_manager->output_added(wltools, output);
             the_workspace_manager->send_done_event();
@@ -392,7 +404,7 @@ void miriway::ExtWorkspaceManagerV1::Global::workspace_destroyed(std::shared_ptr
 {
     context->run_on_wayland_mainloop([this, wksp=std::weak_ptr<Workspace>{wksp}]
         {
-            if (the_workspace_manager)
+            for (auto const& the_workspace_manager : the_workspace_managers)
             {
                 the_workspace_manager->workspace_destroyed(wksp);
                 the_workspace_manager->send_done_event();
@@ -404,7 +416,7 @@ void miriway::ExtWorkspaceManagerV1::Global::workspace_deactivated(std::shared_p
 {
     context->run_on_wayland_mainloop([this, wksp]
         {
-            if (the_workspace_manager)
+            for (auto const& the_workspace_manager : the_workspace_managers)
             {
                 the_workspace_manager->workspace_deactivated(wksp);
                 the_workspace_manager->send_done_event();
@@ -416,7 +428,7 @@ void miriway::ExtWorkspaceManagerV1::Global::workspace_activated(std::shared_ptr
 {
     context->run_on_wayland_mainloop([this, wksp]
         {
-            if (the_workspace_manager)
+            for (auto const& the_workspace_manager : the_workspace_managers)
             {
                 the_workspace_manager->workspace_activated(wksp);
                 the_workspace_manager->send_done_event();
@@ -428,7 +440,7 @@ void miriway::ExtWorkspaceManagerV1::Global::workspace_created(std::shared_ptr<W
 {
     context->run_on_wayland_mainloop([this, wksp]
         {
-            if (the_workspace_manager)
+            for (auto const& the_workspace_manager : the_workspace_managers)
             {
                 the_workspace_manager->workspace_created(wksp);
                 the_workspace_manager->send_done_event();
