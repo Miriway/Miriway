@@ -49,7 +49,7 @@ fi
 cat <<EOT > "${miriway_config}"
 x11-window-title=Budgie/Miriway
 idle-timeout=600
-app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none:-GTK_IM_MODULE:SSH_AUTH_SOCK=/run/user/$(id -u)/keyring/ssh
+app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Budgie:GTK_A11Y=none:-GTK_IM_MODULE:SSH_AUTH_SOCK=/run/user/$(id -u)/keyring/ssh
 shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image /usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper1.jpg
 shell-component=systemd-run --user --scope --slice=background.slice swaync
 shell-component=systemd-run --user --scope --slice=background.slice budgie-panel

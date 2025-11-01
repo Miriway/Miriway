@@ -13,24 +13,16 @@ yambar_config="${xdg_config}/yambar/config.yml"
 # Ensure we have a miriway-shell config file with the fixed options
 mkdir -p -m 755 "$(dirname "${miriway_config}")"
 
-if command -v gsettings > /dev/null; then
-  background=$(gsettings get org.gnome.desktop.background picture-uri | sed -Ee "s|[^:]*://(.*\.png)'$|\1|")
-else
-  # fall back to Ubuntu default
-  background="/usr/share/backgrounds/warty-final-ubuntu.png"
-fi
-if [[ ! -e "${background}" ]]; then
-  background="$(find /usr/share/backgrounds/ -type f | tail -n 1)"
-fi
-
 cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 
 ctrl-alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/miriway-terminal
-shell-component=miriway-background ${background}
+shell-component=miriway-background
 shell-component=yambar --config="${yambar_config}"
+shell-component=swaync
+shell-component=/snap/${SNAP_INSTANCE_NAME}/usr/libexec/polkit-mate-authentication-agent-1
 shell-component=miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse --startup
 shell-meta=a:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse
 

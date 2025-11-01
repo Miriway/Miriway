@@ -3,8 +3,8 @@ set -e
 
 if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 
-shell_components="lxqt-policykit-agent qterminal lxqt-runner lxqt-panel swaybg"
-shell_packages="lxqt-policykit qterminal lxqt-runner lxqt-panel lubuntu-artwork swaybg"
+shell_components="lxqt-policykit-agent qterminal lxqt-runner lxqt-panel swaybg lxqt-notificationd"
+shell_packages="lxqt-policykit qterminal lxqt-runner lxqt-panel lubuntu-artwork swaybg lxqt-notificationd"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 
 unset need_install
@@ -50,9 +50,10 @@ cat <<EOT > "${miriway_config}"
 x11-window-title=LXQt/Miriway
 idle-timeout=600
 env-hacks=MIR_ANCHOR_RECTANGLE_UNCONSTRAINED=1
-app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
+app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=LXQt:GTK_A11Y=none
 
 shell-component=swaybg --mode fill --output '*' --image /usr/share/lubuntu/wallpapers/lubuntu-default-wallpaper.jpg
+shell-component=miriway-unsnap lxqt-notificationd
 shell-component=miriway-unsnap lxqt-policykit-agent
 shell-component=miriway-unsnap lxqt-panel
 ctrl-alt=t:miriway-unsnap qterminal
