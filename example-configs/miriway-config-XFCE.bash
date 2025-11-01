@@ -3,7 +3,7 @@ set -e
 
 if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 
-shell_components="xfce4-terminal xfce4-appfinder xfce4-panel xfdesktop /usr/lib/x86_64-linux-gnu/xfce4/notifyd/xfce4-notifyd"
+shell_components="xfce4-terminal xfce4-appfinder xfce4-panel xfdesktop /usr/lib/x86_64-linux-gnu/xfce4/notifyd/xfce4-notifyd /usr/libexec/xfce-polkit"
 shell_packages="xfce4-terminal xfce4-appfinder xfce4-panel swaybg xfdesktop4 xfce4-notifyd xfce-polkit"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 
