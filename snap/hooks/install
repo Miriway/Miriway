@@ -31,6 +31,8 @@ app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miri
 ctrl-alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/miriway-terminal
 shell-component=miriway-background ${background}
 shell-component=yambar --config="${yambar_config}"
+shell-component=swaync
+shell-component=/snap/${SNAP_INSTANCE_NAME}/usr/libexec/polkit-mate-authentication-agent-1
 shell-component=miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse --startup
 shell-meta=a:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse
 

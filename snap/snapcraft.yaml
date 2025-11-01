@@ -112,6 +112,7 @@ parts:
       - libfreetype6
       - xdg-desktop-portal
       # included in this part because they are used in the snap
+      - mate-polkit
       - sway-notification-center
       - swaybg
       - swaylock
