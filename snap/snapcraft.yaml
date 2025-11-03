@@ -29,10 +29,6 @@ platforms:
   arm64:
   armhf:
 
-package-repositories:
-  - type: apt
-    ppa: mir-team/release
-
 apps:
   miriway:
     command-chain: &command_chain
@@ -74,25 +70,39 @@ apps:
     environment: *_environment
 
 parts:
-  miriway:
+  mir:
+    plugin: nil
     build-attributes:
       - enable-patchelf
-    override-pull: |
+    stage-snaps:
+      - mir-libs/24/edge
+    prime:
+      - -*.h
+      - -*.pc
+      # The libgallium* library needs no-patchelf, so it comes from the mesa-unpatched part
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libgallium*
+
+  miriway:
+    after: [mir]
+    build-attributes:
+      - enable-patchelf
+    build-environment:
+      - LD_LIBRARY_PATH: ${CRAFT_STAGE}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}
+    override-build: |
       craftctl default
       # work around https://github.com/diddlesnaps/snapcraft-multiarch-action/issues/22
       git config --global --add safe.directory ${CRAFT_PART_SRC}
-      server_version=`git describe | cut -c 2-15`
-      mir_version=`LANG=C apt-cache policy mir-graphics-drivers-desktop | sed -rne 's/^\s+Candidate:\s+([^-]*)-.+$/\1/p'`
+      server_version=`git -C ${SNAPCRAFT_PART_SRC} describe | cut -c 2-15`
+      mir_version=$( sed -rne 's/^version:\s+([^-]*)-.+$/\1/p' ${SNAPCRAFT_STAGE}/meta.mir-libs/snap.yaml )
       craftctl set version=$server_version-mir${mir_version}
       if echo $mir_version | grep -e '+dev' -e '~rc' -q; then craftctl set grade=devel; else craftctl set grade=stable; fi
     plugin: cmake
     cmake-parameters:
+      - -DCMAKE_BUILD_TYPE=Debug
       - -DCMAKE_INSTALL_PREFIX=/usr
     source: .
     build-packages:
       - pkg-config
-      - libmiral-dev
-      - libmirwayland-dev
       - libboost-exception-dev
       - libboost-filesystem-dev
       - libfreetype6-dev
@@ -101,14 +111,10 @@ parts:
       - g++
       - make
       - git
+      - libglibmm-2.4-dev
       # This is needed to satisfy the incorrect mirwayland.pc - see https://github.com/canonical/mir/pull/4313
       - libmircommon-dev
     stage-packages:
-      # Stage libmiral<n> indirectly as we cannot (since core22) do `try:/else:`
-      - libmiral-dev
-      - mir-graphics-drivers-desktop
-      - mir-platform-graphics-virtual
-      - mir-graphics-drivers-nvidia
       - libfreetype6
       - xdg-desktop-portal
       # included in this part because they are used in the snap
