@@ -1,4 +1,4 @@
-#!/bin/sh -eul
+#!/bin/sh -l
 
 exec systemd-cat --identifier=miriway env MIRIWAY_SESSION_STARTUP="@CMAKE_INSTALL_FULL_LIBEXECDIR@/miriway-session-startup" MIRIWAY_SESSION_SHUTDOWN="@CMAKE_INSTALL_FULL_LIBEXECDIR@/miriway-session-shutdown" miriway "$@"
 

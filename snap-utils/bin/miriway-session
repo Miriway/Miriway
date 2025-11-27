@@ -1,4 +1,4 @@
-#!/bin/sh -eul
+#!/bin/sh -l
 
 exec systemd-cat --identifier=miriway env MIRIWAY_SESSION_STARTUP="$SNAP/usr/libexec/miriway-session-startup-snap" MIRIWAY_SESSION_SHUTDOWN="$SNAP/usr/libexec/miriway-session-shutdown" miriway "$@"
 
