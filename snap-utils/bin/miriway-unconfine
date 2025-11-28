@@ -1,7 +1,12 @@
 #! /bin/bash
 set -e
-if command -v aa-exec > /dev/null
+if [ -d /sys/kernel/security/apparmor ]
 then
-  exec aa-exec -p unconfined "$@"
+  if command -v aa-exec > /dev/null
+  then
+    exec aa-exec -p unconfined "$@"
+  else
+    echo "WARNING: AppArmor is installed, but aa-exec cannot found (needed to unconfine Miriway)"
+  fi
 fi
 exec "$@"
