@@ -3,6 +3,10 @@ set -e
 
 if [ -e "$1" ]; then
   exec swaybg --image "$1" --mode fill --output '*'
+elif [ -e "/usr/share/backgrounds/miriway.png" ]; then
+  exec swaybg --image "/usr/share/backgrounds/miriway.png" --mode fill --output '*'
+elif [ -e "${SNAP}/usr/share/backgrounds/miriway.png" ]; then
+  exec swaybg --image "${SNAP}/usr/share/backgrounds/miriway.png" --mode fill --output '*'
 else
   exec swaybg --color '#3f3f3f' --output '*'
 fi

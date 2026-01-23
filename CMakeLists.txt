@@ -85,6 +85,10 @@ install(FILES ${CMAKE_SOURCE_DIR}/miriway.desktop
     DESTINATION ${CMAKE_INSTALL_DATADIR}/wayland-sessions/
 )
 
+install(FILES ${CMAKE_SOURCE_DIR}/backgrounds/miriway.png
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/backgrounds/
+)
+
 install(FILES ${CMAKE_SOURCE_DIR}/miriway-shell.config
     DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/xdg/xdg-miriway
 )
