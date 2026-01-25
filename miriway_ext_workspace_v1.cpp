@@ -191,7 +191,7 @@ void miriway::ExtWorkspaceV1::on_output_destroy(const Output& output)
 {
     {
         std:: lock_guard lock(all_the_outputs_mutex);
-        all_the_outputs.insert(output);
+        all_the_outputs.erase(output);
     }
     std::lock_guard lock{all_the_globals_mutex};
     for (auto const& global : all_the_globals)
