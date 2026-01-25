@@ -356,36 +356,28 @@ miriway::ExtWorkspaceManagerV1::Global::~Global()
 
 void miriway::ExtWorkspaceManagerV1::Global::bind(wl_resource* new_ext_workspace_manager_v1)
 {
-    the_workspace_managers.emplace_back(new ExtWorkspaceManagerV1{new_ext_workspace_manager_v1});
+    auto const the_workspace_manager = new ExtWorkspaceManagerV1{new_ext_workspace_manager_v1};
+    the_workspace_managers.emplace_back(the_workspace_manager);
     {
         std::lock_guard lock(all_the_outputs_mutex);
         for (auto const &output: all_the_outputs)
         {
-            for (auto const& the_workspace_manager : the_workspace_managers)
-            {
-                the_workspace_manager->output_added(wltools, output);
-            }
+            the_workspace_manager->output_added(wltools, output);
         }
     }
     {
         std::lock_guard lock(all_the_workspaces_mutex);
         for (auto const& [wksp, state]: all_the_workspaces)
         {
-            for (auto const& the_workspace_manager : the_workspace_managers)
-            {
-                the_workspace_manager->workspace_created(wksp);
-                if (state == WkspState::active)
-                    the_workspace_manager->workspace_activated(wksp);
-                else
-                    the_workspace_manager->workspace_deactivated(wksp);
-            }
+            the_workspace_manager->workspace_created(wksp);
+            if (state == WkspState::active)
+                the_workspace_manager->workspace_activated(wksp);
+            else
+                the_workspace_manager->workspace_deactivated(wksp);
         }
     }
 
-    for (auto const& the_workspace_manager : the_workspace_managers)
-    {
-        the_workspace_manager->send_done_event();
-    }
+    the_workspace_manager->send_done_event();
 }
 
 void miriway::ExtWorkspaceManagerV1::Global::output_added(miral::Output const& output)
