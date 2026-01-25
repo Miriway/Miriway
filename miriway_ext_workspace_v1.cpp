@@ -23,6 +23,8 @@
 #include <miral/wayland_tools.h>
 #include <miral/wayland_extensions.h>
 
+#include <mir/wayland/weak.h>
+
 #include <cstring>
 #include <format>
 #include <list>
@@ -78,7 +80,7 @@ public:
 
 private:
     miral::WaylandExtensions::Context const* const context;
-    std::vector<ExtWorkspaceManagerV1*> the_workspace_managers;
+    std::vector<mir::wayland::Weak<ExtWorkspaceManagerV1>> the_workspace_managers;
     miral::WaylandTools* const wltools;
 };
 
@@ -233,8 +235,11 @@ void miriway::ExtWorkspaceManagerV1::Global::output_removed(const miral::Output 
     {
         for (auto const& the_workspace_manager : the_workspace_managers)
         {
-            the_workspace_manager->output_deleted(wltools, output);
-            the_workspace_manager->send_done_event();
+            if (the_workspace_manager)
+            {
+                the_workspace_manager.value().output_deleted(wltools, output);
+                the_workspace_manager.value().send_done_event();
+            }
         }
     });
 }
@@ -386,8 +391,11 @@ void miriway::ExtWorkspaceManagerV1::Global::output_added(miral::Output const& o
     {
         for (auto const& the_workspace_manager : the_workspace_managers)
         {
-            the_workspace_manager->output_added(wltools, output);
-            the_workspace_manager->send_done_event();
+            if (the_workspace_manager)
+            {
+                the_workspace_manager.value().output_added(wltools, output);
+                the_workspace_manager.value().send_done_event();
+            }
         }
     });
 }
@@ -398,8 +406,11 @@ void miriway::ExtWorkspaceManagerV1::Global::workspace_destroyed(std::shared_ptr
         {
             for (auto const& the_workspace_manager : the_workspace_managers)
             {
-                the_workspace_manager->workspace_destroyed(wksp);
-                the_workspace_manager->send_done_event();
+                if (the_workspace_manager)
+                {
+                    the_workspace_manager.value().workspace_destroyed(wksp);
+                    the_workspace_manager.value().send_done_event();
+                }
             }
         });
 }
@@ -410,8 +421,11 @@ void miriway::ExtWorkspaceManagerV1::Global::workspace_deactivated(std::shared_p
         {
             for (auto const& the_workspace_manager : the_workspace_managers)
             {
-                the_workspace_manager->workspace_deactivated(wksp);
-                the_workspace_manager->send_done_event();
+                if (the_workspace_manager)
+                {
+                    the_workspace_manager.value().workspace_deactivated(wksp);
+                    the_workspace_manager.value().send_done_event();
+                }
             }
         });
 }
@@ -422,8 +436,11 @@ void miriway::ExtWorkspaceManagerV1::Global::workspace_activated(std::shared_ptr
         {
             for (auto const& the_workspace_manager : the_workspace_managers)
             {
-                the_workspace_manager->workspace_activated(wksp);
-                the_workspace_manager->send_done_event();
+                if (the_workspace_manager)
+                {
+                    the_workspace_manager.value().workspace_activated(wksp);
+                    the_workspace_manager.value().send_done_event();
+                }
             }
         });
 }
@@ -434,8 +451,11 @@ void miriway::ExtWorkspaceManagerV1::Global::workspace_created(std::shared_ptr<W
         {
             for (auto const& the_workspace_manager : the_workspace_managers)
             {
-                the_workspace_manager->workspace_created(wksp);
-                the_workspace_manager->send_done_event();
+                if (the_workspace_manager)
+                {
+                    the_workspace_manager.value().workspace_created(wksp);
+                    the_workspace_manager.value().send_done_event();
+                }
             }
         });
 }
