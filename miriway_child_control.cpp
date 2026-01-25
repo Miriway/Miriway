@@ -30,6 +30,7 @@
 #include <format>
 #include <iostream>
 #include <map>
+#include <mutex>
 #include <numeric>
 
 class miriway::ChildControl::Self
