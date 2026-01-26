@@ -1,8 +1,12 @@
 #! /bin/bash
 set -e
 
+bindir=$(dirname $0)
+
 if [ -e "$1" ]; then
   exec swaybg --image "$1" --mode fill --output '*'
+elif [ -e "${bindir}/../share/backgrounds/miriway.png" ]; then
+  exec swaybg --image "${bindir}/../share/backgrounds/miriway.png" --mode fill --output '*'
 else
   exec swaybg --color '#3f3f3f' --output '*'
 fi
