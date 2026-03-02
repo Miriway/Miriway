@@ -22,7 +22,7 @@ issues: https://github.com/Miriway/Miriway/issues
 source-code: https://github.com/Miriway/Miriway
 
 confinement: classic
-base: core24
+base: core26
 
 platforms:
   amd64:
@@ -37,7 +37,7 @@ apps:
   miriway:
     command-chain: &command_chain
       # Workaround for classic snaps having a confinement profile
-      - bin/miriway-unconfine
+      - usr/local/bin/miriway-unconfine
     command: &_command usr/bin/miriway
     environment: &_environment
       # Prep for Mir
@@ -57,19 +57,19 @@ apps:
 
   session:
     command-chain: *command_chain
-    command: bin/miriway-session
+    command: usr/local/bin/miriway-session
     environment: *_environment
 
   vnc-server:
     command-chain:
-      - bin/miriway-unconfine
-      - bin/miriway.vnc-server
+      - usr/local/bin/miriway-unconfine
+      - usr/local/bin/miriway.vnc-server
     command: *_command
     environment: *_environment
 
   run:
     command-chain:
-      - bin/miriway-unconfine
+      - usr/local/bin/miriway-unconfine
     command: usr/bin/miriway-run
     environment: *_environment
 
