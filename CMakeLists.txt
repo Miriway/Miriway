@@ -17,7 +17,7 @@ include(CheckIncludeFileCXX)
 
 option(SDDM "Install configuration for SDDM?" OFF)
 
-pkg_check_modules(MIRAL miral>=5.1 REQUIRED IMPORTED_TARGET)
+pkg_check_modules(MIRAL miral>=5.5 REQUIRED IMPORTED_TARGET)
 pkg_check_modules(MIRWAYLAND mirwayland REQUIRED IMPORTED_TARGET)
 pkg_check_modules(XKBCOMMON xkbcommon REQUIRED IMPORTED_TARGET)
 
