@@ -1,0 +1,15 @@
+summary: Options test
+
+execute: |
+  add-apt-repository ppa:mir-team/release --component "main $( $NODBG || echo main/debug )"
+
+  # install dependencies
+  apt-get install --yes libmiral-dev
+
+  mkdir payload
+  pushd payload
+  tar xf "$CRAFT_ARTIFACT"
+  echo "Run a package test"
+  ./usr/bin/miriway --help | MATCH "user options"
+  popd
+  rm -Rf payload
