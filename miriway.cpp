@@ -179,6 +179,7 @@ public:
             description,
             [this](live_config::Key const&, std::optional<std::span<std::string const>> value)
             {
+                commands.clear();
                 if (value) populate(std::vector<std::string>(value->begin(), value->end()));
             });
     }
