@@ -18,6 +18,8 @@
 
 #include "miriway_workspace_manager.h"
 
+#include <mir/log.h>
+
 using namespace mir::geometry;
 using namespace miral;
 
