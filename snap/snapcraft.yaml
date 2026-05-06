@@ -122,6 +122,23 @@ parts:
       # And try to get _all_ the mesa drivers
       - libgl1-mesa-dri
       - libdrm-nouveau2
+      - libdrm-amdgpu1
+      - libdrm-radeon1
+      - on amd64:
+          - libdrm-intel1
+      - on arm64:
+          - libdrm-etnaviv1
+          - libdrm-freedreno1
+          - libdrm-intel1
+          - libdrm-tegra0
+      - on armhf:
+          - libdrm-etnaviv1
+          - libdrm-exynos1
+          - libdrm-freedreno1
+          - libdrm-omap1
+          - libdrm-tegra0
+      - on riscv64:
+          - libdrm-intel1
     prime:
       - -lib/udev
       - -usr/doc
