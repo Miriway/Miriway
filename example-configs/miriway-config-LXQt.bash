@@ -58,6 +58,9 @@ shell-component=miriway-unsnap lxqt-policykit-agent
 shell-component=miriway-unsnap lxqt-panel
 ctrl-alt=t:miriway-unsnap qterminal
 shell-meta=a:miriway-unsnap lxqt-runner
+shell-key=F12:qterminal -d
+bare-key=XF86MonBrightnessUp:lxqt-config-brightness -i
+bare-key=XF86MonBrightnessDown:lxqt-config-brightness -d
 
 meta=Left:@dock-left
 meta=Right:@dock-right
