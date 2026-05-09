@@ -24,6 +24,7 @@ pkg_check_modules(XKBCOMMON xkbcommon REQUIRED IMPORTED_TARGET)
 add_compile_definitions(MIR_LOG_COMPONENT="miriway")
 
 add_subdirectory(wayland-generated)
+add_subdirectory(app-switcher)
 add_library(miriwaycommon STATIC
     miriway_child_control.cpp       miriway_child_control.h
     miriway_commands.cpp            miriway_commands.h
@@ -42,7 +43,7 @@ target_link_libraries(miriwaycommon
 )
 
 add_executable(miriway-shell miriway.cpp miriway_policy.cpp miriway_policy.h)
-target_link_libraries(miriway-shell miriwaycommon)
+target_link_libraries(miriway-shell miriwaycommon app-switcher)
 
 add_executable(miriway-run-shell miriway-run-shell.cpp)
 target_link_libraries(miriway-run-shell PkgConfig::MIRAL PkgConfig::XKBCOMMON)

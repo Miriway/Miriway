@@ -25,7 +25,7 @@
 
 #include <mir/abnormal_exit.h>
 #include <miral/append_event_filter.h>
-#include <miral/application_switcher.h>
+#include "app-switcher/application_switcher.h"
 #include <miral/bounce_keys.h>
 #include <miral/config_file.h>
 #include <miral/configuration_option.h>
