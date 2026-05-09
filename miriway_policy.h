@@ -22,7 +22,7 @@
 #include "miriway_workspace_manager.h"
 #include "miriway_ext_workspace_v1.h"
 
-#include <miral/minimal_window_manager.h>
+#include <miral/floating_window_manager.h>
 
 namespace miriway
 {
@@ -31,7 +31,7 @@ class ShellCommands;
 
 // A window management policy that adds support for docking and workspaces.
 // Co-ordinates with `ShellCommands` for the handling of related commands.
-class WindowManagerPolicy : public WorkspaceWMStrategy<MinimalWindowManager, ExtWorkspaceV1>
+class WindowManagerPolicy : public WorkspaceWMStrategy<FloatingWindowManager, ExtWorkspaceV1>
 {
 public:
     WindowManagerPolicy(WindowManagerTools const& tools, ShellCommands& commands);
