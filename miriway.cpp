@@ -16,6 +16,7 @@
  * Authored by: Alan Griffiths <alan@octopull.co.uk>
  */
 
+#include "miriway_app_switcher.h"
 #include "miriway_child_control.h"
 #include "miriway_commands.h"
 #include "miriway_documenting_store.h"
@@ -25,7 +26,6 @@
 
 #include <mir/abnormal_exit.h>
 #include <miral/append_event_filter.h>
-#include <miral/application_switcher.h>
 #include <miral/bounce_keys.h>
 #include <miral/config_file.h>
 #include <miral/configuration_option.h>
@@ -37,6 +37,7 @@
 #include <miral/hover_click.h>
 #include <miral/idle_listener.h>
 #include <miral/input_configuration.h>
+#include <miral/internal_client.h>
 #include <miral/keymap.h>
 #include <miral/live_config.h>
 #include <miral/live_config_ini_file.h>
@@ -545,6 +546,8 @@ int main(int argc, char const* argv[])
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_alt.try_command_for(c, s, cmd) || alt.try_command_for(c, s, cmd); },
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_plain.try_command_for(c, s, cmd) || plain.try_command_for(c, s, cmd); }};
 
+    AppSwitcher app_switcher;
+
     std::atomic<bool> is_locked = false;
     LockScreen lockscreen(
         [&child_control, &is_locked](auto const& cmd) { child_control.launch_shell(cmd, [&is_locked]() { return is_locked.load(); });
@@ -581,6 +584,9 @@ int main(int argc, char const* argv[])
                 if (is_locked)
                     return false;
 
+                if (commands.shell_keyboard_enabled() && app_switcher.process_event(e))
+                    return true;
+
                 return commands.input_event(e);
             }},
             SessionLockListener(
@@ -599,6 +605,6 @@ int main(int argc, char const* argv[])
             sticky_keys,
             hover_click,
             magnifier,
-            BasicApplicationSwitcher{},
+            app_switcher,
         });
 }

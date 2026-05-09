@@ -25,6 +25,7 @@ add_compile_definitions(MIR_LOG_COMPONENT="miriway")
 
 add_subdirectory(wayland-generated)
 add_library(miriwaycommon STATIC
+    miriway_app_switcher.cpp        miriway_app_switcher.h
     miriway_child_control.cpp       miriway_child_control.h
     miriway_commands.cpp            miriway_commands.h
     miriway_workspace_manager.cpp   miriway_workspace_manager.h miriway_workspace_hooks.h
