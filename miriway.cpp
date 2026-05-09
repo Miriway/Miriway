@@ -50,6 +50,8 @@
 #include <miral/wayland_tools.h>
 #include <miral/x11_support.h>
 
+#include <mir/log.h>
+
 #include <cstring>
 #include <filesystem>
 #include <format>
@@ -245,9 +247,7 @@ auto getenv_decorations()
         if (strcmp(strategy, "always-csd") == 0) return Decorations::always_csd();
         if (strcmp(strategy, "prefer-csd") == 0) return Decorations::prefer_csd();
 
-        std::cerr <<
-            std::format("Miriway [Warning]: Unknown decoration strategy: '{}', using prefer-csd", strategy) <<
-            std::endl;
+        mir::log_warning("Miriway [Warning]: Unknown decoration strategy: %s, using prefer-csd", strategy);
     }
     return Decorations::prefer_csd();
 }
