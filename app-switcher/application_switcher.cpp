@@ -20,7 +20,7 @@
 #include "wayland_app.h"
 #include "wayland_shm.h"
 #include "wlr-foreign-toplevel-management-unstable-v1.h"
-#include <mir/default_font.h>
+#include "default_font.h"
 
 #include <memory>
 #include <mir/fd.h>
@@ -81,9 +81,9 @@ struct ToplevelInfoPrinter
         if (FT_Init_FreeType(&lib))
             return;
 
-        if (FT_New_Face(lib, mir::default_font().c_str(), 0, &face))
+        if (FT_New_Face(lib, miriway::default_font().c_str(), 0, &face))
         {
-            mir::log_error("ApplicationSwitcher: Failed to load font: %s", mir::default_font().c_str());
+            mir::log_error("ApplicationSwitcher: Failed to load font: %s", miriway::default_font().c_str());
             FT_Done_FreeType(lib);
             return;
         }

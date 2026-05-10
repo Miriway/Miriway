@@ -43,12 +43,13 @@ add_wayland_client_protocol(
     PROTOCOL_SOURCES)
 
 pkg_check_modules(FREETYPE REQUIRED IMPORTED_TARGET freetype2)
-pkg_check_modules(MIRCOMMON REQUIRED IMPORTED_TARGET mircommon)
 pkg_check_modules(WAYLANDCLIENT REQUIRED IMPORTED_TARGET wayland-client)
 
 add_library(app-switcher STATIC
     application_switcher.h
     application_switcher.cpp
+    default_font.h
+    default_font.cpp
     wayland_app.h
     wayland_app.cpp
     wayland_shm.h
@@ -70,7 +71,6 @@ target_link_libraries(app-switcher
         PkgConfig::MIRAL
     PRIVATE
         PkgConfig::FREETYPE
-        PkgConfig::MIRCOMMON
         PkgConfig::WAYLANDCLIENT
 )
 
