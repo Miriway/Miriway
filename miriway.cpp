@@ -58,6 +58,7 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <set>
 
 using namespace miral;
 using namespace miriway;
@@ -161,16 +162,26 @@ private:
 };
 
 // Build an index of commands from "<key>:<commands>" values and launch them by <key> (if found)
-class CommandIndex : ConfigurationOption
+class CommandIndex
 {
 public:
     CommandIndex(
-        std::string const& option_,
+        live_config::Store& store,
+        std::string const& option,
         std::string const& description,
         std::function<void(std::vector<std::string> const&)> launch) :
-        ConfigurationOption{[this](std::vector<std::string> const& cmds) { populate(cmds); }, option_, description},
         launch{std::move(launch)}
     {
+        auto settings_key = option;
+        std::replace(settings_key.begin(), settings_key.end(), '-', '_');
+        store.add_strings_attribute(
+            live_config::Key{{"command", settings_key}},
+            "command " + description,
+            [this](live_config::Key const&, std::optional<std::span<std::string const>> value)
+            {
+                commands.clear();
+                if (value) populate(std::vector<std::string>(value->begin(), value->end()));
+            });
     }
 
     bool try_command_for(xkb_keysym_t key_code, bool with_shift, ShellCommands* cmd) const
@@ -181,12 +192,11 @@ public:
         return found;
     }
 
-    using ConfigurationOption::operator();
 private:
     std::function<void (std::vector<std::string> const& command_line)> const launch;
-    std::map<xkb_keysym_t, ShellCommands::CmdFunctor> commands;
+    mutable std::map<xkb_keysym_t, ShellCommands::CmdFunctor> commands;
 
-    void populate(std::vector<std::string> const& config_cmds)
+    void populate(std::vector<std::string> const& config_cmds) const
     {
         for (auto const& command : config_cmds)
         {
@@ -222,6 +232,126 @@ inline auto config_path(std::filesystem::path path)
     auto const miriway_shell = getenv("MIRIWAY_CONFIG_DIR");
 
     return miriway_shell ? std::filesystem::path(miriway_shell) / basename : basename;
+}
+
+// Migrate options from .config to .settings if not already present.
+void migrate_config_to_settings(std::filesystem::path const& config_file_path,
+                                 std::filesystem::path const& settings_file_path)
+{
+    static std::pair<std::string, std::string> const options[] = {
+        {"shell-meta",                              "command_shell_meta"},
+        {"shell-ctrl-alt",                          "command_shell_ctrl_alt"},
+        {"shell-alt",                               "command_shell_alt"},
+        {"meta",                                    "command_meta"},
+        {"ctrl-alt",                                "command_ctrl_alt"},
+        {"alt",                                     "command_alt"},
+        {"cursor-scale",                            "cursor_scale"},
+        {"keymap",                                  "keymap"},
+        {"key-repeat-rate",                         "keyboard_repeat_rate"},
+        {"key-repeat-delay",                        "keyboard_repeat_delay"},
+        {"mouse-handedness",                        "pointer_handedness"},
+        {"mouse-cursor-acceleration",               "pointer_acceleration"},
+        {"mouse-cursor-acceleration-bias",          "pointer_acceleration_bias"},
+        {"mouse-scroll-speed",                      "pointer_vertical_scroll_speed"},
+        {"mouse-horizontal-scroll-speed-override",  "pointer_horizontal_scroll_speed"},
+        {"mouse-vertical-scroll-speed-override",    "pointer_vertical_scroll_speed"},
+        {"touchpad-disable-while-typing",           "touchpad_disable_while_typing"},
+        {"touchpad-disable-with-external-mouse",    "touchpad_disable_with_external_mouse"},
+        {"touchpad-tap-to-click",                   "touchpad_tap_to_click"},
+        {"touchpad-cursor-acceleration",            "touchpad_acceleration"},
+        {"touchpad-cursor-acceleration-bias",       "touchpad_acceleration_bias"},
+        {"touchpad-scroll-speed",                   "touchpad_vertical_scroll_speed"},
+        {"touchpad-horizontal-scroll-speed-override","touchpad_horizontal_scroll_speed"},
+        {"touchpad-vertical-scroll-speed-override", "touchpad_vertical_scroll_speed"},
+        {"touchpad-scroll-mode",                    "touchpad_scroll_mode"},
+        {"touchpad-click-mode",                     "touchpad_click_mode"},
+        {"touchpad-middle-mouse-button-emulation",  "touchpad_middle_mouse_button_emulation"},
+    };
+
+    // Read the settings file into memory, collecting active keys as we go
+    std::vector<std::string> settings_lines;
+    std::set<std::string> existing_keys;
+    if (std::ifstream settings{settings_file_path})
+    {
+        std::string line;
+        while (std::getline(settings, line))
+        {
+            settings_lines.push_back(line);
+            if (!line.empty() && line[0] != '#')
+            {
+                if (auto const eq = line.find('='); eq != std::string::npos)
+                    existing_keys.insert(line.substr(0, eq));
+            }
+        }
+    }
+
+    // Collect values from .config for keys absent from .settings
+    std::map<std::string, std::vector<std::string>> to_migrate;
+    if (std::ifstream config{config_file_path})
+    {
+        std::string line;
+        while (std::getline(config, line))
+        {
+            for (auto const& [config_name, settings_name] : options)
+            {
+                if (existing_keys.count(settings_name)) continue;
+                if (line.rfind(config_name + "=", 0) == 0)
+                {
+                    auto value = line.substr(config_name.size() + 1);
+                    // .config supports # comments; IniFile does not — strip any inline comment
+                    if (auto const comment = value.find('#'); comment != std::string::npos)
+                        value.erase(comment);
+                    // trim trailing whitespace left after comment removal
+                    if (auto const end = value.find_last_not_of(" \t"); end != std::string::npos)
+                        value.erase(end + 1);
+                    else
+                        value.clear();
+                    if (!value.empty())
+                        to_migrate[settings_name].push_back(std::move(value));
+                }
+            }
+        }
+    }
+
+    if (to_migrate.empty()) return;
+
+    // For each entry to migrate, look for a commented-out placeholder "#<key>=" in the
+    // settings lines and insert the value(s) immediately after it. Entries without a
+    // placeholder are collected separately and appended at the end.
+    std::map<std::string, std::vector<std::string>> to_append;
+    for (auto const& [settings_name, values] : to_migrate)
+    {
+        std::string const placeholder = "#" + settings_name + "=";
+        bool inserted = false;
+        for (std::size_t i = 0; i < settings_lines.size(); ++i)
+        {
+            if (settings_lines[i].rfind(placeholder, 0) == 0)
+            {
+                for (std::size_t j = 0; j < values.size(); ++j)
+                    settings_lines.insert(settings_lines.begin() + static_cast<std::ptrdiff_t>(i + 1 + j),
+                                          settings_name + "=" + values[j]);
+                inserted = true;
+                break;
+            }
+        }
+        if (!inserted)
+            to_append[settings_name] = values;
+    }
+
+    if (!to_append.empty())
+    {
+        settings_lines.push_back("");
+        settings_lines.push_back("# Migrated from " + config_file_path.filename().string());
+        for (auto const& [settings_name, values] : to_append)
+            for (auto const& value : values)
+                settings_lines.push_back(settings_name + "=" + value);
+    }
+
+    if (std::ofstream settings{settings_file_path})
+    {
+        for (auto const& line : settings_lines)
+            settings << line << "\n";
+    }
 }
 
 auto const config_home = []() -> std::filesystem::path
@@ -309,11 +439,13 @@ int main(int argc, char const* argv[])
         child_control.enable_for_shell(extensions, protocol);
     }
 
+    auto const enable_shell_extensions = [&](std::vector<std::string> const& protocols)
+        { for (auto const& protocol : protocols) child_control.enable_for_shell(extensions, protocol); };
+
     ConfigurationOption shell_extension{
-        [&](std::vector<std::string> const& protocols)
-        { for (auto const& protocol : protocols) child_control.enable_for_shell(extensions, protocol); },
-    "shell-add-wayland-extension",
-    "Additional Wayland extension to allow shell processes (may be specified multiple times)"};
+        enable_shell_extensions,
+        "shell-add-wayland-extension",
+        "Additional Wayland extension to allow shell processes (may be specified multiple times)"};
 
     ShellComponents shell_components{[&child_control](auto const& cmd) { child_control.launch_shell(cmd); }};
     runner.add_start_callback([&]{ shell_components.launch_all(); });
@@ -322,19 +454,38 @@ int main(int argc, char const* argv[])
         "shell-component",
         "Shell component to launch on startup (may be specified multiple times)"};
 
-    // `shell_meta`, `shell_ctrl_alt` and `shell_alt` provide a lookup to execute the commands configured by the
+    using miriway::Magnifier;   // We want our Magnifier not the miral Magnifier
+    auto const settings_file = std::filesystem::path{runner.config_file()}.replace_extension("settings");
+
+    live_config::IniFile config_store;
+    auto settings_store = std::make_unique<DocumentingStore>(config_store, config_home / settings_file);
+
+    CursorScale cursor_scale{*settings_store};
+    OutputFilter output_filter{*settings_store};
+
+    Magnifier magnifier{*settings_store};
+    InputConfiguration input_configuration{*settings_store};
+    BounceKeys bounce_keys{*settings_store};
+    SlowKeys slow_keys{*settings_store};
+    StickyKeys sticky_keys{*settings_store};
+    HoverClick hover_click{*settings_store};
+
+    // Register shell command options with the settings store
     // corresponding configuration options. These processes are added to `shell_pids`
     CommandIndex shell_meta{
+        *settings_store,
         "shell-meta",
         "meta <key>:<command> shortcut with shell privileges (may be specified multiple times)",
         [&child_control](auto cmd) { child_control.run_shell(cmd); }};
 
     CommandIndex shell_ctrl_alt{
+        *settings_store,
         "shell-ctrl-alt",
         "ctrl-alt <key>:<command> shortcut with shell privileges (may be specified multiple times)",
         [&child_control](auto cmd) { child_control.run_shell(cmd); }};
 
     CommandIndex shell_alt{
+        *settings_store,
         "shell-alt",
         "alt <key>:<command> shortcut with shell privileges (may be specified multiple times)",
         [&child_control](auto cmd) { child_control.run_shell(cmd); }};
@@ -342,19 +493,34 @@ int main(int argc, char const* argv[])
     // `meta`, `alt` and `ctrl_alt` provide a lookup to execute the commands configured by the corresponding
     // configuration options. These processes are NOT added to `shell_pids`
     CommandIndex meta{
+        *settings_store,
         "meta",
         "meta <key>:<command> shortcut (may be specified multiple times)",
         [&](auto cmd) { child_control.run_app(cmd); }};
 
     CommandIndex ctrl_alt{
+        *settings_store,
         "ctrl-alt",
         "ctrl-alt <key>:<command> shortcut (may be specified multiple times)",
         [&](auto cmd) { child_control.run_app(cmd); }};
 
     CommandIndex alt{
+        *settings_store,
         "alt",
         "alt <key>:<command> shortcut (may be specified multiple times)",
         [&](auto cmd) { child_control.run_app(cmd); }};
+
+    Keymap keymap = getenv("MIRIWAY_SYSTEM_LOCALE1_KEYMAP") ? Keymap::system_locale1() : Keymap{*settings_store};
+    settings_store.reset();
+
+    // Migrate any shell command settings from .config to .settings before loading
+    migrate_config_to_settings(config_home / runner.config_file(), config_home / settings_file);
+
+    ConfigFile config_file{
+        runner,
+        settings_file,
+        ConfigFile::Mode::reload_on_change,
+        [&config_store](auto&... args){ config_store.load_file(args...); }};
 
     // Process input events to identifies commands Miriway needs to handle
     ShellCommands commands{
@@ -386,31 +552,6 @@ int main(int argc, char const* argv[])
             }
         });
 
-    using miriway::Magnifier;   // We want our Magnifier not the miral Magnifier
-    auto const settings_file = std::filesystem::path{runner.config_file()}.replace_extension("settings");
-
-    live_config::IniFile config_store;
-    auto settings_store = std::make_unique<DocumentingStore>(config_store, config_home / settings_file);
-
-    CursorScale cursor_scale{*settings_store};
-    OutputFilter output_filter{*settings_store};
-
-    Magnifier magnifier{*settings_store};
-    InputConfiguration input_configuration{*settings_store};
-    BounceKeys bounce_keys{*settings_store};
-    SlowKeys slow_keys{*settings_store};
-    StickyKeys sticky_keys{*settings_store};
-    HoverClick hover_click{*settings_store};
-
-    Keymap keymap = getenv("MIRIWAY_SYSTEM_LOCALE1_KEYMAP") ? Keymap::system_locale1() : Keymap{*settings_store};
-    settings_store.reset();
-
-    ConfigFile config_file{
-        runner,
-        settings_file,
-        ConfigFile::Mode::reload_on_change,
-        [&config_store](auto&... args){ config_store.load_file(args...); }};
-
     return runner.run_with(
         {
             X11Support{},
@@ -419,12 +560,6 @@ int main(int argc, char const* argv[])
             display_configuration_options,
             child_control,
             components_option,
-            shell_ctrl_alt,
-            shell_alt,
-            shell_meta,
-            ctrl_alt,
-            meta,
-            alt,
             keymap,
             AppendEventFilter{[&](MirEvent const* e) {
                 if (is_locked)
