@@ -186,7 +186,7 @@ public:
 
     bool try_command_for(xkb_keysym_t key_code, bool with_shift, ShellCommands* cmd) const
     {
-        auto const i = commands.find(std::tolower(key_code));
+        auto const i = commands.find(xkb_keysym_to_lower(key_code));
         bool const found = i != end(commands);
         if (found) i->second(cmd, with_shift);
         return found;
@@ -245,8 +245,8 @@ void migrate_config_to_settings(std::filesystem::path const& config_file_path,
         {"meta",                                    "command_meta"},
         {"ctrl-alt",                                "command_ctrl_alt"},
         {"alt",                                     "command_alt"},
-        {"shell-plain",                               "command_shell_plain"},
-        {"plain",                                    "command_plain"},
+        {"shell-plain",                             "command_shell_plain"},
+        {"plain",                                   "command_plain"},
         {"cursor-scale",                            "cursor_scale"},
         {"keymap",                                  "keymap"},
         {"key-repeat-rate",                         "keyboard_repeat_rate"},
@@ -518,7 +518,7 @@ int main(int argc, char const* argv[])
         "unmodified <key>:<command> shortcut with shell privileges (may be specified multiple times)",
         [&child_control](auto cmd) { child_control.run_shell(cmd); }};
 
-    CommandIndex plain_key{
+    CommandIndex plain{
         *settings_store,
         "plain",
         "unmodified <key>:<command> shortcut (may be specified multiple times)",
@@ -542,7 +542,7 @@ int main(int argc, char const* argv[])
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_meta.try_command_for(c, s, cmd) || meta.try_command_for(c, s, cmd); },
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_ctrl_alt.try_command_for(c, s, cmd) || ctrl_alt.try_command_for(c, s, cmd); },
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_alt.try_command_for(c, s, cmd) || alt.try_command_for(c, s, cmd); },
-        [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_plain.try_command_for(c, s, cmd) || plain_key.try_command_for(c, s, cmd); }};
+        [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_plain.try_command_for(c, s, cmd) || plain.try_command_for(c, s, cmd); }};
 
     std::atomic<bool> is_locked = false;
     LockScreen lockscreen(
