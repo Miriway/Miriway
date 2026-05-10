@@ -175,8 +175,8 @@ public:
         auto settings_key = option;
         std::replace(settings_key.begin(), settings_key.end(), '-', '_');
         store.add_strings_attribute(
-            live_config::Key{{settings_key}},
-            description,
+            live_config::Key{{"command", settings_key}},
+            "command " + description,
             [this](live_config::Key const&, std::optional<std::span<std::string const>> value)
             {
                 commands.clear();
@@ -238,13 +238,13 @@ inline auto config_path(std::filesystem::path path)
 void migrate_config_to_settings(std::filesystem::path const& config_file_path,
                                  std::filesystem::path const& settings_file_path)
 {
-    static std::vector<std::pair<std::string, std::string>> const options = {
-        {"shell-meta",                   "shell_meta"},
-        {"shell-ctrl-alt",               "shell_ctrl_alt"},
-        {"shell-alt",                    "shell_alt"},
-        {"meta",                         "meta"},
-        {"ctrl-alt",                     "ctrl_alt"},
-        {"alt",                          "alt"},
+    static std::pair<std::string, std::string> const options[] = {
+        {"shell-meta",                   "command_shell_meta"},
+        {"shell-ctrl-alt",               "command_shell_ctrl_alt"},
+        {"shell-alt",                    "command_shell_alt"},
+        {"meta",                         "command_meta"},
+        {"ctrl-alt",                     "command_ctrl_alt"},
+        {"alt",                          "command_alt"},
     };
 
     // Collect keys already present in the settings file
