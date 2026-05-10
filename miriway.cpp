@@ -268,13 +268,15 @@ void migrate_config_to_settings(std::filesystem::path const& config_file_path,
         {"touchpad-middle-mouse-button-emulation",  "touchpad_middle_mouse_button_emulation"},
     };
 
-    // Collect keys already present in the settings file
+    // Read the settings file into memory, collecting active keys as we go
+    std::vector<std::string> settings_lines;
     std::set<std::string> existing_keys;
     if (std::ifstream settings{settings_file_path})
     {
         std::string line;
         while (std::getline(settings, line))
         {
+            settings_lines.push_back(line);
             if (!line.empty() && line[0] != '#')
             {
                 if (auto const eq = line.find('='); eq != std::string::npos)
@@ -313,12 +315,42 @@ void migrate_config_to_settings(std::filesystem::path const& config_file_path,
 
     if (to_migrate.empty()) return;
 
-    if (std::ofstream settings{settings_file_path, std::ios::app})
+    // For each entry to migrate, look for a commented-out placeholder "#<key>=" in the
+    // settings lines and insert the value(s) immediately after it. Entries without a
+    // placeholder are collected separately and appended at the end.
+    std::map<std::string, std::vector<std::string>> to_append;
+    for (auto const& [settings_name, values] : to_migrate)
     {
-        settings << "\n# Migrated from " << config_file_path.filename().string() << "\n";
-        for (auto const& [settings_name, values] : to_migrate)
+        std::string const placeholder = "#" + settings_name + "=";
+        bool inserted = false;
+        for (std::size_t i = 0; i < settings_lines.size(); ++i)
+        {
+            if (settings_lines[i].rfind(placeholder, 0) == 0)
+            {
+                for (std::size_t j = 0; j < values.size(); ++j)
+                    settings_lines.insert(settings_lines.begin() + static_cast<std::ptrdiff_t>(i + 1 + j),
+                                          settings_name + "=" + values[j]);
+                inserted = true;
+                break;
+            }
+        }
+        if (!inserted)
+            to_append[settings_name] = values;
+    }
+
+    if (!to_append.empty())
+    {
+        settings_lines.push_back("");
+        settings_lines.push_back("# Migrated from " + config_file_path.filename().string());
+        for (auto const& [settings_name, values] : to_append)
             for (auto const& value : values)
-                settings << settings_name << "=" << value << "\n";
+                settings_lines.push_back(settings_name + "=" + value);
+    }
+
+    if (std::ofstream settings{settings_file_path})
+    {
+        for (auto const& line : settings_lines)
+            settings << line << "\n";
     }
 }
 
