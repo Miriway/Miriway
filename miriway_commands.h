@@ -37,13 +37,13 @@ using namespace miral;
 class WindowManagerPolicy;
 
 // Process `input_event()` to identify commands Miriway needs to handle.
-// Commands will be routed to MirRunner, the WindowManagerPolicy, meta_command or ctrl_alt_command as appropriate
+// Commands will be routed to MirRunner, the WindowManagerPolicy, or a CommandFunctor as appropriate
 class ShellCommands
 {
 public:
     using CommandFunctor = std::function<bool(xkb_keysym_t key_code, bool with_shift, ShellCommands* cmd)>;
 
-    ShellCommands(MirRunner& runner, CommandFunctor meta_command, CommandFunctor ctrl_alt_command, CommandFunctor alt_command);
+    ShellCommands(MirRunner& runner, CommandFunctor meta_command, CommandFunctor ctrl_alt_command, CommandFunctor alt_command, CommandFunctor key_command);
 
     void init_window_manager(WindowManagerPolicy* wm);
 
@@ -74,6 +74,7 @@ private:
     CommandFunctor meta_command;
     CommandFunctor ctrl_alt_command;
     CommandFunctor alt_command;
+    CommandFunctor key_command;
     WindowManagerPolicy* wm = nullptr;
     std::atomic<bool> shell_commands_active = true;
 

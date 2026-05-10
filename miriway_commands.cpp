@@ -27,8 +27,8 @@
 #include <mir/log.h>
 
 miriway::ShellCommands::ShellCommands(
-    MirRunner& runner, CommandFunctor meta_command, CommandFunctor ctrl_alt_command, CommandFunctor alt_command) :
-    runner{runner}, meta_command{std::move(meta_command)}, ctrl_alt_command{std::move(ctrl_alt_command)}, alt_command{std::move(alt_command)}
+    MirRunner& runner, CommandFunctor meta_command, CommandFunctor ctrl_alt_command, CommandFunctor alt_command, CommandFunctor key_command) :
+    runner{runner}, meta_command{std::move(meta_command)}, ctrl_alt_command{std::move(ctrl_alt_command)}, alt_command{std::move(alt_command)}, key_command{std::move(key_command)}
 {
 }
 
@@ -84,6 +84,16 @@ auto miriway::ShellCommands::keyboard_shortcuts(MirKeyboardEvent const* kev) -> 
         if ((mods & mir_input_event_modifier_alt) == mir_input_event_modifier_alt)
         {
             return alt_command(key_code, mods & mir_input_event_modifier_shift, this);
+        }
+
+        auto const real_mods =
+            mir_input_event_modifier_alt |
+            mir_input_event_modifier_shift |
+            mir_input_event_modifier_ctrl |
+            mir_input_event_modifier_meta;
+        if (!(mods & real_mods))
+        {
+            return key_command(key_code, false, this);
         }
     }
 
