@@ -115,7 +115,7 @@ struct ToplevelInfoPrinter
         auto const region_size = buffer->size();
         FT_Set_Pixel_Sizes(face, 20, 0);
 
-        const auto [width, height, line_height, lines, selected_line_index] = compute_text_metrics(info_list, selector_state, selected_window_index);
+        auto const& [width, height, line_height, lines, is_app_header, selected_line_index] = compute_text_metrics(info_list, selector_state, selected_window_index);
         auto base_pos_y = 0.5 * (region_size.height - height);
         static constexpr int region_pixel_bytes = 4;
         auto const region_buffer = static_cast<unsigned char*>(buffer->data());
@@ -137,7 +137,8 @@ struct ToplevelInfoPrinter
                     return ascii;
                 }
             }();
-            Color color = selected_line_index == i ? yellow : white;
+            Color color = selected_line_index == i ? yellow :
+                is_app_header[i] ? grey   : white;
 
             for (auto const ch : line_text)
             {
@@ -162,6 +163,7 @@ private:
         geom::Height height{};
         geom::DeltaY line_height{};
         std::vector<std::string> lines;
+        std::vector<bool> is_app_header;
         std::optional<int> selected_index;
     };
 
@@ -171,6 +173,7 @@ private:
 
     static constexpr Color white{255, 255, 255, 255};
     static constexpr Color yellow{255, 255, 0, 255};
+    static constexpr Color grey{128, 128, 128, 255};
 
     TextMetrics compute_text_metrics(
         std::vector<ToplevelInfo> const& info_list,
@@ -205,9 +208,10 @@ private:
                 list_of_app_id_to_window_mapping.push_back({app_id, {info}});
         }
 
-        auto const add_text = [&](std::string const& text)
+        auto const add_text = [&](std::string const& text, bool is_header)
         {
             metrics.lines.push_back(text);
+            metrics.is_app_header.push_back(is_header);
             std::wstring const line_text = [&]
             {
                 try
@@ -240,16 +244,25 @@ private:
         // Using the sorted list, we then create the displayed list.
         for (const auto& [app_id, window_info_list] : list_of_app_id_to_window_mapping)
         {
-            add_text(app_id);
-            if (selected_top_level && selector_state == SelectorState::Applications)
-            {
-                if (selected_top_level->app_id == app_id)
-                    metrics.selected_index = metrics.lines.size() - 1;
-            }
+            add_text(app_id, true);
+            // App-id rows are never selected — the focus always sits on a window title.
+
+            // In Applications mode the first window title of the selected app is highlighted.
+            bool const highlight_first_window =
+                selector_state == SelectorState::Applications
+                && selected_top_level
+                && selected_top_level->app_id == app_id;
+            bool first_window = true;
 
             for (auto const& window_info : window_info_list)
             {
-                add_text("    " + window_info.window_title);
+                add_text("    " + window_info.window_title, /*is_header=*/false);
+                if (highlight_first_window && first_window)
+                {
+                    metrics.selected_index = static_cast<int>(metrics.lines.size()) - 1;
+                    first_window = false;
+                }
+
                 if (selected_top_level && selector_state == SelectorState::Windows)
                 {
                     if (selected_top_level->handle == window_info.handle)
