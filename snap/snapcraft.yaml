@@ -95,7 +95,7 @@ parts:
       - libmirwayland-dev
       - libboost-exception-dev
       - libboost-filesystem-dev
-      - libfreetype6-dev
+      - libfreetype-dev
       - libwayland-dev
       - libxkbcommon-dev
       - g++

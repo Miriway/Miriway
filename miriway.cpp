@@ -25,6 +25,7 @@
 
 #include <mir/abnormal_exit.h>
 #include <miral/append_event_filter.h>
+#include "app-switcher/application_switcher.h"
 #include <miral/bounce_keys.h>
 #include <miral/config_file.h>
 #include <miral/configuration_option.h>
@@ -598,5 +599,6 @@ int main(int argc, char const* argv[])
             sticky_keys,
             hover_click,
             magnifier,
+            BasicApplicationSwitcher{},
         });
 }
