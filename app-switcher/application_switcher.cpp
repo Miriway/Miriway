@@ -496,8 +496,7 @@ public:
 
     void next_app()
     {
-        if (start_if_not_running(SelectorState::Applications))
-            return;
+        start_if_not_running(SelectorState::Applications);
 
         if (!tentative_focus_index)
             return;
@@ -519,8 +518,7 @@ public:
 
     void prev_app()
     {
-        if (start_if_not_running(SelectorState::Applications))
-            return;
+        start_if_not_running(SelectorState::Applications);
 
         if (!tentative_focus_index)
             return;
@@ -541,8 +539,7 @@ public:
 
     void next_window()
     {
-        if (start_if_not_running(SelectorState::Windows))
-            return;
+        start_if_not_running(SelectorState::Windows);
 
         if (!tentative_focus_index)
             return;
@@ -562,8 +559,7 @@ public:
 
     void prev_window()
     {
-        if (start_if_not_running(SelectorState::Windows))
-            return;
+        start_if_not_running(SelectorState::Windows);
 
         if (!tentative_focus_index)
             return;
@@ -770,10 +766,10 @@ private:
     /// Starts the application switcher if it isn't already running.
     ///
     /// \returns `true` if it started, otherwise `false`.
-    bool start_if_not_running(SelectorState next_state)
+    void start_if_not_running(SelectorState next_state)
     {
         if (is_running)
-            return false;
+            return;
 
         is_running = true;
         selector_state = next_state;
@@ -791,7 +787,6 @@ private:
         }
 
         draw_internal();
-        return true;
     }
 
     void draw_internal()
