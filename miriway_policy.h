@@ -32,6 +32,11 @@ using MiralWindowManager = miral::FloatingWindowManager;
 #include <miral/minimal_window_manager.h>
 using MiralWindowManager = miral::MinimalWindowManager;
 #endif
+#include <miral/output.h>
+#include <miral/zone.h>
+
+#include <chrono>
+#include <vector>
 
 namespace miriway
 {
@@ -49,8 +54,8 @@ public:
     using WorkspaceWMStrategy::workspace_end;
     using WorkspaceWMStrategy::workspace_up;
     using WorkspaceWMStrategy::workspace_down;
-    void dock_active_window_left();
-    void dock_active_window_right();
+    void dock_active_window_left(bool shift);
+    void dock_active_window_right(bool shift);
     bool handle_pointer_event(const MirPointerEvent* event) override;
     void handle_request_move(WindowInfo& window_info, const MirInputEvent* input_event) override;
     void toggle_maximized_restored();
@@ -64,6 +69,11 @@ private:
 
     void advise_delete_window(const WindowInfo &window_info) override;
 
+    void advise_application_zone_create(Zone const& application_zone) override;
+    void advise_application_zone_update(Zone const& updated, Zone const& original) override;
+    void advise_application_zone_delete(Zone const& application_zone) override;
+    void move_active_window_to_next_output(MirPlacementGravity placement);
+
     bool handle_keyboard_event(MirKeyboardEvent const* event) override;
 
     void dock_active_window_under_lock(MirPlacementGravity placement);
@@ -74,6 +84,9 @@ private:
     // moving_window and window_moved are a huristic to deduce whether a window has been moved by user
     bool moving_window = false;  // A move request has been made
     bool window_moved = false;   // Pointer events have been processed following a move request
+
+    std::vector<Zone> application_zones;
+    std::chrono::steady_clock::time_point last_output_move{};
 };
 }
 
