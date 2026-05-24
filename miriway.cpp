@@ -60,6 +60,7 @@
 #include <functional>
 #include <iostream>
 #include <set>
+#include <sstream>
 
 using namespace miral;
 using namespace miriway;
@@ -371,6 +372,33 @@ auto const config_home = []() -> std::filesystem::path
     return "/dev/null";
 }();
 
+auto find_config_file(std::string const& config_file_name) -> std::optional<std::filesystem::path>
+{
+    if (auto const miriway_config_dir = getenv("MIRIWAY_CONFIG_DIR"))
+    {
+        auto const path = std::filesystem::path{miriway_config_dir} / config_file_name;
+        if (std::filesystem::exists(path)) return path;
+    }
+
+    auto const home_path = config_home / config_file_name;
+    if (std::filesystem::exists(home_path)) return home_path;
+
+    char const* xdg_config_dirs = getenv("XDG_CONFIG_DIRS");
+    std::string const config_dirs = xdg_config_dirs ? xdg_config_dirs : "/etc/xdg";
+
+    std::stringstream ss(config_dirs);
+    std::string dir;
+    while (std::getline(ss, dir, ':'))
+    {
+        if (dir.empty()) continue;
+        auto const path = std::filesystem::path{dir} / config_file_name;
+        std::error_code ec;
+        if (std::filesystem::exists(path, ec)) return path;
+    }
+
+    return std::nullopt;
+}
+
 auto getenv_decorations()
 {
     if (auto const strategy = getenv("MIRIWAY_DECORATIONS"))
@@ -461,7 +489,10 @@ int main(int argc, char const* argv[])
     auto const settings_file = std::filesystem::path{runner.config_file()}.replace_extension("settings");
 
     // Migrate any shell command settings from .config to .settings before registering
-    migrate_config_to_settings(config_home / runner.config_file(), config_home / settings_file);
+    if (auto const config_file_path = find_config_file(runner.config_file()))
+    {
+        migrate_config_to_settings(config_file_path.value(), config_home / settings_file);
+    }
 
     live_config::IniFile config_store;
     auto settings_store = std::make_unique<DocumentingStore>(config_store, config_home / settings_file);
