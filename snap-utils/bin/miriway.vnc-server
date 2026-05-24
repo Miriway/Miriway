@@ -6,8 +6,7 @@ then
 else
   echo "Warning: ubuntu-frame-vnc is NOT installed. Please run the following:"
   echo "  sudo snap install ubuntu-frame-vnc && sudo snap connect ubuntu-frame-vnc:wayland"
-  echo "  falling back to wayvnc defaults"
-  vnc_server=wayvnc
+  exit 1
 fi
 
 miriway_local_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
