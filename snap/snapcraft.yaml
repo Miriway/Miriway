@@ -60,13 +60,6 @@ apps:
     command: bin/miriway-session
     environment: *_environment
 
-  vnc-server:
-    command-chain:
-      - bin/miriway-unconfine
-      - bin/miriway.vnc-server
-    command: *_command
-    environment: *_environment
-
   run:
     command-chain:
       - bin/miriway-unconfine
