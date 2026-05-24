@@ -48,12 +48,13 @@ Wayland extension protocols (for example, `layer-shell` which allows placement
 of wallpaper, panels, etc). There are two types of shell component:
 
 Shell components that should be launched when the shell starts and restarted if
-they fail are specified with `shell-component`. For example,
+they fail are specified with `shell-component` in `mirway-shell.config`. For example,
 
     shell-component=swaybg --mode fill --output '*' --image /usr/share/lubuntu/wallpapers/lubuntu-default-wallpaper.jpg
 
 Shell components that are launched by the user are specified by either
-`shell-meta` or `shell-ctrl-alt`. For example:
+`shell-meta` or `shell-ctrl-alt` in `mirway-shell.settings`.
+For example:
 
     shell-meta=a:wofi --show drun --location top_left
 

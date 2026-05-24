@@ -6,6 +6,7 @@ if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 shell_components="xfce4-terminal xfce4-appfinder xfce4-panel xfdesktop /usr/lib/x86_64-linux-gnu/xfce4/notifyd/xfce4-notifyd /usr/libexec/xfce-polkit"
 shell_packages="xfce4-terminal xfce4-appfinder xfce4-panel swaybg xfdesktop4 xfce4-notifyd xfce-polkit"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
+miriway_settings="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.settings"
 
 unset need_install
 
@@ -20,6 +21,10 @@ done
 
 if [ -e "${miriway_config}" ]; then
   echo WARNING Overwriting "${miriway_config}"
+fi
+
+if [ -e "${miriway_settings}" ]; then
+  echo WARNING Overwriting "${miriway_settings}"
 fi
 
 read -p"OK to proceed? [y/n] " yn
@@ -55,15 +60,18 @@ shell-component=miriway-unsnap xfdesktop
 shell-component=miriway-unsnap /usr/lib/$(uname -m)-linux-gnu/xfce4/notifyd/xfce4-notifyd
 shell-component=miriway-unsnap /usr/libexec/xfce-polkit
 shell-component=miriway-unsnap xfce4-panel
-shell-meta=a:miriway-unsnap xfce4-appfinder --disable-server
-ctrl-alt=t:miriway-unsnap xfce4-terminal
+EOT
 
-meta=Left:@dock-left
-meta=Right:@dock-right
-meta=Space:@toggle-maximized
-meta=Home:@workspace-begin
-meta=End:@workspace-end
-meta=Page_Up:@workspace-up
-meta=Page_Down:@workspace-down
-ctrl-alt=BackSpace:@exit
+cat <<EOT > "${miriway_settings}"
+command_shell_meta=a:miriway-unsnap xfce4-appfinder --disable-server
+command_ctrl_alt=t:miriway-unsnap xfce4-terminal
+
+command_meta=Left:@dock-left
+command_meta=Right:@dock-right
+command_meta=Space:@toggle-maximized
+command_meta=Home:@workspace-begin
+command_meta=End:@workspace-end
+command_meta=Page_Up:@workspace-up
+command_meta=Page_Down:@workspace-down
+command_ctrl_alt=BackSpace:@exit
 EOT

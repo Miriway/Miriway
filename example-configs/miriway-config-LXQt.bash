@@ -6,6 +6,7 @@ if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 shell_components="lxqt-policykit-agent qterminal lxqt-runner lxqt-panel swaybg lxqt-notificationd"
 shell_packages="lxqt-policykit qterminal lxqt-runner lxqt-panel lubuntu-artwork swaybg lxqt-notificationd"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
+miriway_settings="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.settings"
 
 unset need_install
 
@@ -20,6 +21,10 @@ done
 
 if [ -e "${miriway_config}" ]; then
   echo WARNING Overwriting "${miriway_config}"
+fi
+
+if [ -e "${miriway_settings}" ]; then
+  echo WARNING Overwriting "${miriway_settings}"
 fi
 
 read -p"OK to proceed? [y/n] " yn
@@ -56,18 +61,21 @@ shell-component=swaybg --mode fill --output '*' --image /usr/share/lubuntu/wallp
 shell-component=miriway-unsnap lxqt-notificationd
 shell-component=miriway-unsnap lxqt-policykit-agent
 shell-component=miriway-unsnap lxqt-panel
-ctrl-alt=t:miriway-unsnap qterminal
-shell-meta=a:miriway-unsnap lxqt-runner
-shell-plain=F12:miriway-unsnap qterminal -d
-plain=XF86MonBrightnessUp:miriway-unsnap lxqt-config-brightness -i
-plain=XF86MonBrightnessDown:miriway-unsnap lxqt-config-brightness -d
+EOT
 
-meta=Left:@dock-left
-meta=Right:@dock-right
-meta=Space:@toggle-maximized
-meta=Home:@workspace-begin
-meta=End:@workspace-end
-meta=Page_Up:@workspace-up
-meta=Page_Down:@workspace-down
-ctrl-alt=BackSpace:@exit
+cat <<EOT > "${miriway_settings}"
+command_ctrl_alt=t:miriway-unsnap qterminal
+command_shell_meta=a:miriway-unsnap lxqt-runner
+command_shell_plain=F12:miriway-unsnap qterminal -d
+command_plain=XF86MonBrightnessUp:miriway-unsnap lxqt-config-brightness -i
+command_plain=XF86MonBrightnessDown:miriway-unsnap lxqt-config-brightness -d
+
+command_meta=Left:@dock-left
+command_meta=Right:@dock-right
+command_meta=Space:@toggle-maximized
+command_meta=Home:@workspace-begin
+command_meta=End:@workspace-end
+command_meta=Page_Up:@workspace-up
+command_meta=Page_Down:@workspace-down
+command_ctrl_alt=BackSpace:@exit
 EOT
