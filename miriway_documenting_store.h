@@ -23,6 +23,7 @@
 
 #include <fstream>
 #include <filesystem>
+#include <set>
 
 namespace miriway
 {
@@ -32,11 +33,7 @@ using namespace miral;
 class DocumentingStore : public live_config::Store
 {
 public:
-    explicit DocumentingStore(Store& underlying, std::filesystem::path target) :
-        underlying{underlying},
-        doc{exists(target) ? std::ofstream{} : std::ofstream(target)}
-    {
-    }
+    explicit DocumentingStore(Store& underlying, std::filesystem::path target);
 
     void add_int_attribute(const live_config::Key& key, std::string_view description, HandleInt handler) override;
     void add_ints_attribute(const live_config::Key& key, std::string_view description, HandleInts handler) override;
@@ -65,6 +62,7 @@ public:
 private:
     Store& underlying;
     std::ofstream doc;
+    std::set<std::string, std::less<>> existing_keys;
 };
 }
 

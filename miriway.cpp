@@ -460,6 +460,9 @@ int main(int argc, char const* argv[])
     using miriway::Magnifier;   // We want our Magnifier not the miral Magnifier
     auto const settings_file = std::filesystem::path{runner.config_file()}.replace_extension("settings");
 
+    // Migrate any shell command settings from .config to .settings before registering
+    migrate_config_to_settings(config_home / runner.config_file(), config_home / settings_file);
+
     live_config::IniFile config_store;
     auto settings_store = std::make_unique<DocumentingStore>(config_store, config_home / settings_file);
 
@@ -527,9 +530,6 @@ int main(int argc, char const* argv[])
 
     Keymap keymap = getenv("MIRIWAY_SYSTEM_LOCALE1_KEYMAP") ? Keymap::system_locale1() : Keymap{*settings_store};
     settings_store.reset();
-
-    // Migrate any shell command settings from .config to .settings before loading
-    migrate_config_to_settings(config_home / runner.config_file(), config_home / settings_file);
 
     ConfigFile config_file{
         runner,
