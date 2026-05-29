@@ -203,10 +203,11 @@ private:
         {
             if (auto const split = command.find(':'); split >= 1 && split+1 < command.size())
             {
+                auto const key = xkb_keysym_to_lower(to_key(command.substr(0, split)));
+
                 if (command[split+1] != '@')
                 {
-                    auto const k = to_key(command.substr(0, split));
-                    commands[xkb_keysym_to_lower(k)] =
+                    commands[key] =
                         [this, argv = ExternalClientLauncher::split_command(command.substr(split+1))](miriway::ShellCommands*, bool)
                         {
                             launch(argv);
@@ -216,7 +217,7 @@ private:
                 {
                     if (auto const lookup = wm_command.find(command.substr(split+2)); lookup != std::end(wm_command))
                     {
-                        commands[xkb_keysym_to_lower(to_key(command.substr(0, split)))] = lookup->second;
+                        commands[key] = lookup->second;
                     }
                 }
             }
