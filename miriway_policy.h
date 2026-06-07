@@ -86,7 +86,6 @@ private:
     bool window_moved = false;   // Pointer events have been processed following a move request
 
     std::vector<Zone> application_zones;
-    std::chrono::steady_clock::time_point last_output_move{};
 };
 }
 

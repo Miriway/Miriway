@@ -171,69 +171,60 @@ void miriway::WindowManagerPolicy::dock_active_window_right(bool shift)
 
 void miriway::WindowManagerPolicy::move_active_window_to_next_output(MirPlacementGravity placement)
 {
-    tools.invoke_under_lock(
-        [this, placement]
+    if (application_zones.size() < 2)
+        return;
+
+    auto const active_window = tools.active_window();
+    if (!active_window)
+        return;
+
+    auto& window_info = tools.info_for(active_window);
+    if (!eligible_to_dock(window_info.type(), window_info.depth_layer()))
+        return;
+
+    // Find the zone containing the window centre
+    auto const size = active_window.size();
+    auto const window_centre = active_window.top_left()
+        + Displacement{DeltaX{size.width.as_int() / 2}, DeltaY{size.height.as_int() / 2}};
+
+    auto current_zone = application_zones.begin();
+    for (auto it = application_zones.begin(); it != application_zones.end(); ++it)
+    {
+        if (it->extents().contains(window_centre))
         {
-            auto const now = std::chrono::steady_clock::now();
-            if (now - last_output_move < std::chrono::seconds{1})
-                return;
+            current_zone = it;
+            break;
+        }
+    }
 
-            if (application_zones.size() < 2)
-                return;
+    // Pick next or previous zone depending on direction
+    Zone const* target_zone = nullptr;
+    bool const going_right = (placement & mir_placement_gravity_east) != 0;
 
-            auto const active_window = tools.active_window();
-            if (!active_window)
-                return;
+    if (going_right)
+    {
+        auto next = std::next(current_zone);
+        if (next == application_zones.end())
+            next = application_zones.begin();
+        target_zone = &*next;
+    }
+    else
+    {
+        if (current_zone == application_zones.begin())
+            current_zone = application_zones.end();
+        target_zone = &*std::prev(current_zone);
+    }
 
-            auto& window_info = tools.info_for(active_window);
-            if (!eligible_to_dock(window_info.type(), window_info.depth_layer()))
-                return;
+    auto const target_rect = target_zone->extents();
+    auto top_left = target_rect.top_left + Displacement{DeltaX{going_right ? target_rect.size.width.as_int() / 2 : 0}, DeltaY{}};
+    WindowSpecification modifications;
+    modifications.attached_edges() = placement;
+    modifications.size() = {target_rect.size.width / 2, active_window.size().height};
+    modifications.top_left() = top_left;
+    modifications.output_id() = -1;
 
-            // Find the zone containing the window centre
-            auto const size = active_window.size();
-            auto const window_centre = active_window.top_left()
-                + Displacement{DeltaX{size.width.as_int() / 2}, DeltaY{size.height.as_int() / 2}};
-
-            auto current_zone = application_zones.begin();
-            for (auto it = application_zones.begin(); it != application_zones.end(); ++it)
-            {
-                if (it->extents().contains(window_centre))
-                {
-                    current_zone = it;
-                    break;
-                }
-            }
-
-            // Pick next or previous zone depending on direction
-            Zone const* target_zone = nullptr;
-            bool const going_right = (placement & mir_placement_gravity_east) != 0;
-
-            if (going_right)
-            {
-                auto next = std::next(current_zone);
-                if (next == application_zones.end())
-                    next = application_zones.begin();
-                target_zone = &*next;
-            }
-            else
-            {
-                if (current_zone == application_zones.begin())
-                    current_zone = application_zones.end();
-                target_zone = &*std::prev(current_zone);
-            }
-
-            auto const target_rect = target_zone->extents();
-            auto top_left = target_rect.top_left + Displacement{DeltaX{going_right ? target_rect.size.width.as_int() / 2 : 0}, DeltaY{}};
-            WindowSpecification modifications;
-            modifications.attached_edges() = placement;
-            modifications.size() = {target_rect.size.width / 2, active_window.size().height};
-            modifications.top_left() = top_left;
-            modifications.output_id() = -1;
-
-            tools.place_and_size_for_state(modifications, window_info);
-            tools.modify_window(window_info, modifications);
-            last_output_move = now;
-        });
+    tools.place_and_size_for_state(modifications, window_info);
+    tools.modify_window(window_info, modifications);
 }
 
 void miriway::WindowManagerPolicy::advise_application_zone_create(miral::Zone const& application_zone)
