@@ -6,7 +6,7 @@ if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 shell_components="waybar wofi kgx swaybg swaylock swaync"
 shell_packages="waybar wofi gnome-console swaybg swaylock sway-notification-center sway-backgrounds"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
-miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
+miriway_settings="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.settings"
 waybar_config="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/config"
 waybar_style="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/style.css"
 
@@ -23,6 +23,10 @@ done
 
 if [ -e "${miriway_config}" ]; then
   echo WARNING Overwriting "${miriway_config}"
+fi
+
+if [ -e "${miriway_settings}" ]; then
+  echo WARNING Overwriting "${miriway_settings}"
 fi
 
 if [ -e "${waybar_config}" ]; then
@@ -75,24 +79,27 @@ cat <<EOT > "${miriway_config}"
 x11-window-title=Sway/Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Sway:GTK_A11Y=none
-ctrl-alt=t:miriway-unsnap kgx
-shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image ${background}
-shell-component=systemd-run --user --scope --slice=background.slice swaync
-
-shell-component=miriway-unsnap waybar
-shell-meta=a:miriway-unsnap wofi --show drun --location top_left
-
-shell-ctrl-alt=l:miriway-unsnap loginctl lock-session
 lockscreen-app=miriway-unsnap swaylock -i ${background}
 
-meta=Left:@dock-left
-meta=Right:@dock-right
-meta=Space:@toggle-maximized
-meta=Home:@workspace-begin
-meta=End:@workspace-end
-meta=Page_Up:@workspace-up
-meta=Page_Down:@workspace-down
-ctrl-alt=BackSpace:@exit
+shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image ${background}
+shell-component=systemd-run --user --scope --slice=background.slice swaync
+shell-component=miriway-unsnap waybar
+EOT
+
+cat <<EOT > "${miriway_settings}"
+command_ctrl_alt=t:miriway-unsnap kgx
+command_shell_meta=a:miriway-unsnap wofi --show drun --location top_left
+
+command_shell_ctrl_alt=l:miriway-unsnap loginctl lock-session
+
+command_meta=Left:@dock-left
+command_meta=Right:@dock-right
+command_meta=Space:@toggle-maximized
+command_meta=Home:@workspace-begin
+command_meta=End:@workspace-end
+command_meta=Page_Up:@workspace-up
+command_meta=Page_Down:@workspace-down
+command_ctrl_alt=BackSpace:@exit
 EOT
 
 # Ensure we have a config file with the fixed options

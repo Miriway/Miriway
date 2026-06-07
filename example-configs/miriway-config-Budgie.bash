@@ -6,6 +6,7 @@ if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 shell_components="budgie-panel budgie-run-dialog /usr/libexec/budgie-desktop/budgie-polkit-dialog tilix grim swaylock swaync swaybg"
 shell_packages="budgie-desktop-environment budgie-wallpapers tilix grim swaylock sway-notification-center swaybg"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
+miriway_settings="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.settings"
 
 unset need_install
 
@@ -20,6 +21,10 @@ done
 
 if [ -e "${miriway_config}" ]; then
   echo WARNING Overwriting "${miriway_config}"
+fi
+
+if [ -e "${miriway_settings}" ]; then
+  echo WARNING Overwriting "${miriway_settings}"
 fi
 
 read -p"OK to proceed? [y/n] " yn
@@ -50,26 +55,29 @@ cat <<EOT > "${miriway_config}"
 x11-window-title=Budgie/Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Budgie:GTK_A11Y=none:-GTK_IM_MODULE:SSH_AUTH_SOCK=/run/user/$(id -u)/keyring/ssh
+lockscreen-app=miriway-unsnap swaylock -i /usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper1.jpg
+
 shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image /usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper1.jpg
 shell-component=systemd-run --user --scope --slice=background.slice swaync
 shell-component=systemd-run --user --scope --slice=background.slice budgie-panel
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice gnome-keyring-daemon --foreground
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice /usr/libexec/budgie-desktop/budgie-polkit-dialog
+EOT
 
-ctrl-alt=t:miriway-unsnap tilix
-shell-meta=a:miriway-unsnap budgie-run-dialog
-meta=Print:miriway-unsnap sh -c "grim ~/Pictures/screenshot-\$(date --iso-8601=seconds).png"
+cat <<EOT > "${miriway_settings}"
+command_ctrl_alt=t:miriway-unsnap tilix
+command_shell_meta=a:miriway-unsnap budgie-run-dialog
+command_meta=Print:miriway-unsnap sh -c "grim ~/Pictures/screenshot-\$(date --iso-8601=seconds).png"
 
-shell-ctrl-alt=l:miriway-unsnap loginctl lock-session
-lockscreen-app=miriway-unsnap swaylock -i /usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper1.jpg
+command_shell_ctrl_alt=l:miriway-unsnap loginctl lock-session
 
-ctrl-alt=Up:@toggle-always-on-top
-meta=Left:@dock-left
-meta=Right:@dock-right
-meta=Space:@toggle-maximized
-meta=Home:@workspace-begin
-meta=End:@workspace-end
-meta=Page_Up:@workspace-up
-meta=Page_Down:@workspace-down
-ctrl-alt=BackSpace:@exit
+command_ctrl_alt=Up:@toggle-always-on-top
+command_meta=Left:@dock-left
+command_meta=Right:@dock-right
+command_meta=Space:@toggle-maximized
+command_meta=Home:@workspace-begin
+command_meta=End:@workspace-end
+command_meta=Page_Up:@workspace-up
+command_meta=Page_Down:@workspace-down
+command_ctrl_alt=BackSpace:@exit
 EOT

@@ -24,8 +24,8 @@ meta|Page_Up|@workspace-up|Previous workspace ("Shift" to bring app)
 meta|Page_Down|@workspace-down|Next workspace ("Shift" to bring app)
 ctrl-alt|BackSpace|@exit|Exit ("Shift" to force if apps are open)
 
-These (and other) defaults are specified in `/usr/local/etc/xdg/xdg-miriway/miriway-shell.config` but can be
-overridden for an individual user in `~/.config/miriway-shell.config`. For more
+These (and other) defaults are specified in `/usr/local/etc/xdg/xdg-miriway/miriway-shell.settings` but can be
+overridden for an individual user in `~/.config/miriway-shell.settings`. For more
 details see [Configuring Miriway](CONFIGURING_MIRIWAY.md).
 
 The "@" commands are internal to miriway-shell, others are commands that could be executed from a terminal.

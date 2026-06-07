@@ -13,6 +13,7 @@ shell_components="synapse swaync swaybg swaylock kgx grim gnome-keyring-daemon $
 shell_packages="synapse sway-notification-center swaybg swaylock gnome-console grim gnome-keyring mate-polkit"
 
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
+miriway_settings="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.settings"
 yambar_config="${XDG_CONFIG_HOME:-$HOME/.config}/yambar/config.yml"
 
 unset need_install
@@ -28,6 +29,10 @@ done
 
 if [ -e "${miriway_config}" ]; then
   echo WARNING Overwriting "${miriway_config}"
+fi
+
+if [ -e "${miriway_settings}" ]; then
+  echo WARNING Overwriting "${miriway_settings}"
 fi
 
 if [ -e "${yambar_config}" ]; then
@@ -83,39 +88,41 @@ fi
 cat <<EOT > "${miriway_config}"
 x11-window-title=Miriway
 idle-timeout=600
-touchpad-tap-to-click=true
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none:-GTK_IM_MODULE:SSH_AUTH_SOCK=/run/user/$(id -u)/keyring/ssh
+display-config=static=${miriway_display}
+lockscreen-app=miriway-unsnap swaylock -i ${background}
+
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice synapse --startup
 shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image ${background}
 shell-component=systemd-run --user --scope --slice=background.slice swaync
 shell-component=systemd-run --user --scope --slice=background.slice yambar
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice gnome-keyring-daemon --foreground
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice ${polkit_agent}
+EOT
 
-ctrl-alt=t:miriway-unsnap kgx
-shell-meta=a:miriway-unsnap synapse
-meta=Print:miriway-unsnap sh -c "grim ~/Pictures/screenshot-\$(date --iso-8601=seconds).png"
+cat <<EOT > "${miriway_settings}"
+touchpad_tap_to_click=true
+command_ctrl_alt=t:miriway-unsnap kgx
+command_shell_meta=a:miriway-unsnap synapse
+command_meta=Print:miriway-unsnap sh -c "grim ~/Pictures/screenshot-\$(date --iso-8601=seconds).png"
 
-shell-ctrl-alt=l:miriway-unsnap loginctl lock-session
-lockscreen-app=miriway-unsnap swaylock -i ${background}
+command_shell_ctrl_alt=l:miriway-unsnap loginctl lock-session
 
-ctrl-alt=d:cp ${miriway_display}~docked ${miriway_display}
-ctrl-alt=u:cp ${miriway_display}~undocked ${miriway_display}
-ctrl-alt=s:miriway-swap
-ctrl-alt=k:miriway-unsnap lock-and-suspend.sh
-ctrl-alt=Up:@toggle-always-on-top
-shell-ctrl-alt=y:systemd-run --user --scope --slice=background.slice yambar
+command_ctrl_alt=d:cp ${miriway_display}~docked ${miriway_display}
+command_ctrl_alt=u:cp ${miriway_display}~undocked ${miriway_display}
+command_ctrl_alt=s:miriway-swap
+command_ctrl_alt=k:miriway-unsnap lock-and-suspend.sh
+command_ctrl_alt=Up:@toggle-always-on-top
+command_shell_ctrl_alt=y:systemd-run --user --scope --slice=background.slice yambar
 
-meta=Left:@dock-left
-meta=Right:@dock-right
-meta=Space:@toggle-maximized
-meta=Home:@workspace-begin
-meta=End:@workspace-end
-meta=Page_Up:@workspace-up
-meta=Page_Down:@workspace-down
-ctrl-alt=BackSpace:@exit
-
-display-config=static=${miriway_display}
+command_meta=Left:@dock-left
+command_meta=Right:@dock-right
+command_meta=Space:@toggle-maximized
+command_meta=Home:@workspace-begin
+command_meta=End:@workspace-end
+command_meta=Page_Up:@workspace-up
+command_meta=Page_Down:@workspace-down
+command_ctrl_alt=BackSpace:@exit
 EOT
 
 # Ensure we have a config file with the fixed options

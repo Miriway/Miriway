@@ -13,6 +13,7 @@ shell_components="mate-panel mate-terminal /usr/libexec/mate-notification-daemon
 shell_packages="mate-panel mate-terminal mate-notification-daemon mate-polkit mate-backgrounds swaybg"
 
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
+miriway_settings="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.settings"
 
 for component in $shell_components
 do
@@ -25,6 +26,10 @@ done
 
 if [ -e "${miriway_config}" ]; then
   echo WARNING Overwriting "${miriway_config}"
+fi
+
+if [ -e "${miriway_settings}" ]; then
+  echo WARNING Overwriting "${miriway_settings}"
 fi
 
 read -p"OK to proceed? [y/n] " yn
@@ -77,23 +82,26 @@ cat <<EOT > "${miriway_config}"
 x11-window-title=MATE/Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=MATE:GTK_A11Y=none
+
 shell-component=miriway-unsnap /usr/libexec/mate-notification-daemon/mate-notification-daemon
 shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image '${background}'
 shell-component=miriway-unsnap ${polkit_agent}
 shell-component=miriway-unsnap mate-panel
+EOT
 
-shell-meta=a:miriway-unsnap mate-panel --run-dialog
-ctrl-alt=t:miriway-unsnap mate-terminal
+cat <<EOT > "${miriway_settings}"
+command_shell_meta=a:miriway-unsnap mate-panel --run-dialog
+command_ctrl_alt=t:miriway-unsnap mate-terminal
 # This hack to work with X11
-#shell-meta=a:miriway-unsnap sh -c "exec mate-panel --run-dialog --display \$DISPLAY"
-#ctrl-alt=t:miriway-unsnap sh -c "exec mate-terminal --display \$DISPLAY"
+#command_shell_meta=a:miriway-unsnap sh -c "exec mate-panel --run-dialog --display \$DISPLAY"
+#command_ctrl_alt=t:miriway-unsnap sh -c "exec mate-terminal --display \$DISPLAY"
 
-meta=Left:@dock-left
-meta=Right:@dock-right
-meta=Space:@toggle-maximized
-meta=Home:@workspace-begin
-meta=End:@workspace-end
-meta=Page_Up:@workspace-up
-meta=Page_Down:@workspace-down
-ctrl-alt=BackSpace:@exit
+command_meta=Left:@dock-left
+command_meta=Right:@dock-right
+command_meta=Space:@toggle-maximized
+command_meta=Home:@workspace-begin
+command_meta=End:@workspace-end
+command_meta=Page_Up:@workspace-up
+command_meta=Page_Down:@workspace-down
+command_ctrl_alt=BackSpace:@exit
 EOT
