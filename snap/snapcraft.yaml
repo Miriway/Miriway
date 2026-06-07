@@ -60,13 +60,6 @@ apps:
     command: bin/miriway-session
     environment: *_environment
 
-  vnc-server:
-    command-chain:
-      - bin/miriway-unconfine
-      - bin/miriway.vnc-server
-    command: *_command
-    environment: *_environment
-
   run:
     command-chain:
       - bin/miriway-unconfine
@@ -211,13 +204,3 @@ parts:
       - libinih1
       - libwayland-cursor0
       - libcairo2
-
-  wayvnc:
-    plugin: nil
-    stage-packages:
-      - wayvnc
-    stage:
-      # The libgallium* library needs no-patchelf, so it comes from the mesa-unpatched part
-      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libgallium*
-    build-attributes:
-      - enable-patchelf
