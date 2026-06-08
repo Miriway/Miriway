@@ -130,14 +130,14 @@ void miriway::ShellCommands::init_window_manager(WindowManagerPolicy* wm)
     this->wm = wm;
 }
 
-void miriway::ShellCommands::dock_active_window_left(bool) const
+void miriway::ShellCommands::dock_active_window_left(bool shift) const
 {
-    wm->dock_active_window_left();
+    wm->dock_active_window_left(shift);
 }
 
-void miriway::ShellCommands::dock_active_window_right(bool) const
+void miriway::ShellCommands::dock_active_window_right(bool shift) const
 {
-    wm->dock_active_window_right();
+    wm->dock_active_window_right(shift);
 }
 
 void miriway::ShellCommands::toggle_maximized_restored(bool) const

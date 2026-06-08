@@ -24,6 +24,8 @@
 #include <miral/window_manager_tools.h>
 #include <miral/zone.h>
 
+#include <algorithm>
+
 using namespace mir::geometry;
 using namespace miral;
 
@@ -62,13 +64,20 @@ void miriway::WindowManagerPolicy::advise_delete_window(const miral::WindowInfo 
     }
 }
 
-void miriway::WindowManagerPolicy::dock_active_window_left()
+void miriway::WindowManagerPolicy::dock_active_window_left(bool shift)
 {
     tools.invoke_under_lock(
-        [this]
+        [this, shift]
         {
-            dock_active_window_under_lock(
-                MirPlacementGravity(mir_placement_gravity_northwest | mir_placement_gravity_southwest));
+            if (!shift)
+            {
+                dock_active_window_under_lock(
+                    MirPlacementGravity(mir_placement_gravity_northwest | mir_placement_gravity_southwest));
+            }
+            else
+            {
+                move_active_window_to_next_output(mir_placement_gravity_west);
+            }
         });
 }
 
@@ -143,14 +152,107 @@ void miriway::WindowManagerPolicy::toggle_always_on_top()
         });
 }
 
-void miriway::WindowManagerPolicy::dock_active_window_right()
+void miriway::WindowManagerPolicy::dock_active_window_right(bool shift)
 {
     tools.invoke_under_lock(
-        [this]
+        [this, shift]
         {
-            dock_active_window_under_lock(
-                MirPlacementGravity(mir_placement_gravity_northeast | mir_placement_gravity_southeast));
+            if (!shift)
+            {
+                dock_active_window_under_lock(
+                    MirPlacementGravity(mir_placement_gravity_northeast | mir_placement_gravity_southeast));
+            }
+            else
+            {
+                move_active_window_to_next_output(mir_placement_gravity_east);
+            }
         });
+}
+
+void miriway::WindowManagerPolicy::move_active_window_to_next_output(MirPlacementGravity placement)
+{
+    if (application_zones.size() < 2)
+        return;
+
+    auto const active_window = tools.active_window();
+    if (!active_window)
+        return;
+
+    auto& window_info = tools.info_for(active_window);
+    if (!eligible_to_dock(window_info.type(), window_info.depth_layer()))
+        return;
+
+    // Find the zone containing the window centre
+    auto const size = active_window.size();
+    auto const window_centre = active_window.top_left()
+        + Displacement{DeltaX{size.width.as_int() / 2}, DeltaY{size.height.as_int() / 2}};
+
+    auto current_zone = application_zones.begin();
+    for (auto it = application_zones.begin(); it != application_zones.end(); ++it)
+    {
+        if (it->extents().contains(window_centre))
+        {
+            current_zone = it;
+            break;
+        }
+    }
+
+    // Pick next or previous zone depending on direction
+    Zone const* target_zone = nullptr;
+    bool const going_right = (placement & mir_placement_gravity_east) != 0;
+
+    if (going_right)
+    {
+        auto next = std::next(current_zone);
+        if (next == application_zones.end())
+            next = application_zones.begin();
+        target_zone = &*next;
+    }
+    else
+    {
+        if (current_zone == application_zones.begin())
+            current_zone = application_zones.end();
+        target_zone = &*std::prev(current_zone);
+    }
+
+    auto const target_rect = target_zone->extents();
+    auto top_left = target_rect.top_left + Displacement{DeltaX{going_right ? target_rect.size.width.as_int() / 2 : 0}, DeltaY{}};
+    WindowSpecification modifications;
+    modifications.attached_edges() = placement;
+    modifications.size() = {target_rect.size.width / 2, active_window.size().height};
+    modifications.top_left() = top_left;
+    modifications.output_id() = -1;
+
+    tools.place_and_size_for_state(modifications, window_info);
+    tools.modify_window(window_info, modifications);
+}
+
+void miriway::WindowManagerPolicy::advise_application_zone_create(miral::Zone const& application_zone)
+{
+    application_zones.push_back(application_zone);
+    WorkspaceWMStrategy::advise_application_zone_create(application_zone);
+}
+
+void miriway::WindowManagerPolicy::advise_application_zone_update(miral::Zone const& updated, miral::Zone const& original)
+{
+    for (auto& zone : application_zones)
+    {
+        if (zone.is_same_zone(original))
+        {
+            zone = updated;
+            break;
+        }
+    }
+    WorkspaceWMStrategy::advise_application_zone_update(updated, original);
+}
+
+void miriway::WindowManagerPolicy::advise_application_zone_delete(miral::Zone const& application_zone)
+{
+    application_zones.erase(
+        std::remove_if(application_zones.begin(), application_zones.end(),
+            [&application_zone](Zone const& z){ return z.is_same_zone(application_zone); }),
+        application_zones.end());
+    WorkspaceWMStrategy::advise_application_zone_delete(application_zone);
 }
 
 bool miriway::WindowManagerPolicy::handle_pointer_event(const MirPointerEvent* event)
