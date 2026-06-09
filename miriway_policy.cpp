@@ -179,8 +179,6 @@ void miriway::WindowManagerPolicy::move_active_window_to_next_output(MirPlacemen
         return;
 
     auto& window_info = tools.info_for(active_window);
-    if (!eligible_to_dock(window_info.type(), window_info.depth_layer()))
-        return;
 
     // Find the zone containing the window centre
     auto const size = active_window.size();
@@ -215,12 +213,18 @@ void miriway::WindowManagerPolicy::move_active_window_to_next_output(MirPlacemen
         target_zone = &*std::prev(current_zone);
     }
 
-    auto const target_rect = target_zone->extents();
-    auto top_left = target_rect.top_left + Displacement{DeltaX{going_right ? target_rect.size.width.as_int() / 2 : 0}, DeltaY{}};
+    auto const target_extents = target_zone->extents();
+    auto top_left_offset = active_window.top_left() - current_zone->extents().top_left;
+    if (top_left_offset.dx < DeltaX{} || top_left_offset.dx > as_delta(target_extents.size.width))
+    {
+        top_left_offset.dx = DeltaX{};
+    }
+    if (top_left_offset.dy < DeltaY{} || top_left_offset.dy > as_delta(target_extents.size.height))
+    {
+        top_left_offset.dy = DeltaY{};
+    }
     WindowSpecification modifications;
-    modifications.attached_edges() = placement;
-    modifications.size() = {target_rect.size.width / 2, active_window.size().height};
-    modifications.top_left() = top_left;
+    modifications.top_left() = target_extents.top_left + top_left_offset;
     modifications.output_id() = -1;
 
     tools.place_and_size_for_state(modifications, window_info);
