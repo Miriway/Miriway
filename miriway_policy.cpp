@@ -178,43 +178,25 @@ void miriway::WindowManagerPolicy::move_active_window_to_next_output(MirPlacemen
     if (!active_window)
         return;
 
-    auto& window_info = tools.info_for(active_window);
+    auto const active_zone = tools.active_application_zone();
 
-    // Find the zone containing the window centre
-    auto const size = active_window.size();
-    auto const window_centre = active_window.top_left()
-        + Displacement{DeltaX{size.width.as_int() / 2}, DeltaY{size.height.as_int() / 2}};
-
-    auto current_zone = application_zones.begin();
-    for (auto it = application_zones.begin(); it != application_zones.end(); ++it)
-    {
-        if (it->extents().contains(window_centre))
+    // Next or previous zone depending on direction
+    Zone const target_zone = [&]()
         {
-            current_zone = it;
-            break;
-        }
-    }
+            auto iter = std::find(application_zones.begin(), application_zones.end(), active_zone);
 
-    // Pick next or previous zone depending on direction
-    Zone const* target_zone = nullptr;
-    bool const going_right = (placement & mir_placement_gravity_east) != 0;
+            if (placement & mir_placement_gravity_east)
+            {
+                return ++iter != application_zones.end() ? *iter : *application_zones.begin();
+            }
+            else
+            {
+                return iter != application_zones.begin() ? *--iter : *application_zones.rbegin();
+            }
+        }();
 
-    if (going_right)
-    {
-        auto next = std::next(current_zone);
-        if (next == application_zones.end())
-            next = application_zones.begin();
-        target_zone = &*next;
-    }
-    else
-    {
-        if (current_zone == application_zones.begin())
-            current_zone = application_zones.end();
-        target_zone = &*std::prev(current_zone);
-    }
-
-    auto const target_extents = target_zone->extents();
-    auto top_left_offset = active_window.top_left() - current_zone->extents().top_left;
+    auto const target_extents = target_zone.extents();
+    auto top_left_offset = active_window.top_left() - active_zone.extents().top_left;
     if (top_left_offset.dx < DeltaX{} || top_left_offset.dx > as_delta(target_extents.size.width))
     {
         top_left_offset.dx = DeltaX{};
@@ -227,6 +209,7 @@ void miriway::WindowManagerPolicy::move_active_window_to_next_output(MirPlacemen
     modifications.top_left() = target_extents.top_left + top_left_offset;
     modifications.output_id() = -1;
 
+    auto& window_info = tools.info_for(active_window);
     tools.place_and_size_for_state(modifications, window_info);
     tools.modify_window(window_info, modifications);
 }
