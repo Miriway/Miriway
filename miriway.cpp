@@ -578,9 +578,7 @@ int main(int argc, char const* argv[])
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_alt.try_command_for(c, s, cmd) || alt.try_command_for(c, s, cmd); },
         [&] (xkb_keysym_t c, bool s, ShellCommands* cmd) { return shell_plain.try_command_for(c, s, cmd) || plain.try_command_for(c, s, cmd); }};
 
-#ifdef MIRIWAY_USE_APP_SWITCHER
     AppSwitcher app_switcher;
-#endif
 
     std::atomic<bool> is_locked = false;
     LockScreen lockscreen(
@@ -617,10 +615,8 @@ int main(int argc, char const* argv[])
             AppendEventFilter{[&](MirEvent const* e) {
                 if (is_locked)
                     return false;
-#ifdef MIRIWAY_USE_APP_SWITCHER
                 if (commands.shell_keyboard_enabled() && app_switcher.process_event(e))
                     return true;
-#endif
                 return commands.input_event(e);
             }},
             SessionLockListener(

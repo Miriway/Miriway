@@ -22,16 +22,7 @@
 #include "miriway_workspace_manager.h"
 #include "miriway_ext_workspace_v1.h"
 
-#include <miral/version.h>
-
-#if MIRAL_VERSION >= MIR_VERSION_NUMBER(5, 8, 0)
-#define MIRIWAY_USE_APP_SWITCHER
 #include <miral/floating_window_manager.h>
-using MiralWindowManager = miral::FloatingWindowManager;
-#else
-#include <miral/minimal_window_manager.h>
-using MiralWindowManager = miral::MinimalWindowManager;
-#endif
 #include <miral/output.h>
 #include <miral/zone.h>
 
@@ -45,7 +36,7 @@ class ShellCommands;
 
 // A window management policy that adds support for docking and workspaces.
 // Co-ordinates with `ShellCommands` for the handling of related commands.
-class WindowManagerPolicy : public WorkspaceWMStrategy<MiralWindowManager, ExtWorkspaceV1>
+class WindowManagerPolicy : public WorkspaceWMStrategy<miral::FloatingWindowManager, ExtWorkspaceV1>
 {
 public:
     WindowManagerPolicy(WindowManagerTools const& tools, ShellCommands& commands);
