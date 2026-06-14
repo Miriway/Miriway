@@ -13,10 +13,11 @@ and comes with some scripts to help set up a variety of example configurations.
 These shortcuts are the defaults provided:
 
 Modifiers|Key|Function|Action
---|--|--|--
-Ctrl-Alt|T|miriway-terminal|Terminal emulator
-meta|Left|@dock-left|Dock app left
-meta|Right|@dock-right|Dock app right
+--|-|--|--
+Ctrl-Alt|t|miriway-terminal|Terminal emulator
+meta|a|synapse|App launcher        
+meta|Left|@dock-left|Dock app left ("Shift" to move output left)
+meta|Right|@dock-right|Dock app right ("Shift" to move output right)
 meta|Space|@toggle-maximized|Toggle app maximized
 meta|Home|@workspace-begin|First workspace ("Shift" to bring app)
 meta|End|@workspace-end|Last workspace ("Shift" to bring app)
@@ -24,8 +25,8 @@ meta|Page_Up|@workspace-up|Previous workspace ("Shift" to bring app)
 meta|Page_Down|@workspace-down|Next workspace ("Shift" to bring app)
 ctrl-alt|BackSpace|@exit|Exit ("Shift" to force if apps are open)
 
-These (and other) defaults are specified in `/usr/local/etc/xdg/xdg-miriway/miriway-shell.settings` but can be
-overridden for an individual user in `~/.config/miriway-shell.settings`. For more
+These (and other) defaults are specified in `/usr/local/etc/xdg/xdg-miriway/miriway-shell.config`
+and are copied for an individual user into `~/.config/miriway-shell.settings`. For more
 details see [Configuring Miriway](CONFIGURING_MIRIWAY.md).
 
 The "@" commands are internal to miriway-shell, others are commands that could be executed from a terminal.
