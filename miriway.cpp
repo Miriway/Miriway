@@ -635,8 +635,6 @@ int main(int argc, char const* argv[])
             sticky_keys,
             hover_click,
             magnifier,
-#ifdef MIRIWAY_USE_APP_SWITCHER
             app_switcher,
-#endif
         });
 }
