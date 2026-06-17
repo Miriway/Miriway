@@ -128,7 +128,7 @@ EOT
 # Ensure we have a config file with the fixed options
 cat <<EOT > "${yambar_config}"
 awesome: &awesome Font Awesome 6 Free:style=solid:pixelsize=14
-ubuntu: &ubuntu Font Ubuntu 6 Free:style=solid:pixelsize=14
+ubuntu: &ubuntu Ubuntu:pixelsize=14
 
 bar:
   location: top

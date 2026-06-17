@@ -18,22 +18,22 @@ x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 
-ctrl-alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/miriway-terminal
+command_ctrl_alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/miriway-terminal
 shell-component=miriway-background
 shell-component=yambar --config="${yambar_config}"
 shell-component=swaync
 shell-component=/snap/${SNAP_INSTANCE_NAME}/usr/libexec/polkit-mate-authentication-agent-1
 shell-component=miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse --startup
-shell-meta=a:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse
+command_shell_meta=a:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse
 
-meta=Left:@dock-left
-meta=Right:@dock-right
-meta=Space:@toggle-maximized
-meta=Home:@workspace-begin
-meta=End:@workspace-end
-meta=Page_Up:@workspace-up
-meta=Page_Down:@workspace-down
-ctrl-alt=BackSpace:@exit
+command_meta=Left:@dock-left
+command_meta=Right:@dock-right
+command_meta=Space:@toggle-maximized
+command_meta=Home:@workspace-begin
+command_meta=End:@workspace-end
+command_meta=Page_Up:@workspace-up
+command_meta=Page_Down:@workspace-down
+command_ctrl_alt=BackSpace:@exit
 EOT
 # Ensure we have a miriway-shell config file with the fixed options
 ###################################################################
@@ -43,7 +43,7 @@ EOT
 mkdir -p -m 755 "$(dirname "${yambar_config}")"
 cat <<EOT > "${yambar_config}"
 awesome: &awesome Font Awesome 6 Free:style=solid:pixelsize=14
-ubuntu: &ubuntu Font Ubuntu 6 Free:style=solid:pixelsize=14
+ubuntu: &ubuntu Ubuntu:pixelsize=14
 
 bar:
   location: top
