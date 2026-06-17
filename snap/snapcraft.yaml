@@ -22,7 +22,7 @@ issues: https://github.com/Miriway/Miriway/issues
 source-code: https://github.com/Miriway/Miriway
 
 confinement: classic
-base: core24
+base: core26
 
 platforms:
   amd64:
