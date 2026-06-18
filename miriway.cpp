@@ -376,12 +376,6 @@ auto const config_home = []() -> std::filesystem::path
 
 auto find_config_file(std::string const& config_file_name) -> std::optional<std::filesystem::path>
 {
-    if (auto const miriway_config_dir = getenv("MIRIWAY_CONFIG_DIR"))
-    {
-        auto const path = std::filesystem::path{miriway_config_dir} / config_file_name;
-        if (std::filesystem::exists(path)) return path;
-    }
-
     auto const home_path = config_home / config_file_name;
     if (std::filesystem::exists(home_path)) return home_path;
 
@@ -488,16 +482,16 @@ int main(int argc, char const* argv[])
         "Shell component to launch on startup (may be specified multiple times)"};
 
     using miriway::Magnifier;   // We want our Magnifier not the miral Magnifier
-    auto const settings_file = std::filesystem::path{runner.config_file()}.replace_extension("settings");
+    auto const settings_file = config_home / std::filesystem::path{runner.config_file()}.replace_extension("settings");
 
     // Migrate any shell command settings from .config to .settings before registering
     if (auto const config_file_path = find_config_file(runner.config_file()))
     {
-        migrate_config_to_settings(config_file_path.value(), config_home / settings_file);
+        migrate_config_to_settings(config_file_path.value(), settings_file);
     }
 
     live_config::IniFile config_store;
-    auto settings_store = std::make_unique<DocumentingStore>(config_store, config_home / settings_file);
+    auto settings_store = std::make_unique<DocumentingStore>(config_store, settings_file);
 
     CursorScale cursor_scale{*settings_store};
     OutputFilter output_filter{*settings_store};
