@@ -1,4 +1,8 @@
 #!/bin/sh
 
-rm /usr/share/wayland-sessions/miriway.desktop /etc/xdg/xdg-miriway/miriway-shell.config
-rm /usr/lib/systemd/user/miriway-session.target
+rm /usr/share/wayland-sessions/${SNAP_INSTANCE_NAME}.desktop
+rm /etc/xdg/xdg-${SNAP_INSTANCE_NAME}/miriway-shell.config
+# if we're the last ones, clear the target away
+if [[ $( snap list | grep -E "^${SNAP_NAME}[ _]" | wc -l ) -eq 1 ]]; then
+  rm /usr/lib/systemd/user/miriway-session.target
+fi

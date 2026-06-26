@@ -29,14 +29,14 @@ then
   exit 1
 fi
 
-if [ -e "/etc/xdg/xdg-miriway" ] && [ "${XDG_CONFIG_DIRS#*/etc/xdg/xdg-miriway}" = "${XDG_CONFIG_DIRS}" ]
+if [ -e "/etc/xdg/xdg-${MIRIWAY_XDG:=miriway}" ] && [ "${XDG_CONFIG_DIRS#*/etc/xdg/xdg-$MIRIWAY_XDG}" = "${XDG_CONFIG_DIRS}" ]
 then
-  export XDG_CONFIG_DIRS="/etc/xdg/xdg-miriway:${XDG_CONFIG_DIRS:-/etc/xdg}"
+  export XDG_CONFIG_DIRS="/etc/xdg/xdg-${MIRIWAY_XDG}:${XDG_CONFIG_DIRS:-/etc/xdg}"
 fi
 
-if [ -e "/usr/local/etc/xdg/xdg-miriway" ] && [ "${XDG_CONFIG_DIRS#*/usr/local/etc/xdg/xdg-miriway}" = "${XDG_CONFIG_DIRS}" ]
+if [ -e "/usr/local/etc/xdg/xdg-${MIRIWAY_XDG}" ] && [ "${XDG_CONFIG_DIRS#*/usr/local/etc/xdg/xdg-$MIRIWAY_XDG}" = "${XDG_CONFIG_DIRS}" ]
 then
-  export XDG_CONFIG_DIRS="/usr/local/etc/xdg/xdg-miriway:${XDG_CONFIG_DIRS:-/etc/xdg}"
+  export XDG_CONFIG_DIRS="/usr/local/etc/xdg/xdg-${MIRIWAY_XDG}:${XDG_CONFIG_DIRS:-/etc/xdg}"
 fi
 
 if command -v Xwayland > /dev/null
