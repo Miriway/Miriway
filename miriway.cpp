@@ -25,6 +25,7 @@
 #include "miriway_ext_workspace_v1.h"
 
 #include <mir/abnormal_exit.h>
+#include <mir/fatal.h>
 #include <miral/append_event_filter.h>
 #include <miral/bounce_keys.h>
 #include <miral/config_file.h>
@@ -122,7 +123,7 @@ public:
         launch{std::move(launch)},
         lockscreen_option{[this](mir::optional_value<std::string> const& app)
             {
-                if (app.is_set())
+                if (app)
                 {
                     lockscreen_app = ExternalClientLauncher::split_command(app.value());
                 }

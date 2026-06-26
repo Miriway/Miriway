@@ -29,6 +29,23 @@
 
 namespace miral { class Workspace; }
 
+// Make code compile during the migration from mir::optional_value to std::optional
+#ifndef MIR_OPTIONAL_VALUE_H_
+namespace mir { template<class T> using optional_value = std::optional<T>; }
+#endif
+
+namespace miriway
+{
+// A level of indirection to work around the migration from mir::optional_value to std::optional
+template<typename Optional> void reset_optional(Optional& opt);
+
+template<typename Optional> void reset_optional(Optional& opt)
+    requires requires { opt.reset(); } { opt.reset(); }
+
+template<typename Optional> void reset_optional(Optional& opt)
+    requires requires { opt.is_set(); opt.consume(); } { if (opt.is_set()) opt.consume(); }
+}
+
 namespace miriway
 {
 using miral::Window;
@@ -134,11 +151,8 @@ protected:
 
         if (in_hidden_workspace(window_info))
         {
-            // Don't allow state changes in hidden workspaces
-            if (mods.state().is_set()) mods.state().consume();
-
-            // Don't allow size changes in hidden workspaces
-            if (mods.size().is_set()) mods.size().consume();
+            reset_optional(mods.state());       // Don't allow state changes in hidden workspaces
+            reset_optional(mods.size());        // Don't allow size changes in hidden workspaces
         }
 
         WMStrategy::handle_modify_window(window_info, mods);
