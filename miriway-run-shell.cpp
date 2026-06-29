@@ -20,7 +20,7 @@
 #include <miral/keymap.h>
 #include <miral/runner.h>
 #include <miral/wayland_extensions.h>
-#include <miral/minimal_window_manager.h>
+#include <miral/floating_window_manager.h>
 #include <miral/set_window_management_policy.h>
 #include <miral/toolkit_event.h>
 #include <miral/x11_support.h>
@@ -30,10 +30,10 @@ using namespace miral::toolkit;
 
 namespace
 {
-class MiralRunWM : public MinimalWindowManager
+class MiralRunWM : public FloatingWindowManager
 {
 public:
-    using MinimalWindowManager::MinimalWindowManager;
+    using FloatingWindowManager::FloatingWindowManager;
 
     void handle_request_move(WindowInfo& /*window_info*/, MirInputEvent const* /*input_event*/) override
     {
@@ -74,11 +74,11 @@ public:
                 output.left() + (output.size.width - modifications.size().value().width)/2,
                 output.top() + (output.size.height - modifications.size().value().height)/2};
 
-            MinimalWindowManager::handle_modify_window(window_info, modifications);
+            FloatingWindowManager::handle_modify_window(window_info, modifications);
         }
         else
         {
-            MinimalWindowManager::handle_modify_window(window_info, new_modifications);
+            FloatingWindowManager::handle_modify_window(window_info, new_modifications);
         }
     }
 };
