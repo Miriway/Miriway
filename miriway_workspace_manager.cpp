@@ -257,8 +257,13 @@ void miriway::WorkspaceManager::activate_workspace_containing(Window const& wind
         });
 }
 
+#ifdef MIR_WINDOW_MANAGEMENT_POLICY_USE_SPAN
+void miriway::WorkspaceManager::advise_adding_to_workspace(std::shared_ptr<Workspace> const& workspace,
+                                                           std::span<Window const> windows)
+#else
 void miriway::WorkspaceManager::advise_adding_to_workspace(std::shared_ptr<Workspace> const& workspace,
                                                            std::vector<Window> const& windows)
+#endif
 {
     if (windows.empty())
         return;

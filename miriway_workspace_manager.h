@@ -81,9 +81,13 @@ public:
 
     void advise_new_window(const WindowInfo &window_info);
 
+#ifdef MIR_WINDOW_MANAGEMENT_POLICY_USE_SPAN
+    void advise_adding_to_workspace(std::shared_ptr<Workspace> const& workspace,
+                                    std::span<Window const> windows);
+#else
     void advise_adding_to_workspace(std::shared_ptr<Workspace> const& workspace,
                                     std::vector<Window> const& windows);
-
+#endif
     auto active_workspace() const -> std::shared_ptr<Workspace>;
 
     bool in_hidden_workspace(WindowInfo const& info) const;
@@ -138,8 +142,13 @@ protected:
         WorkspaceManager::advise_new_window(window_info);
     }
 
+#ifdef MIR_WINDOW_MANAGEMENT_POLICY_USE_SPAN
+    void advise_adding_to_workspace(std::shared_ptr<Workspace> const& workspace,
+                                    std::span<Window const> windows) override
+#else
     void advise_adding_to_workspace(std::shared_ptr<Workspace> const& workspace,
                                     std::vector<Window> const& windows) override
+#endif
     {
         WMStrategy::advise_adding_to_workspace(workspace, windows);
         WorkspaceManager::advise_adding_to_workspace(workspace, windows);
