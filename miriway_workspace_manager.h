@@ -158,6 +158,16 @@ protected:
         WMStrategy::handle_modify_window(window_info, mods);
     }
 
+#if defined(MIRAL_USE_HANDLE_RAISE_WINDOW_IS_DEAD)
+    void handle_activate_window(WindowInfo& window_info) override
+    {
+        if (in_hidden_workspace(window_info))
+        {
+            activate_workspace_containing(window_info.window());
+        }
+        WMStrategy::handle_activate_window(window_info);
+    }
+#else
     void handle_raise_window(WindowInfo& window_info) override
     {
         if (in_hidden_workspace(window_info))
@@ -166,7 +176,7 @@ protected:
         }
         WMStrategy::handle_raise_window(window_info);
     }
-
+#endif
     virtual void advise_output_create(miral::Output const& output) override
     {
         WMHooks::on_output_create(output);
