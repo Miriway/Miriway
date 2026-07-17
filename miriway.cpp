@@ -225,7 +225,11 @@ private:
             }
             else
             {
+#ifdef MIR_FATAL_ERROR
+                MIR_FATAL_ERROR("Invalid command option: {}", command);
+#else
                 mir::fatal_error("Invalid command option: %s", command.c_str());
+#endif
             }
         }
     }
