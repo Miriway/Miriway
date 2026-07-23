@@ -108,7 +108,6 @@ parts:
       - libmiral-dev
       - mir-graphics-drivers-desktop
       - mir-platform-graphics-virtual
-      - mir-graphics-drivers-nvidia
       - libfreetype6
       - xdg-desktop-portal
       # included in this part because they are used in the snap
