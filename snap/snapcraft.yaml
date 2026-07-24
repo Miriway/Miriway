@@ -161,8 +161,8 @@ parts:
       - -usr/include
       - -usr/lib/*/pkgconfig
       - -usr/lib/*/libmir*.so
-      # The libgallium* library needs no-patchelf, so it comes from the mesa-unpatched part
-      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libgallium*
+      # The libLLVM.so* library needs no-patchelf, so it comes from the mesa-unpatched part
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libLLVM.so*
 
   example-configs:
     plugin: dump
@@ -186,11 +186,11 @@ parts:
   mesa-no-patchelf:
     plugin: nil
     stage-packages:
-      - mesa-libgallium
+      - libllvm21
     build-attributes:
       - no-patchelf # Otherwise snapcraft may strip the build ID and cause the driver to crash
     stage:
-      - usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libgallium*
+      - usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libLLVM.so.*
 
   xdg-desktop-portal-wlr:
     plugin: meson
@@ -217,7 +217,7 @@ parts:
     stage-packages:
       - wayvnc
     stage:
-      # The libgallium* library needs no-patchelf, so it comes from the mesa-unpatched part
-      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libgallium*
+      # The libLLVM.so* library needs no-patchelf, so it comes from the mesa-unpatched part
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libLLVM.so*
     build-attributes:
       - enable-patchelf
