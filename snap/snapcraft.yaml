@@ -44,7 +44,6 @@ apps:
       MIR_SERVER_PLATFORM_PATH: ${SNAP}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/mir/server-platform
       __EGL_VENDOR_LIBRARY_DIRS: ${SNAP}/etc/glvnd/egl_vendor.d:${SNAP}/usr/share/glvnd/egl_vendor.d
       GBM_BACKENDS_PATH: ${SNAP}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/gbm
-      LIBGL_DRIVERS_PATH: ${SNAP}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
       LIBINPUT_QUIRKS_DIR: ${SNAP}/usr/share/libinput
       PATH: ${SNAP}/bin/:${SNAP}/usr/bin/:${SNAP}/usr/local/bin/:${PATH}
       # Warning: This variable is used by xdg-desktop-portal to force it to look in
@@ -54,6 +53,7 @@ apps:
       # but we are abusing it for our purposes here.
       XDG_DESKTOP_PORTAL_DIR: ${SNAP}/usr/share/xdg-desktop-portal/portals/
       DRIRC_CONFIGDIR: ${SNAP}/usr/share/drirc.d
+      AMDGPU_ASIC_ID_TABLE_PATHS: ${SNAP}/usr/share/libdrm${AMDGPU_ASIC_ID_TABLE_PATHS:+:$AMDGPU_ASIC_ID_TABLE_PATHS}
 
   session:
     command-chain: *command_chain
@@ -120,6 +120,8 @@ parts:
       - yambar
       # And try to get _all_ the mesa drivers
       - libgl1-mesa-dri
+      - libdrm2
+      - libdrm-common
       - libdrm-nouveau2
       - libdrm-amdgpu1
       - libdrm-radeon1
@@ -148,7 +150,6 @@ parts:
       - -usr/share/doc
       - -usr/share/doc-base
       - -usr/share/icons
-      - -usr/share/libdrm
       - -usr/share/libwacom
       - -usr/share/lintian
       - -usr/share/man
