@@ -93,9 +93,9 @@ display-config=static=${miriway_display}
 lockscreen-app=miriway-unsnap swaylock -i ${background}
 
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice synapse --startup
-shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image ${background}
-shell-component=systemd-run --user --scope --slice=background.slice swaync
-shell-component=systemd-run --user --scope --slice=background.slice yambar
+shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image ${background}
+shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaync
+shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice yambar
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice gnome-keyring-daemon --foreground
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice ${polkit_agent}
 EOT
