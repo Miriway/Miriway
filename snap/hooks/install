@@ -1,10 +1,10 @@
 #!/bin/sh -e
 
 mkdir -p /usr/share/wayland-sessions/ /usr/lib/systemd/user/
-sed -e s/miriway-session/miriway.session/ "$SNAP"/usr/share/wayland-sessions/miriway.desktop > /usr/share/wayland-sessions/miriway.desktop
+sed -e s/miriway-session/${SNAP_INSTANCE_NAME}.session/ -e "s/Name=.*/& ($SNAP_INSTANCE_KEY)/" "$SNAP"/usr/share/wayland-sessions/miriway.desktop > /usr/share/wayland-sessions/${SNAP_INSTANCE_NAME}.desktop
 cp "$SNAP"/usr/lib/systemd/user/miriway-session.target /usr/lib/systemd/user/
 
-xdg_config=/etc/xdg/xdg-miriway
+xdg_config=/etc/xdg/xdg-${SNAP_INSTANCE_NAME}
 
 miriway_config="${xdg_config}/miriway-shell.config"
 yambar_config="${xdg_config}/yambar/config.yml"
@@ -18,13 +18,13 @@ x11-window-title=Miriway
 idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 
-ctrl-alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/miriway-terminal
+ctrl-alt=t:miriway-unsnap miriway-terminal
 shell-component=miriway-background
 shell-component=yambar --config="${yambar_config}"
 shell-component=swaync
-shell-component=/snap/${SNAP_INSTANCE_NAME}/usr/libexec/polkit-mate-authentication-agent-1
-shell-component=miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse --startup
-shell-meta=a:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse
+shell-component=sh -c '\${SNAP}/usr/libexec/polkit-mate-authentication-agent-1'
+shell-component=miriway-unsnap synapse --startup
+shell-meta=a:miriway-unsnap synapse
 
 meta=Left:@dock-left
 meta=Right:@dock-right
@@ -57,7 +57,7 @@ bar:
           string:
             text: " start"
             margin: 5
-            on-click: miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse
+            on-click: miriway-unsnap synapse
             deco: &greybg
               background:
                 color: 3f3f3fff
