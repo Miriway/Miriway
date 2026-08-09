@@ -57,9 +57,7 @@ apps:
       AMDGPU_ASIC_ID_TABLE_PATHS: ${SNAP}/usr/share/libdrm${AMDGPU_ASIC_ID_TABLE_PATHS:+:$AMDGPU_ASIC_ID_TABLE_PATHS}
 
   session:
-    command-chain: *command_chain
     command: bin/miriway-session
-    environment: *_environment
 
   vnc-server:
     command-chain:
