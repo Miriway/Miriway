@@ -93,9 +93,9 @@ display-config=static=${miriway_display}
 lockscreen-app=miriway-unsnap swaylock -i ${background}
 
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice synapse --startup
-shell-component=systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image ${background}
-shell-component=systemd-run --user --scope --slice=background.slice swaync
-shell-component=systemd-run --user --scope --slice=background.slice yambar
+shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image ${background}
+shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaync
+shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice yambar
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice gnome-keyring-daemon --foreground
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice ${polkit_agent}
 EOT
@@ -128,7 +128,7 @@ EOT
 # Ensure we have a config file with the fixed options
 cat <<EOT > "${yambar_config}"
 awesome: &awesome Font Awesome 6 Free:style=solid:pixelsize=14
-ubuntu: &ubuntu Font Ubuntu 6 Free:style=solid:pixelsize=14
+ubuntu: &ubuntu Ubuntu:pixelsize=14
 
 bar:
   location: top
@@ -177,7 +177,6 @@ EOT
 for wificard in /sys/class/net/wl*
 do cat <<EOT >> "${yambar_config}"
     - network:
-        name: $(basename "$wificard")
         content:
           map:
             deco: *greybg
@@ -189,12 +188,10 @@ do cat <<EOT >> "${yambar_config}"
                 map:
                   default:
                     - string: {text: , font: *awesome, deco: *greybg}
-#                    - string: {text: "{ssid} {dl-speed:mb}/{ul-speed:mb} Mb/s" }
 
                   conditions:
                     ipv4 == "":
                       - string: {text: , font: *awesome}
-#                      - string: {text: "{ssid} {dl-speed:mb}/{ul-speed:mb} Mb/s"}
 EOT
 done
 
