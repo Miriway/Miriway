@@ -116,7 +116,7 @@ parts:
       - swaylock
       - synapse
       - xwayland
-      - yambar
+      - waybar
       # And try to get _all_ the mesa drivers
       - libgl1-mesa-dri
       - libdrm2
@@ -175,6 +175,13 @@ parts:
       miriway-config-SWAY.bash: example-configs/SWAY.bash
       miriway-config-XFCE.bash: example-configs/XFCE.bash
       miriway-config-alan_g.bash: example-configs/alan_g.bash
+
+  waybar:
+    plugin: dump
+    source: waybar
+    organize:
+      config: waybar/config
+      style.css: waybar/style.css
 
   snap-utils:
     plugin: dump

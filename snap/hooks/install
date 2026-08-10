@@ -7,7 +7,8 @@ cp "$SNAP"/usr/lib/systemd/user/miriway-session.target /usr/lib/systemd/user/
 xdg_config=/etc/xdg/xdg-miriway
 
 miriway_config="${xdg_config}/miriway-shell.config"
-yambar_config="${xdg_config}/yambar/config.yml"
+waybar_config="${xdg_config}/waybar/config"
+waybar_style="${xdg_config}/waybar/style.css"
 
 ###################################################################
 # Ensure we have a miriway-shell config file with the fixed options
@@ -20,7 +21,7 @@ app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miri
 
 ctrl-alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/miriway-terminal
 shell-component=miriway-background
-shell-component=yambar --config="${yambar_config}"
+shell-component=waybar --config="${waybar_config}" --style="${waybar_style}"
 shell-component=swaync
 shell-component=/snap/${SNAP_INSTANCE_NAME}/usr/libexec/polkit-mate-authentication-agent-1
 shell-component=miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse --startup
@@ -39,114 +40,11 @@ EOT
 ###################################################################
 
 ###################################################################
-# Ensure we have a yambar config file with the fixed options
-mkdir -p -m 755 "$(dirname "${yambar_config}")"
-cat <<EOT > "${yambar_config}"
-awesome: &awesome Font Awesome 6 Free:style=solid:pixelsize=14
-ubuntu: &ubuntu Ubuntu:pixelsize=14
-
-bar:
-  location: top
-  height: 21
-  background: 282828ff
-  font: *ubuntu
-
-  left:
-    - label:
-        content:
-          string:
-            text: " start"
-            margin: 5
-            on-click: miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse
-            deco: &greybg
-              background:
-                color: 3f3f3fff
-
-  center:
-    - clock:
-        content:
-          - string:
-              margin: 5
-              text: "{date} {time}"
-              deco: *greybg
-
-  right:
-EOT
-
-for wificard in /sys/class/net/wl*
-do cat <<EOT >> "${yambar_config}"
-    - network:
-        content:
-          map:
-            deco: *greybg
-            margin: 5
-            default: {string: {text: , font: *awesome}}
-            conditions:
-              state == down: {string: {text: , font: *awesome}}
-              state == up:
-                map:
-                  default:
-                    - string: {text: , font: *awesome, deco: *greybg}
-
-                  conditions:
-                    ipv4 == "":
-                      - string: {text: , font: *awesome}
-EOT
-done
-
-for battery in /sys/class/power_supply/BAT*
-do cat <<EOT >> "${yambar_config}"
-    - battery:
-        name: $(basename "$battery")
-        anchors:
-          discharging: &discharging
-            list:
-              items:
-                - ramp:
-                    tag: capacity
-                    items:
-                      - string: {text: , foreground: ff0000ff, font: *awesome}
-                      - string: {text: , foreground: ffa600ff, font: *awesome}
-                      - string: {text: , font: *awesome}
-                      - string: {text: , font: *awesome}
-                      - string: {text: , font: *awesome}
-                      - string: {text: , font: *awesome}
-                      - string: {text: , font: *awesome}
-                      - string: {text: , font: *awesome}
-                      - string: {text: , font: *awesome}
-                      - string: {text: , foreground: 00ff00ff, font: *awesome}
-                - string: {text: "{capacity}% {estimate}"}
-        content:
-          map:
-            deco: *greybg
-            margin: 5
-            conditions:
-              state == unknown:
-                <<: *discharging
-              state == discharging:
-                <<: *discharging
-              state == charging:
-                - string: {text: , foreground: 00ff00ff, font: *awesome}
-                - string: {text: "{capacity}% {estimate}"}
-              state == full:
-                - string: {text: , foreground: 00ff00ff, font: *awesome}
-                - string: {text: "{capacity}% full"}
-              state == "not charging":
-                - ramp:
-                    tag: capacity
-                    items:
-                      - string: {text:  , foreground: ff0000ff, font: *awesome}
-                      - string: {text:  , foreground: ffa600ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                - string: {text: "{capacity}%"}
-EOT
-done
-# Ensure we have a yambar config file with the fixed options
+# Ensure we have a waybar config file with the fixed options
+mkdir -p -m 755 "$(dirname "${waybar_config}")"
+# Expand @CPU_ICONS@ to one {icon<n>} per thread on this machine
+threads=$(grep -c '^cpu[0-9]' /proc/stat)
+cpu_icons=$(printf '{icon%s}' $(seq 0 $((threads - 1))))
+sed "s|@CPU_ICONS@|${cpu_icons}|" "$SNAP"/example-configs/waybar/config > "${waybar_config}"
+cp "$SNAP"/example-configs/waybar/style.css "${waybar_style}"
 ###################################################################

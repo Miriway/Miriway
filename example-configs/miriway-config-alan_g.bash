@@ -9,12 +9,13 @@ else
   polkit_agent="/usr/libexec/polkit-mate-authentication-agent-1"
 fi
 
-shell_components="synapse swaync swaybg swaylock kgx grim gnome-keyring-daemon ${polkit_agent}"
-shell_packages="synapse sway-notification-center swaybg swaylock gnome-console grim gnome-keyring mate-polkit"
+shell_components="waybar synapse swaync swaybg swaylock kgx grim gnome-keyring-daemon ${polkit_agent}"
+shell_packages="waybar synapse sway-notification-center swaybg swaylock gnome-console grim gnome-keyring mate-polkit"
 
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 miriway_settings="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.settings"
-yambar_config="${XDG_CONFIG_HOME:-$HOME/.config}/yambar/config.yml"
+waybar_config="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/config"
+waybar_style="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/style.css"
 
 unset need_install
 
@@ -35,8 +36,12 @@ if [ -e "${miriway_settings}" ]; then
   echo WARNING Overwriting "${miriway_settings}"
 fi
 
-if [ -e "${yambar_config}" ]; then
-  echo WARNING Overwriting "${yambar_config}"
+if [ -e "${waybar_config}" ]; then
+  echo WARNING Overwriting "${waybar_config}"
+fi
+
+if [ -e "${waybar_style}" ]; then
+  echo WARNING Overwriting "${waybar_style}"
 fi
 
 read -p"OK to proceed/configure only? [y/n/c] " yn
@@ -63,7 +68,7 @@ then
   fi
 fi
 
-mkdir "$(dirname "${yambar_config}")" -p -m 700
+mkdir "$(dirname "${waybar_config}")" -p -m 700
 
 if  [ -e "/usr/libexec/mate-polkit/polkit-mate-authentication-agent-1" ]; then
   polkit_agent="/usr/libexec/mate-polkit/polkit-mate-authentication-agent-1"
@@ -95,7 +100,7 @@ lockscreen-app=miriway-unsnap swaylock -i ${background}
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice synapse --startup
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaybg --mode fill --output '*' --image ${background}
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice swaync
-shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice yambar
+shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice waybar
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice gnome-keyring-daemon --foreground
 shell-component=miriway-unsnap systemd-run --user --scope --slice=background.slice ${polkit_agent}
 EOT
@@ -113,7 +118,7 @@ command_ctrl_alt=u:cp ${miriway_display}~undocked ${miriway_display}
 command_ctrl_alt=s:miriway-swap
 command_ctrl_alt=k:miriway-unsnap lock-and-suspend.sh
 command_ctrl_alt=Up:@toggle-always-on-top
-command_shell_ctrl_alt=y:systemd-run --user --scope --slice=background.slice yambar
+command_shell_ctrl_alt=y:systemd-run --user --scope --slice=background.slice waybar
 
 command_meta=Left:@dock-left
 command_meta=Right:@dock-right
@@ -125,127 +130,10 @@ command_meta=Page_Down:@workspace-down
 command_ctrl_alt=BackSpace:@exit
 EOT
 
-# Ensure we have a config file with the fixed options
-cat <<EOT > "${yambar_config}"
-awesome: &awesome Font Awesome 6 Free:style=solid:pixelsize=14
-ubuntu: &ubuntu Ubuntu:pixelsize=14
-
-bar:
-  location: top
-  height: 21
-  background: 282828ff
-  font: *ubuntu
-
-  left:
-    - cpu:
-        content:
-          map:
-            deco: &greybg
-              background:
-                color: 3f3f3fff
-            conditions:
-              id >= 0:
-                - ramp:
-                    tag: cpu
-                    items:
-                      - string: {text: ▁, foreground: 00ff00ff}
-                      - string: {text: ▂, foreground: 00ff00ff}
-                      - string: {text: ▃, foreground: 00ff00ff}
-                      - string: {text: ▄}
-                      - string: {text: ▅}
-                      - string: {text: ▆, foreground: ffa600ff}
-                      - string: {text: ▇, foreground: ffa600ff}
-                      - string: {text: █, foreground: ff0000ff}
-    - mem:
-        content:
-          - string:
-              margin: 5
-              text: "mem: {percent_used}%"
-              deco: *greybg
-
-  center:
-    - clock:
-        content:
-          - string:
-              margin: 5
-              text: "{date} {time}"
-              deco: *greybg
-
-  right:
-EOT
-
-for wificard in /sys/class/net/wl*
-do cat <<EOT >> "${yambar_config}"
-    - network:
-        content:
-          map:
-            deco: *greybg
-            margin: 5
-            default: {string: {text: , font: *awesome}}
-            conditions:
-              state == down: {string: {text: , font: *awesome}}
-              state == up:
-                map:
-                  default:
-                    - string: {text: , font: *awesome, deco: *greybg}
-
-                  conditions:
-                    ipv4 == "":
-                      - string: {text: , font: *awesome}
-EOT
-done
-
-for battery in /sys/class/power_supply/BAT*
-do cat <<EOT >> "${yambar_config}"
-    - battery:
-        name: $(basename "$battery")
-        anchors:
-          discharging: &discharging
-            list:
-              items:
-                - ramp:
-                    tag: capacity
-                    items:
-                      - string: {text: , foreground: ff0000ff, font: *awesome}
-                      - string: {text: , foreground: ffa600ff, font: *awesome}
-                      - string: {text: , font: *awesome}
-                      - string: {text: , font: *awesome}
-                      - string: {text: , font: *awesome}
-                      - string: {text: , font: *awesome}
-                      - string: {text: , font: *awesome}
-                      - string: {text: , font: *awesome}
-                      - string: {text: , font: *awesome}
-                      - string: {text: , foreground: 00ff00ff, font: *awesome}
-                - string: {text: "{capacity}% {estimate}"}
-        content:
-          map:
-            deco: *greybg
-            margin: 5
-            conditions:
-              state == unknown:
-                <<: *discharging
-              state == discharging:
-                <<: *discharging
-              state == charging:
-                - string: {text: , foreground: 00ff00ff, font: *awesome}
-                - string: {text: "{capacity}% {estimate}"}
-              state == full:
-                - string: {text: , foreground: 00ff00ff, font: *awesome}
-                - string: {text: "{capacity}% full"}
-              state == "not charging":
-                - ramp:
-                    tag: capacity
-                    items:
-                      - string: {text:  , foreground: ff0000ff, font: *awesome}
-                      - string: {text:  , foreground: ffa600ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
-                - string: {text: "{capacity}%"}
-EOT
-done
+# Install the waybar config files shipped alongside this script,
+# expanding @CPU_ICONS@ to one {icon<n>} per thread on this machine
+waybar_source="$(dirname "$0")/../waybar"
+threads=$(grep -c '^cpu[0-9]' /proc/stat)
+cpu_icons=$(printf '{icon%s}' $(seq 0 $((threads - 1))))
+sed "s|@CPU_ICONS@|${cpu_icons}|" "${waybar_source}/config" > "${waybar_config}"
+cp "${waybar_source}/style.css" "${waybar_style}"

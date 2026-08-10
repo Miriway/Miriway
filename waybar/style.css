@@ -1,0 +1,66 @@
+/* #282828 bar, #3f3f3f module chips,
+   Ubuntu font, Font Awesome icons, green/orange/red status colors. */
+
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "Ubuntu", "Font Awesome 6 Free", "FontAwesome", sans-serif;
+    font-size: 14px;
+    min-height: 0;
+}
+
+window#waybar {
+    background-color: #282828;
+    color: #ffffff;
+}
+
+window#waybar.hidden {
+    opacity: 0.2;
+}
+
+#clock,
+#battery,
+#cpu,
+#memory,
+#temperature,
+#network,
+#tray {
+    background-color: #3f3f3f;
+    padding: 0 5px;
+    margin: 2px 1px;
+    color: #ffffff;
+}
+
+/* Battery color semantics: green charging, orange warning, red critical */
+#battery.charging,
+#battery.plugged {
+    color: #00ff00;
+}
+
+#battery.warning:not(.charging):not(.plugged) {
+    color: #ffa600;
+}
+
+#battery.critical:not(.charging):not(.plugged) {
+    color: #ff0000;
+}
+
+#temperature.critical {
+    color: #ff0000;
+}
+
+#network.disconnected {
+    color: #ffa600;
+}
+
+label:focus {
+    background-color: #000000;
+}
+
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+}
