@@ -32,6 +32,12 @@ platforms:
 package-repositories:
   - type: apt
     ppa: mir-team/release
+  - type: apt
+    url: http://archive.ubuntu.com/ubuntu
+    suites: [resolute-proposed]
+    components: [main, universe]
+    key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
+    priority: 500
 
 apps:
   miriway:
