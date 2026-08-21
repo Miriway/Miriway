@@ -19,7 +19,7 @@ idle-timeout=600
 app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none
 
 ctrl-alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/miriway-terminal
-shell-component=miriway-background
+shell-component=wbg -s /snap/${SNAP_INSTANCE_NAME}/current/usr/share/backgrounds/miriway.png
 shell-component=yambar --config="${yambar_config}"
 shell-component=swaync
 shell-component=/snap/${SNAP_INSTANCE_NAME}/usr/libexec/polkit-mate-authentication-agent-1
