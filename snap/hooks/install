@@ -45,6 +45,6 @@ mkdir -p -m 755 "$(dirname "${waybar_config}")"
 # Expand @CPU_ICONS@ to one {icon<n>} per thread on this machine
 threads=$(grep -c '^cpu[0-9]' /proc/stat)
 cpu_icons=$(printf '{icon%s}' $(seq 0 $((threads - 1))))
-sed "s|@CPU_ICONS@|${cpu_icons}|" "$SNAP"/example-configs/waybar/config > "${waybar_config}"
-cp "$SNAP"/example-configs/waybar/style.css "${waybar_style}"
+sed "s|@CPU_ICONS@|${cpu_icons}|" "$SNAP"/waybar/config > "${waybar_config}"
+cp "$SNAP"/waybar/style.css "${waybar_style}"
 ###################################################################
