@@ -9,8 +9,8 @@ else
   polkit_agent="/usr/libexec/polkit-mate-authentication-agent-1"
 fi
 
-shell_components="synapse swaync swaybg swaylock kgx grim gnome-keyring-daemon ${polkit_agent}"
-shell_packages="synapse sway-notification-center swaybg swaylock gnome-console grim gnome-keyring mate-polkit"
+shell_components="synapse swaync swaybg yambar swaylock kgx grim gnome-keyring-daemon ${polkit_agent}"
+shell_packages="synapse sway-notification-center swaybg yambar swaylock gnome-console grim gnome-keyring mate-polkit"
 
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 miriway_settings="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.settings"
