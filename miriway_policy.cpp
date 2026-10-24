@@ -272,17 +272,20 @@ bool miriway::WindowManagerPolicy::handle_pointer_event(const MirPointerEvent* e
                     {
                         Rectangle const top_margin{active_rect.top_left, {active_rect.size.width, active_rect.size.height/20}};
 
-                        // If part of the active window is offscreen at top, and cursor near top, maximize it!
-                        if (overlap.top() == active_rect.top() && top_margin.contains(cursor))
+
+                        if (auto& info = tools.info_for(active_window); eligible_to_dock(info.type(), info.depth_layer()))
                         {
-                            auto& window_info = tools.info_for(active_window);
-                            WindowSpecification modifications;
+                            // If part of the active window is offscreen at top, and cursor near top, maximize it!
+                            if (overlap.top() == active_rect.top() && top_margin.contains(cursor))
+                            {
+                                WindowSpecification modifications;
 
-                            modifications.state() = mir_window_state_maximized;
+                                modifications.state() = mir_window_state_maximized;
 
-                            tools.place_and_size_for_state(modifications, window_info);
-                            tools.modify_window(window_info, modifications);
-                            return result;
+                                tools.place_and_size_for_state(modifications, info);
+                                tools.modify_window(info, modifications);
+                                return result;
+                            }
                         }
                     }
 
