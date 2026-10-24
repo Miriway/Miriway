@@ -187,27 +187,6 @@ void miriway::WorkspaceManager::change_active_workspace(
     hooks.on_workspace_activate(new_active);
 
     auto const old_active_window = tools_.active_window();
-    auto const old_active_window_shell = old_active_window &&
-        !is_application(tools_.info_for(old_active_window).depth_layer());
-
-    if (!old_active_window || old_active_window_shell)
-    {
-        // If there's no active window, the first shown grabs focus: get the right one
-        if (auto const ww = workspace_to_active[new_active])
-        {
-            tools_.for_each_workspace_containing(ww, [&](std::shared_ptr<Workspace> const& ws)
-            {
-                if (ws == new_active)
-                {
-                    apply_workspace_visible_to(ww);
-                }
-            });
-
-            // If focus was on a shell window, put it on an app
-            if (old_active_window_shell)
-                tools_.select_active_window(ww);
-        }
-    }
 
     tools_.remove_tree_from_workspace(window, old_active);
     tools_.add_tree_to_workspace(window, new_active);
@@ -244,6 +223,24 @@ void miriway::WorkspaceManager::change_active_workspace(
         // Remember the old active_window when we switch away
         workspace_to_active[old_active] = old_active_window;
     }
+
+    auto const remembered = workspace_to_active.find(new_active);
+    auto const preferred = window ? window :
+        remembered != workspace_to_active.end() ? remembered->second : Window{};
+
+    Window next_active;
+    tools_.for_each_window_in_workspace(new_active, [&](Window const& ww)
+    {
+        if (is_application(tools_.info_for(ww).depth_layer()) && tools_.can_select_window(ww))
+        {
+            if (!next_active || ww == preferred)
+                next_active = ww;
+        }
+    });
+
+    // Hiding windows can change focus, so select the destination window last.
+    if (next_active)
+        tools_.select_active_window(next_active);
 }
 
 void miriway::WorkspaceManager::activate_workspace_containing(Window const& window)
