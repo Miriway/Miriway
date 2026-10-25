@@ -296,19 +296,19 @@ default_terminal_for_profile()
 {
     case "$1" in
         mate)
-            if has mate-terminal; then echo mate-terminal; else echo miriway-terminal; fi
+            echo mate-terminal
             ;;
         xfce)
-            if has xfce4-terminal; then echo xfce4-terminal; else echo miriway-terminal; fi
+            echo xfce4-terminal
             ;;
         lxqt)
-            if has qterminal; then echo qterminal; else echo miriway-terminal; fi
+            echo qterminal
             ;;
         sway)
-            if has foot; then echo foot; elif has alacritty; then echo alacritty; else echo miriway-terminal; fi
+            if has foot; then echo foot; else echo alacritty; fi
             ;;
         *)
-            if has kgx; then echo kgx; else echo miriway-terminal; fi
+            if has kgx; then echo kgx; elif has gnome-terminal; then echo gnome-terminal; else echo kgx; fi
             ;;
     esac
 }
