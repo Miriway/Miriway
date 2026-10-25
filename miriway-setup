@@ -500,6 +500,10 @@ install_missing_packages()
         [ -n "$package" ] && packages+=("$package")
     done
 
+    if [ "$profile" = lxqt ]; then
+        packages+=(lubuntu-artwork breeze-icon-theme)
+    fi
+
     if [ "$panel" = yambar ]; then
         package="$(fontawesome_package "$package_manager")"
         [ -n "$package" ] && packages+=("$package")
@@ -802,6 +806,43 @@ EOF
     done
 }
 
+generate_lxqt_config()
+{
+    local target="$config_dir/lxqt/lxqt.conf"
+    local content=""
+
+    if [ -e "$target" ]; then
+        content="$(cat "$target")"
+    fi
+
+    printf '%s\n' "$content" | awk '
+        function finish_general() {
+            if (in_general && !theme_written) {
+                print "icon_theme=breeze"
+                theme_written = 1
+            }
+        }
+        /^[[:space:]]*\[/ {
+            finish_general()
+            in_general = ($0 ~ /^[[:space:]]*\[General\][[:space:]]*$/)
+            if (in_general) general_found = 1
+        }
+        in_general && /^[[:space:]]*icon_theme[[:space:]]*=/ {
+            if (!theme_written) print "icon_theme=breeze"
+            theme_written = 1
+            next
+        }
+        { print }
+        END {
+            finish_general()
+            if (!general_found) {
+                print "[General]"
+                print "icon_theme=breeze"
+            }
+        }
+    '
+}
+
 write_file()
 {
     local target="$1"
@@ -829,7 +870,9 @@ write_file()
         fi
     fi
 
-    "$generator" > "$target"
+    local content
+    content="$("$generator")"
+    printf '%s\n' "$content" > "$target"
 }
 
 parse_args()
@@ -985,8 +1028,12 @@ main()
         fi
     done < <(collect_required_commands)
 
+    if [ "$profile" = lxqt ] && [ ! -e /usr/share/icons/breeze/index.theme ]; then
+        missing_commands+=(breeze-icon-theme)
+    fi
+
     if [ "${#missing_commands[@]}" -gt 0 ]; then
-        echo "Missing commands:"
+        echo "Missing commands or packages:"
         printf '  %s\n' "${missing_commands[@]}"
         echo
 
@@ -1008,6 +1055,10 @@ main()
 
     write_file "$config_dir/miriway-shell.config" generate_config
     write_file "$config_dir/miriway-shell.settings" generate_settings
+
+    if [ "$profile" = lxqt ]; then
+        write_file "$config_dir/lxqt/lxqt.conf" generate_lxqt_config
+    fi
 
     if [ "$panel" = yambar ]; then
         write_file "$config_dir/yambar/config.yml" generate_yambar_config

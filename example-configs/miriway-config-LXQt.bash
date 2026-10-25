@@ -4,11 +4,16 @@ set -e
 if [ ! -e ~/.config ]; then mkdir ~/.config; fi
 
 shell_components="lxqt-policykit-agent qterminal lxqt-runner lxqt-panel swaybg lxqt-notificationd"
-shell_packages="lxqt-policykit qterminal lxqt-runner lxqt-panel lubuntu-artwork swaybg lxqt-notificationd"
+shell_packages="lxqt-policykit qterminal lxqt-runner lxqt-panel lubuntu-artwork breeze-icon-theme swaybg lxqt-notificationd"
 miriway_config="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.config"
 miriway_settings="${XDG_CONFIG_HOME:-$HOME/.config}/miriway-shell.settings"
 
 unset need_install
+
+if [ ! -e /usr/share/icons/breeze/index.theme ]; then
+  echo May need to install breeze-icon-theme
+  need_install=1
+fi
 
 for component in $shell_components
 do

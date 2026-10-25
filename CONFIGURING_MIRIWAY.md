@@ -19,6 +19,9 @@ This interactive utility can generate `miriway-shell.config`,
 `miriway-shell.settings`, and optional component configuration such as
 `yambar/config.yml`.
 
+The `lxqt` profile also selects the Breeze icon theme in `lxqt/lxqt.conf`,
+preserving other LXQt settings.
+
 It offers several starting profiles:
 
     miriway-setup --list-profiles
