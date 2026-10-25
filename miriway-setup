@@ -25,7 +25,7 @@ if [ "${SNAP_NAME:-}" == "miriway" ]; then
   use_unsnap=yes
 fi
 
-profiles="minimal desktop mate xfce lxqt budgie sway"
+profiles="minimal desktop mate xfce lxqt budgie sway alan_g"
 
 usage()
 {
@@ -35,7 +35,7 @@ Usage: $program [OPTIONS]
 Create a user Miriway configuration.
 
 Options:
-  --profile NAME          Profile to generate: minimal, desktop, mate, xfce, lxqt, budgie, sway
+  --profile NAME          Profile to generate: minimal, desktop, mate, xfce, lxqt, budgie, sway, alan_g
   --list-profiles         List available profiles
   --config-dir DIR        Configuration directory to write to [default: \$XDG_CONFIG_HOME or ~/.config]
   --background PATH       Background image to use
@@ -70,6 +70,7 @@ xfce     XFCE-friendly setup
 lxqt     LXQt-friendly setup
 budgie   Budgie-friendly setup
 sway     Sway-like setup
+alan_g   Setup used by alan_g
 EOF
 }
 
@@ -268,6 +269,12 @@ default_background_for_profile()
     fi
 
     case "$1" in
+        alan_g)
+            if [ -e "$HOME/Pictures/202109-Norfolk/IMG_5949.JPG" ]; then
+              echo "$HOME/Pictures/202109-Norfolk/IMG_5949.JPG"
+              return
+            fi
+            ;;
         budgie)
             if [ -e "/usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper1.jpg" ]; then
               echo "/usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper1.jpg"
@@ -362,6 +369,14 @@ default_terminal_for_profile()
 apply_profile_defaults()
 {
     case "$profile" in
+        alan_g)
+            terminal="${terminal:-kgx}"
+            launcher="${launcher:-synapse}"
+            panel="${panel:-yambar}"
+            notifications="${notifications:-swaync}"
+            wallpaper="${wallpaper:-swaybg}"
+            lockscreen="${lockscreen:-swaylock}"
+            ;;
         budgie)
             terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
             launcher="${launcher:-budgie-run-dialog}"
@@ -457,7 +472,7 @@ collect_required_commands()
             echo grim
         fi
 
-        if [ "$profile" = desktop ] || [ "$profile" = mate ]; then
+        if [ "$profile" = alan_g ] || [ "$profile" = desktop ] || [ "$profile" = mate ]; then
             echo gnome-keyring-daemon
         fi
     } | sed '/^$/d;/^none$/d' | sort -u
@@ -560,7 +575,15 @@ generate_config()
 
 x11-window-title=Miriway
 idle-timeout=600
-app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none:-GTK_IM_MODULE
+EOF
+
+    if [ "$profile" = alan_g ]; then
+        echo "app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none:-GTK_IM_MODULE:SSH_AUTH_SOCK=/run/user/$(id -u)/keyring/ssh"
+    else
+        echo "app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none:-GTK_IM_MODULE"
+    fi
+
+    cat <<EOF
 display-config=static=$miriway_display
 EOF
 
@@ -586,7 +609,11 @@ EOF
         echo "shell-component=$(shell_command_line "$prefix" "$panel")"
     fi
 
-    if [ "$profile" = desktop ] || [ "$profile" = mate ]; then
+    if [ "$profile" = alan_g ]; then
+        echo "shell-component=$(shell_command_line "$prefix" "synapse --startup")"
+    fi
+
+    if [ "$profile" = alan_g ] || [ "$profile" = desktop ] || [ "$profile" = mate ]; then
         echo "shell-component=$(shell_command_line "$prefix" "gnome-keyring-daemon --foreground")"
     fi
 
@@ -618,6 +645,16 @@ EOF
 
     if [ "$lockscreen" != none ]; then
         echo "command_shell_ctrl_alt=l:$(shell_command_line "$app_prefix_value" "loginctl lock-session")"
+    fi
+
+    if [ "$profile" = alan_g ]; then
+        local miriway_display="${config_dir}/miriway-shell.display"
+        echo "command_ctrl_alt=d:cp ${miriway_display}~docked ${miriway_display}"
+        echo "command_ctrl_alt=u:cp ${miriway_display}~undocked ${miriway_display}"
+        echo "command_ctrl_alt=s:miriway-swap"
+        echo "command_ctrl_alt=k:$(shell_command_line "$app_prefix_value" "lock-and-suspend.sh")"
+        echo "command_ctrl_alt=Up:@toggle-always-on-top"
+        echo "command_shell_ctrl_alt=y:systemd-run --user --scope --slice=background.slice yambar"
     fi
 
     cat <<EOF
@@ -896,7 +933,8 @@ interactive_setup()
         "xfce - XFCE-friendly setup" \
         "lxqt - LXQt-friendly setup" \
         "budgie - Budgie-friendly setup" \
-        "sway - Sway-like setup")"
+        "sway - Sway-like setup" \
+        "alan_g - Setup used by alan_g")"
 
     profile="${selected%% *}"
 }

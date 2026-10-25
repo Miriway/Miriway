@@ -25,13 +25,7 @@ It offers several starting profiles:
 
 For non-interactive setup, pass a profile explicitly:
 
-    miriway-setup --profile minimal
-    miriway-setup --profile desktop
-    miriway-setup --profile mate
-    miriway-setup --profile xfce
-    miriway-setup --profile lxqt
-    miriway-setup --profile budgie
-    miriway-setup --profile sway
+d    miriway-setup --profile (one of the profiles listed above)
 
 Useful options include:
 
