@@ -240,6 +240,9 @@ package_for_command()
                 apk) echo gnome-keyring ;;
             esac
             ;;
+        /usr/libexec/mate-notification-daemon/mate-notification-daemon)
+            echo mate-notification-daemon
+            ;;
         *)
             echo "$command_name"
             ;;
@@ -257,18 +260,58 @@ fontawesome_package()
     esac
 }
 
-default_background()
+default_background_for_profile()
 {
     if [ -n "${background:-}" ]; then
         echo "$background"
-    elif [ -e /usr/share/backgrounds/miriway.png ]; then
-        echo /usr/share/backgrounds/miriway.png
+        return
+    fi
+
+    case "$1" in
+        budgie)
+            if [ -e "/usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper1.jpg" ]; then
+              echo "/usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper1.jpg"
+              return
+            fi
+            ;;
+        lxqt)
+            if [ -e "/usr/share/lubuntu/wallpapers/lubuntu-default-wallpaper.jpg" ]; then
+              echo "/usr/share/lubuntu/wallpapers/lubuntu-default-wallpaper.jpg"
+              return
+            fi
+            ;;
+        mate)
+            if [ -e "/usr/share/backgrounds/ubuntu-mate-common/Green-Wall-Logo.png" ]; then
+              echo "/usr/share/backgrounds/ubuntu-mate-common/Green-Wall-Logo.png"
+              return
+            elif [ -e "/usr/share/backgrounds/mate/desktop/GreenTraditional.jpg" ]; then
+              echo "/usr/share/backgrounds/mate/desktop/GreenTraditional.jpg"
+              return
+            fi
+            ;;
+        sway)
+            if [ -e "/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_2048x1536.png" ]; then
+              echo "/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_2048x1536.png"
+              return
+            elif  [ -e "/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png" ]; then
+              echo "/usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png"
+              return
+            fi
+            ;;
+        xfce)
+            ;;
+        *)
+            ;;
+    esac
+
+    if [ -e /usr/share/backgrounds/miriway.png ]; then
+        echo "/usr/share/backgrounds/miriway.png"
+    elif [ -e /snap/miriway/current/usr/share/backgrounds/miriway.png ]; then
+        echo "/snap/miriway/current/usr/share/backgrounds/miriway.png"
     elif [ -e /usr/share/backgrounds/warty-final-ubuntu.png ]; then
-        echo /usr/share/backgrounds/warty-final-ubuntu.png
+        echo "/usr/share/backgrounds/warty-final-ubuntu.png"
     elif [ -d /usr/share/backgrounds ]; then
         find /usr/share/backgrounds -type f 2>/dev/null | head -n 1
-    else
-        echo ""
     fi
 }
 
@@ -295,17 +338,20 @@ detect_polkit_agent()
 default_terminal_for_profile()
 {
     case "$1" in
-        mate)
-            echo mate-terminal
-            ;;
-        xfce)
-            echo xfce4-terminal
+        budgie)
+            echo tilix
             ;;
         lxqt)
             echo qterminal
             ;;
+        mate)
+            echo mate-terminal
+            ;;
         sway)
             if has foot; then echo foot; else echo alacritty; fi
+            ;;
+        xfce)
+            echo xfce4-terminal
             ;;
         *)
             if has kgx; then echo kgx; elif has gnome-terminal; then echo gnome-terminal; else echo kgx; fi
@@ -316,13 +362,13 @@ default_terminal_for_profile()
 apply_profile_defaults()
 {
     case "$profile" in
-        minimal)
+        budgie)
             terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
-            launcher="${launcher:-none}"
-            panel="${panel:-none}"
-            notifications="${notifications:-none}"
-            wallpaper="${wallpaper:-none}"
-            lockscreen="${lockscreen:-none}"
+            launcher="${launcher:-budgie-run-dialog}"
+            panel="${panel:-budgie-panel}"
+            notifications="${notifications:-swaync}"
+            wallpaper="${wallpaper:-swaybg}"
+            lockscreen="${lockscreen:-swaylock}"
             ;;
         desktop)
             terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
@@ -332,10 +378,34 @@ apply_profile_defaults()
             wallpaper="${wallpaper:-swaybg}"
             lockscreen="${lockscreen:-swaylock}"
             ;;
+        lxqt)
+            terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
+            launcher="${launcher:-lxqt-runner}"
+            panel="${panel:-lxqt-panel}"
+            notifications="${notifications:-lxqt-notificationd}"
+            wallpaper="${wallpaper:-swaybg}"
+            lockscreen="${lockscreen:-swaylock}"
+            ;;
         mate)
             terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
-            launcher="${launcher:-synapse}"
-            panel="${panel:-yambar}"
+            launcher="${launcher:-mate-panel --run-dialog}"
+            panel="${panel:-mate-panel}"
+            notifications="${notifications:-/usr/libexec/mate-notification-daemon/mate-notification-daemon}"
+            wallpaper="${wallpaper:-swaybg}"
+            lockscreen="${lockscreen:-swaylock}"
+            ;;
+        minimal)
+            terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
+            launcher="${launcher:-none}"
+            panel="${panel:-none}"
+            notifications="${notifications:-none}"
+            wallpaper="${wallpaper:-none}"
+            lockscreen="${lockscreen:-none}"
+            ;;
+        sway)
+            terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
+            launcher="${launcher:-wofi --show drun --location top_left}"
+            panel="${panel:-waybar}"
             notifications="${notifications:-swaync}"
             wallpaper="${wallpaper:-swaybg}"
             lockscreen="${lockscreen:-swaylock}"
@@ -343,33 +413,9 @@ apply_profile_defaults()
         xfce)
             terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
             launcher="${launcher:-xfce4-appfinder}"
-            panel="${panel:-none}"
-            notifications="${notifications:-none}"
-            wallpaper="${wallpaper:-none}"
-            lockscreen="${lockscreen:-swaylock}"
-            ;;
-        lxqt)
-            terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
-            launcher="${launcher:-lxqt-runner}"
-            panel="${panel:-none}"
-            notifications="${notifications:-none}"
-            wallpaper="${wallpaper:-none}"
-            lockscreen="${lockscreen:-swaylock}"
-            ;;
-        budgie)
-            terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
-            launcher="${launcher:-budgie-menu}"
-            panel="${panel:-none}"
-            notifications="${notifications:-none}"
-            wallpaper="${wallpaper:-swaybg}"
-            lockscreen="${lockscreen:-swaylock}"
-            ;;
-        sway)
-            terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
-            launcher="${launcher:-wofi --show drun}"
-            panel="${panel:-yambar}"
-            notifications="${notifications:-mako}"
-            wallpaper="${wallpaper:-swaybg}"
+            panel="${panel:-xfce4-panel}"
+            notifications="${notifications:-xfce4-notifyd}"
+            wallpaper="${wallpaper:-xfdesktop}"
             lockscreen="${lockscreen:-swaylock}"
             ;;
     esac
@@ -526,6 +572,10 @@ EOF
 
     if [ "$wallpaper" = swaybg ] && [ -n "$background" ]; then
         echo "shell-component=$(shell_command_line "$prefix" "swaybg --mode fill --output '*' --image $quoted_background")"
+    elif [ "$wallpaper" = xfdesktop ]; then
+        echo "shell-component=$(shell_command_line "$prefix" "xfdesktop --reload")"
+    elif [ "$wallpaper" != none ]; then
+        echo "shell-component=$(shell_command_line "$prefix" "$wallpaper")"
     fi
 
     if [ "$notifications" != none ]; then
@@ -867,7 +917,7 @@ main()
 
     apply_profile_defaults
 
-    background="$(default_background)"
+    background="$(default_background_for_profile "$profile")"
 
     if [ "$use_unsnap" = ask ]; then
         if ask_yes_no "Use miriway-unsnap when launching desktop applications?" y; then
