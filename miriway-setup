@@ -217,7 +217,12 @@ package_for_command()
                 apk) echo swaync ;;
             esac
             ;;
-        mako) echo mako ;;
+        mako)
+            case "$package_manager" in
+                apt) echo mako-notifier ;;
+                *) echo mako ;;
+            esac
+            ;;
         yambar) echo yambar ;;
         waybar) echo waybar ;;
         grim) echo grim ;;
@@ -417,6 +422,10 @@ install_missing_packages()
     local command_name package
 
     [ "${#missing_commands[@]}" -eq 0 ] && return 0
+    if [ "$dry_run" -eq 1 ]; then
+        echo "Dry run: skipping installation of missing commands: ${missing_commands[*]}"
+        return 0
+    fi
     [ -z "$package_manager" ] && error "cannot find a supported package manager"
 
     for command_name in "${missing_commands[@]}"
@@ -437,8 +446,8 @@ install_missing_packages()
     echo "Installing packages: ${packages[*]}"
 
     case "$package_manager" in
-        apt) sudo apt install "${packages[@]}" ;;
-        dnf) sudo dnf install "${packages[@]}" ;;
+        apt) sudo apt install -y "${packages[@]}" ;;
+        dnf) sudo dnf install -y "${packages[@]}" ;;
         apk) sudo apk add "${packages[@]}" ;;
     esac
 }
@@ -614,8 +623,9 @@ EOF
     for wificard in /sys/class/net/wl*
     do
         [ -e "$wificard" ] || continue
-        cat <<'EOF'
+        cat <<EOF
     - network:
+        name: ${wificard##*/}
         content:
           map:
             deco: *greybg

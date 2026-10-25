@@ -75,7 +75,7 @@ apps:
   setup:
     command-chain:
       - bin/miriway-unconfine
-    command: bin/miriway-setup
+    command: usr/bin/miriway-setup
     environment: *_environment
 
 parts:
