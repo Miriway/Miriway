@@ -201,6 +201,7 @@ package_for_command()
 
     case "$command_name" in
         none|"") return 0 ;;
+        budgie-panel|budgie-run-dialog) echo budgie-core ;;
         kgx)
             case "$package_manager" in
                 apt) echo gnome-console ;;
