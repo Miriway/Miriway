@@ -11,6 +11,41 @@ can be started. But it is possible to integrate specialised app launchers
 
 ## Basic configuration
 
+The easiest way to create a user configuration is to run:
+
+    miriway-setup
+
+This interactive utility can generate `miriway-shell.config`,
+`miriway-shell.settings`, and optional component configuration such as
+`yambar/config.yml`.
+
+It offers several starting profiles:
+
+    miriway-setup --list-profiles
+
+For non-interactive setup, pass a profile explicitly:
+
+    miriway-setup --profile minimal
+    miriway-setup --profile desktop
+    miriway-setup --profile mate
+    miriway-setup --profile xfce
+    miriway-setup --profile lxqt
+    miriway-setup --profile budgie
+    miriway-setup --profile sway
+
+Useful options include:
+
+    miriway-setup --profile desktop --dry-run
+    miriway-setup --profile mate --install
+    miriway-setup --profile sway --no-install
+    miriway-setup --profile desktop --background /path/to/image
+    miriway-setup --profile desktop --terminal kgx
+    miriway-setup --profile desktop --launcher synapse
+    miriway-setup --profile desktop --panel yambar
+
+Existing configuration files are backed up before replacement unless
+`--no-backup` is specified.
+
 In addition to these Miriway specific configuration options, all the standard
 Mir Server configuration options are supported. These include such things as
 display layout.

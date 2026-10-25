@@ -1,0 +1,911 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+program="$(basename "$0")"
+
+profile=""
+config_dir="${XDG_CONFIG_HOME:-$HOME/.config}"
+dry_run=0
+force=0
+backup=1
+install_mode=ask
+interactive=1
+
+terminal=""
+launcher=""
+panel=""
+notifications=""
+wallpaper=""
+lockscreen=""
+background=""
+use_unsnap=ask
+use_systemd_run=ask
+
+profiles="minimal desktop mate xfce lxqt budgie sway"
+
+usage()
+{
+    cat <<EOF
+Usage: $program [OPTIONS]
+
+Create a user Miriway configuration.
+
+Options:
+  --profile NAME          Profile to generate: minimal, desktop, mate, xfce, lxqt, budgie, sway
+  --list-profiles         List available profiles
+  --config-dir DIR        Configuration directory to write to [default: \$XDG_CONFIG_HOME or ~/.config]
+  --background PATH       Background image to use
+  --terminal COMMAND      Terminal command
+  --launcher COMMAND      Launcher command
+  --panel COMMAND         Panel/bar command: none, yambar, waybar
+  --notifications COMMAND Notification daemon command: none, swaync, mako
+  --lockscreen COMMAND    Lockscreen command: none, swaylock
+  --install               Install missing packages without prompting
+  --no-install            Do not install missing packages
+  --backup                Back up existing files before replacing them [default]
+  --no-backup             Do not create backups
+  --force                 Replace existing files without prompting
+  --dry-run               Print what would be written without changing files
+  -h, --help              Show this help
+
+Examples:
+  $program
+  $program --profile minimal
+  $program --profile mate --install
+  $program --profile sway --no-install --dry-run
+EOF
+}
+
+list_profiles()
+{
+    cat <<EOF
+minimal  Minimal Miriway keybindings and no desktop components
+desktop  Generic desktop-like setup using swaybg, swaync, yambar and swaylock
+mate     MATE-friendly setup
+xfce     XFCE-friendly setup
+lxqt     LXQt-friendly setup
+budgie   Budgie-friendly setup
+sway     Sway-like setup
+EOF
+}
+
+error()
+{
+    echo "$program: $*" >&2
+    exit 1
+}
+
+has()
+{
+    command -v "$1" >/dev/null 2>&1
+}
+
+ask_yes_no()
+{
+    local prompt="$1"
+    local default="${2:-y}"
+    local answer
+
+    if [ "$interactive" -eq 0 ]; then
+        [ "$default" = y ]
+        return
+    fi
+
+    while true
+    do
+        if [ "$default" = y ]; then
+            read -r -p "$prompt [Y/n] " answer
+            answer="${answer:-y}"
+        else
+            read -r -p "$prompt [y/N] " answer
+            answer="${answer:-n}"
+        fi
+
+        case "$answer" in
+            [Yy]|[Yy][Ee][Ss]) return 0 ;;
+            [Nn]|[Nn][Oo]) return 1 ;;
+        esac
+    done
+}
+
+ask_yes_no()
+{
+    local prompt="$1"
+    local default="${2:-y}"
+    local answer
+
+    if [ "$interactive" -eq 0 ]; then
+        [ "$default" = y ]
+        return
+    fi
+
+    while true
+    do
+        if [ "$default" = y ]; then
+            read -r -p "$prompt [Y/n] " answer
+            answer="${answer:-y}"
+        else
+            read -r -p "$prompt [y/N] " answer
+            answer="${answer:-n}"
+        fi
+
+        case "$answer" in
+            [Yy]|[Yy][Ee][Ss]) return 0 ;;
+            [Nn]|[Nn][Oo]) return 1 ;;
+        esac
+    done
+}
+
+choose_from()
+{
+    local prompt="$1"
+    shift
+    local choices=("$@")
+    local i answer
+
+    echo "$prompt" >&2
+    i=1
+    for choice in "${choices[@]}"
+    do
+        echo "  $i. $choice" >&2
+        i=$((i + 1))
+    done
+
+    while true
+    do
+        read -r -p "Selection [1-${#choices[@]}]: " answer
+        case "$answer" in
+            ''|*[!0-9]*) ;;
+            *)
+                if [ "$answer" -ge 1 ] && [ "$answer" -le "${#choices[@]}" ]; then
+                    echo "${choices[$((answer - 1))]}"
+                    return
+                fi
+                ;;
+        esac
+    done
+}
+
+valid_profile()
+{
+    local candidate="$1"
+    for p in $profiles
+    do
+        [ "$candidate" = "$p" ] && return 0
+    done
+    return 1
+}
+
+detect_package_manager()
+{
+    if has apt; then
+        echo apt
+    elif has dnf; then
+        echo dnf
+    elif has apk; then
+        echo apk
+    else
+        echo ""
+    fi
+}
+
+package_for_command()
+{
+    local package_manager="$1"
+    local command_name="$2"
+
+    case "$command_name" in
+        none|"") return 0 ;;
+        kgx)
+            case "$package_manager" in
+                apt) echo gnome-console ;;
+                dnf) echo gnome-console ;;
+                apk) echo kgx ;;
+            esac
+            ;;
+        mate-terminal) echo mate-terminal ;;
+        xfce4-terminal) echo xfce4-terminal ;;
+        qterminal) echo qterminal ;;
+        foot) echo foot ;;
+        alacritty) echo alacritty ;;
+        swaybg) echo swaybg ;;
+        swaylock) echo swaylock ;;
+        swaync)
+            case "$package_manager" in
+                apt) echo sway-notification-center ;;
+                dnf) echo sway-notification-center ;;
+                apk) echo swaync ;;
+            esac
+            ;;
+        mako) echo mako ;;
+        yambar) echo yambar ;;
+        waybar) echo waybar ;;
+        grim) echo grim ;;
+        synapse) echo synapse ;;
+        wofi) echo wofi ;;
+        bemenu) echo bemenu ;;
+        gnome-keyring-daemon)
+            case "$package_manager" in
+                apt) echo gnome-keyring ;;
+                dnf) echo gnome-keyring ;;
+                apk) echo gnome-keyring ;;
+            esac
+            ;;
+        *)
+            echo "$command_name"
+            ;;
+    esac
+}
+
+fontawesome_package()
+{
+    local package_manager="$1"
+
+    case "$package_manager" in
+        apt) echo fonts-font-awesome ;;
+        dnf) echo fontawesome-fonts ;;
+        apk) echo font-awesome ;;
+    esac
+}
+
+default_background()
+{
+    if [ -n "${background:-}" ]; then
+        echo "$background"
+    elif [ -e /usr/share/backgrounds/miriway.png ]; then
+        echo /usr/share/backgrounds/miriway.png
+    elif [ -e /usr/share/backgrounds/warty-final-ubuntu.png ]; then
+        echo /usr/share/backgrounds/warty-final-ubuntu.png
+    elif [ -d /usr/share/backgrounds ]; then
+        find /usr/share/backgrounds -type f 2>/dev/null | head -n 1
+    else
+        echo ""
+    fi
+}
+
+detect_polkit_agent()
+{
+    for candidate in \
+        /usr/libexec/mate-polkit/polkit-mate-authentication-agent-1 \
+        /usr/libexec/polkit-mate-authentication-agent-1 \
+        /usr/lib/polkit-mate/polkit-mate-authentication-agent-1 \
+        /usr/libexec/xfce-polkit \
+        /usr/lib/xfce-polkit/xfce-polkit \
+        /usr/libexec/lxqt-policykit-agent \
+        /usr/lib/lxqt-policykit/lxqt-policykit-agent
+    do
+        if [ -x "$candidate" ]; then
+            echo "$candidate"
+            return
+        fi
+    done
+
+    find /usr/lib /usr/libexec -name 'polkit-*-agent-1' -type f -perm -111 2>/dev/null | head -n 1 || true
+}
+
+default_terminal_for_profile()
+{
+    case "$1" in
+        mate)
+            if has mate-terminal; then echo mate-terminal; else echo miriway-terminal; fi
+            ;;
+        xfce)
+            if has xfce4-terminal; then echo xfce4-terminal; else echo miriway-terminal; fi
+            ;;
+        lxqt)
+            if has qterminal; then echo qterminal; else echo miriway-terminal; fi
+            ;;
+        sway)
+            if has foot; then echo foot; elif has alacritty; then echo alacritty; else echo miriway-terminal; fi
+            ;;
+        *)
+            if has kgx; then echo kgx; else echo miriway-terminal; fi
+            ;;
+    esac
+}
+
+apply_profile_defaults()
+{
+    case "$profile" in
+        minimal)
+            terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
+            launcher="${launcher:-none}"
+            panel="${panel:-none}"
+            notifications="${notifications:-none}"
+            wallpaper="${wallpaper:-none}"
+            lockscreen="${lockscreen:-none}"
+            ;;
+        desktop)
+            terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
+            launcher="${launcher:-synapse}"
+            panel="${panel:-yambar}"
+            notifications="${notifications:-swaync}"
+            wallpaper="${wallpaper:-swaybg}"
+            lockscreen="${lockscreen:-swaylock}"
+            ;;
+        mate)
+            terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
+            launcher="${launcher:-synapse}"
+            panel="${panel:-yambar}"
+            notifications="${notifications:-swaync}"
+            wallpaper="${wallpaper:-swaybg}"
+            lockscreen="${lockscreen:-swaylock}"
+            ;;
+        xfce)
+            terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
+            launcher="${launcher:-xfce4-appfinder}"
+            panel="${panel:-none}"
+            notifications="${notifications:-none}"
+            wallpaper="${wallpaper:-none}"
+            lockscreen="${lockscreen:-swaylock}"
+            ;;
+        lxqt)
+            terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
+            launcher="${launcher:-lxqt-runner}"
+            panel="${panel:-none}"
+            notifications="${notifications:-none}"
+            wallpaper="${wallpaper:-none}"
+            lockscreen="${lockscreen:-swaylock}"
+            ;;
+        budgie)
+            terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
+            launcher="${launcher:-budgie-menu}"
+            panel="${panel:-none}"
+            notifications="${notifications:-none}"
+            wallpaper="${wallpaper:-swaybg}"
+            lockscreen="${lockscreen:-swaylock}"
+            ;;
+        sway)
+            terminal="${terminal:-$(default_terminal_for_profile "$profile")}"
+            launcher="${launcher:-wofi --show drun}"
+            panel="${panel:-yambar}"
+            notifications="${notifications:-mako}"
+            wallpaper="${wallpaper:-swaybg}"
+            lockscreen="${lockscreen:-swaylock}"
+            ;;
+    esac
+}
+
+profile_summary()
+{
+    cat <<EOF
+Profile:       $profile
+Config dir:    $config_dir
+Terminal:      $terminal
+Launcher:      $launcher
+Panel:         $panel
+Notifications: $notifications
+Wallpaper:     $wallpaper
+Lockscreen:    $lockscreen
+Background:    ${background:-none}
+EOF
+}
+
+command_word()
+{
+    local command_line="$1"
+    set -- $command_line
+    echo "${1:-}"
+}
+
+collect_required_commands()
+{
+    {
+        command_word "$terminal"
+        command_word "$launcher"
+        command_word "$panel"
+        command_word "$notifications"
+        command_word "$wallpaper"
+        command_word "$lockscreen"
+
+        if [ "$profile" != minimal ]; then
+            echo grim
+        fi
+
+        if [ "$profile" = desktop ] || [ "$profile" = mate ]; then
+            echo gnome-keyring-daemon
+        fi
+    } | sed '/^$/d;/^none$/d' | sort -u
+}
+
+install_missing_packages()
+{
+    local package_manager="$1"
+    shift
+    local missing_commands=("$@")
+    local packages=()
+    local command_name package
+
+    [ "${#missing_commands[@]}" -eq 0 ] && return 0
+    [ -z "$package_manager" ] && error "cannot find a supported package manager"
+
+    for command_name in "${missing_commands[@]}"
+    do
+        package="$(package_for_command "$package_manager" "$command_name")"
+        [ -n "$package" ] && packages+=("$package")
+    done
+
+    if [ "$panel" = yambar ]; then
+        package="$(fontawesome_package "$package_manager")"
+        [ -n "$package" ] && packages+=("$package")
+    fi
+
+    mapfile -t packages < <(printf '%s\n' "${packages[@]}" | sort -u)
+
+    [ "${#packages[@]}" -eq 0 ] && return 0
+
+    echo "Installing packages: ${packages[*]}"
+
+    case "$package_manager" in
+        apt) sudo apt install "${packages[@]}" ;;
+        dnf) sudo dnf install "${packages[@]}" ;;
+        apk) sudo apk add "${packages[@]}" ;;
+    esac
+}
+
+run_prefix()
+{
+    if [ "$use_unsnap" = yes ] && [ "$use_systemd_run" = yes ]; then
+        echo "miriway-unsnap systemd-run --user --scope --slice=background.slice"
+    elif [ "$use_unsnap" = yes ]; then
+        echo "miriway-unsnap"
+    elif [ "$use_systemd_run" = yes ]; then
+        echo "systemd-run --user --scope --slice=background.slice"
+    else
+        echo ""
+    fi
+}
+
+app_prefix()
+{
+    if [ "$use_unsnap" = yes ]; then
+        echo "miriway-unsnap"
+    else
+        echo ""
+    fi
+}
+
+shell_command_line()
+{
+    local prefix="$1"
+    shift
+
+    if [ -n "$prefix" ]; then
+        echo "$prefix $*"
+    else
+        echo "$*"
+    fi
+}
+
+generate_config()
+{
+    local miriway_display="${config_dir}/miriway-shell.display"
+    local prefix
+    local polkit_agent
+
+    prefix="$(run_prefix)"
+    polkit_agent="$(detect_polkit_agent)"
+
+    cat <<EOF
+# Generated by miriway-setup
+# Profile: $profile
+
+x11-window-title=Miriway
+idle-timeout=600
+app-env-amend=XDG_SESSION_TYPE=wayland:GTK_USE_PORTAL=0:XDG_CURRENT_DESKTOP=Miriway:GTK_A11Y=none:-GTK_IM_MODULE
+display-config=static=$miriway_display
+EOF
+
+    if [ "$lockscreen" != none ] && [ -n "$background" ]; then
+        echo "lockscreen-app=$(shell_command_line "$(app_prefix)" "$lockscreen -i $background")"
+    elif [ "$lockscreen" != none ]; then
+        echo "lockscreen-app=$(shell_command_line "$(app_prefix)" "$lockscreen")"
+    fi
+
+    if [ "$wallpaper" = swaybg ] && [ -n "$background" ]; then
+        echo "shell-component=$(shell_command_line "$prefix" "swaybg --mode fill --output '*' --image $background")"
+    fi
+
+    if [ "$notifications" != none ]; then
+        echo "shell-component=$(shell_command_line "$prefix" "$notifications")"
+    fi
+
+    if [ "$panel" != none ]; then
+        echo "shell-component=$(shell_command_line "$prefix" "$panel")"
+    fi
+
+    if [ "$profile" = desktop ] || [ "$profile" = mate ]; then
+        echo "shell-component=$(shell_command_line "$prefix" "gnome-keyring-daemon --foreground")"
+    fi
+
+    if [ -n "$polkit_agent" ]; then
+        echo "shell-component=$(shell_command_line "$prefix" "$polkit_agent")"
+    fi
+}
+
+generate_settings()
+{
+    local app_prefix_value
+    app_prefix_value="$(app_prefix)"
+
+    cat <<EOF
+# Generated by miriway-setup
+# Profile: $profile
+
+touchpad_tap_to_click=true
+command_ctrl_alt=t:$(shell_command_line "$app_prefix_value" "$terminal")
+EOF
+
+    if [ "$launcher" != none ]; then
+        echo "command_shell_meta=a:$(shell_command_line "$app_prefix_value" "$launcher")"
+    fi
+
+    if [ "$profile" != minimal ]; then
+        echo 'command_meta=Print:miriway-unsnap sh -c "grim ~/Pictures/screenshot-$(date --iso-8601=seconds).png"'
+    fi
+
+    if [ "$lockscreen" != none ]; then
+        echo "command_shell_ctrl_alt=l:$(shell_command_line "$app_prefix_value" "loginctl lock-session")"
+    fi
+
+    cat <<EOF
+
+command_meta=Left:@dock-left
+command_meta=Right:@dock-right
+command_meta=Space:@toggle-maximized
+command_meta=Home:@workspace-begin
+command_meta=End:@workspace-end
+command_meta=Page_Up:@workspace-up
+command_meta=Page_Down:@workspace-down
+command_ctrl_alt=BackSpace:@exit
+EOF
+}
+
+generate_yambar_config()
+{
+    cat <<'EOF'
+awesome: &awesome Font Awesome 6 Free:style=solid:pixelsize=14
+ubuntu: &ubuntu Ubuntu:pixelsize=14
+
+bar:
+  location: top
+  height: 21
+  background: 282828ff
+  font: *ubuntu
+
+  left:
+    - cpu:
+        content:
+          map:
+            deco: &greybg
+              background:
+                color: 3f3f3fff
+            conditions:
+              id >= 0:
+                - ramp:
+                    tag: cpu
+                    items:
+                      - string: {text: ▁, foreground: 00ff00ff}
+                      - string: {text: ▂, foreground: 00ff00ff}
+                      - string: {text: ▃, foreground: 00ff00ff}
+                      - string: {text: ▄}
+                      - string: {text: ▅}
+                      - string: {text: ▆, foreground: ffa600ff}
+                      - string: {text: ▇, foreground: ffa600ff}
+                      - string: {text: █, foreground: ff0000ff}
+    - mem:
+        content:
+          - string:
+              margin: 5
+              text: "mem: {percent_used}%"
+              deco: *greybg
+
+  center:
+    - clock:
+        content:
+          - string:
+              margin: 5
+              text: "{date} {time}"
+              deco: *greybg
+
+  right:
+EOF
+
+    for wificard in /sys/class/net/wl*
+    do
+        [ -e "$wificard" ] || continue
+        cat <<'EOF'
+    - network:
+        content:
+          map:
+            deco: *greybg
+            margin: 5
+            default: {string: {text: , font: *awesome}}
+            conditions:
+              state == down: {string: {text: , font: *awesome}}
+              state == up:
+                map:
+                  default:
+                    - string: {text: , font: *awesome, deco: *greybg}
+                  conditions:
+                    ipv4 == "":
+                      - string: {text: , font: *awesome}
+EOF
+    done
+
+    for battery in /sys/class/power_supply/BAT*
+    do
+        [ -e "$battery" ] || continue
+        cat <<EOF
+    - battery:
+        name: $(basename "$battery")
+        anchors:
+          discharging: &discharging
+            list:
+              items:
+                - ramp:
+                    tag: capacity
+                    items:
+                      - string: {text: , foreground: ff0000ff, font: *awesome}
+                      - string: {text: , foreground: ffa600ff, font: *awesome}
+                      - string: {text: , font: *awesome}
+                      - string: {text: , font: *awesome}
+                      - string: {text: , font: *awesome}
+                      - string: {text: , font: *awesome}
+                      - string: {text: , font: *awesome}
+                      - string: {text: , font: *awesome}
+                      - string: {text: , font: *awesome}
+                      - string: {text: , foreground: 00ff00ff, font: *awesome}
+                - string: {text: "{capacity}% {estimate}"}
+        content:
+          map:
+            deco: *greybg
+            margin: 5
+            conditions:
+              state == unknown:
+                <<: *discharging
+              state == discharging:
+                <<: *discharging
+              state == charging:
+                - string: {text: , foreground: 00ff00ff, font: *awesome}
+                - string: {text: "{capacity}% {estimate}"}
+              state == full:
+                - string: {text: , foreground: 00ff00ff, font: *awesome}
+                - string: {text: "{capacity}% full"}
+              state == "not charging":
+                - ramp:
+                    tag: capacity
+                    items:
+                      - string: {text:  , foreground: ff0000ff, font: *awesome}
+                      - string: {text:  , foreground: ffa600ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                      - string: {text:  , foreground: 00ff00ff, font: *awesome}
+                - string: {text: "{capacity}%"}
+EOF
+    done
+}
+
+write_file()
+{
+    local target="$1"
+    local generator="$2"
+
+    if [ "$dry_run" -eq 1 ]; then
+        echo
+        echo "===== $target ====="
+        "$generator"
+        return
+    fi
+
+    mkdir -p "$(dirname "$target")"
+
+    if [ -e "$target" ]; then
+        if [ "$force" -eq 0 ]; then
+            if ! ask_yes_no "Replace existing $target?" n; then
+                echo "Skipping $target"
+                return
+            fi
+        fi
+
+        if [ "$backup" -eq 1 ]; then
+            cp "$target" "$target.backup-$(date +%Y%m%d-%H%M%S)"
+        fi
+    fi
+
+    "$generator" > "$target"
+}
+
+parse_args()
+{
+    while [ "$#" -gt 0 ]
+    do
+        case "$1" in
+            --profile)
+                [ "$#" -gt 1 ] || error "--profile requires a value"
+                profile="$2"
+                interactive=0
+                shift 2
+                ;;
+            --list-profiles)
+                list_profiles
+                exit 0
+                ;;
+            --config-dir)
+                [ "$#" -gt 1 ] || error "--config-dir requires a value"
+                config_dir="$2"
+                shift 2
+                ;;
+            --background)
+                [ "$#" -gt 1 ] || error "--background requires a value"
+                background="$2"
+                shift 2
+                ;;
+            --terminal)
+                [ "$#" -gt 1 ] || error "--terminal requires a value"
+                terminal="$2"
+                shift 2
+                ;;
+            --launcher)
+                [ "$#" -gt 1 ] || error "--launcher requires a value"
+                launcher="$2"
+                shift 2
+                ;;
+            --panel)
+                [ "$#" -gt 1 ] || error "--panel requires a value"
+                panel="$2"
+                shift 2
+                ;;
+            --notifications)
+                [ "$#" -gt 1 ] || error "--notifications requires a value"
+                notifications="$2"
+                shift 2
+                ;;
+            --lockscreen)
+                [ "$#" -gt 1 ] || error "--lockscreen requires a value"
+                lockscreen="$2"
+                shift 2
+                ;;
+            --install)
+                install_mode=yes
+                interactive=0
+                shift
+                ;;
+            --no-install)
+                install_mode=no
+                interactive=0
+                shift
+                ;;
+            --backup)
+                backup=1
+                shift
+                ;;
+            --no-backup)
+                backup=0
+                shift
+                ;;
+            --force)
+                force=1
+                interactive=0
+                shift
+                ;;
+            --dry-run)
+                dry_run=1
+                shift
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            *)
+                error "unknown option: $1"
+                ;;
+        esac
+    done
+}
+
+interactive_setup()
+{
+    local selected
+
+    echo "Welcome to Miriway setup."
+    echo
+
+    selected="$(choose_from "Choose a profile:" \
+        "minimal - minimal Miriway configuration" \
+        "desktop - generic desktop-like setup" \
+        "mate - MATE-friendly setup" \
+        "xfce - XFCE-friendly setup" \
+        "lxqt - LXQt-friendly setup" \
+        "budgie - Budgie-friendly setup" \
+        "sway - Sway-like setup")"
+
+    profile="${selected%% *}"
+}
+
+main()
+{
+    local package_manager
+    local missing_commands=()
+    local command_name
+
+    parse_args "$@"
+
+    if [ -z "$profile" ]; then
+        interactive_setup
+    fi
+
+    valid_profile "$profile" || error "unknown profile: $profile"
+
+    apply_profile_defaults
+
+    background="$(default_background)"
+
+    if [ "$use_unsnap" = ask ]; then
+        if ask_yes_no "Use miriway-unsnap when launching desktop applications?" y; then
+            use_unsnap=yes
+        else
+            use_unsnap=no
+        fi
+    fi
+
+    if [ "$use_systemd_run" = ask ]; then
+        if has systemd-run && ask_yes_no "Use systemd-run for background shell components?" y; then
+            use_systemd_run=yes
+        else
+            use_systemd_run=no
+        fi
+    fi
+
+    echo
+    profile_summary
+    echo
+
+    while read -r command_name
+    do
+        if ! has "$command_name"; then
+            missing_commands+=("$command_name")
+        fi
+    done < <(collect_required_commands)
+
+    if [ "${#missing_commands[@]}" -gt 0 ]; then
+        echo "Missing commands:"
+        printf '  %s\n' "${missing_commands[@]}"
+        echo
+
+        package_manager="$(detect_package_manager)"
+
+        case "$install_mode" in
+            yes)
+                install_missing_packages "$package_manager" "${missing_commands[@]}"
+                ;;
+            no)
+                ;;
+            ask)
+                if ask_yes_no "Install missing packages?" y; then
+                    install_missing_packages "$package_manager" "${missing_commands[@]}"
+                fi
+                ;;
+        esac
+    fi
+
+    write_file "$config_dir/miriway-shell.config" generate_config
+    write_file "$config_dir/miriway-shell.settings" generate_settings
+
+    if [ "$panel" = yambar ]; then
+        write_file "$config_dir/yambar/config.yml" generate_yambar_config
+    fi
+
+    if [ "$dry_run" -eq 0 ]; then
+        echo
+        echo "Miriway setup complete."
+        echo "Configuration written under: $config_dir"
+    fi
+}
+
+main "$@"
