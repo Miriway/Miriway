@@ -21,7 +21,7 @@ background=""
 use_unsnap=ask
 use_systemd_run=ask
 
-if [ "$SNAP_NAME" == "miriway" ]; then
+if [ "${SNAP_NAME:-}" == "miriway" ]; then
   use_unsnap=yes
 fi
 
