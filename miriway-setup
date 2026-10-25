@@ -209,6 +209,7 @@ package_for_command()
                 apk) echo kgx ;;
             esac
             ;;
+        xfdesktop) echo xfdesktop4 ;;
         mate-terminal) echo mate-terminal ;;
         xfce4-terminal) echo xfce4-terminal ;;
         qterminal) echo qterminal ;;
