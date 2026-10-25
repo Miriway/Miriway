@@ -200,28 +200,22 @@ package_for_command()
     local command_name="$2"
 
     case "$command_name" in
-        none|"") return 0 ;;
+        /usr/libexec/mate-notification-daemon/mate-notification-daemon)
+            echo mate-notification-daemon
+            ;;
         budgie-panel|budgie-run-dialog) echo budgie-core ;;
-        kgx)
+        gnome-keyring-daemon)
             case "$package_manager" in
-                apt) echo gnome-console ;;
-                dnf) echo gnome-console ;;
-                apk) echo kgx ;;
+                apk) echo gnome-keyring ;;
+                apt) echo gnome-keyring ;;
+                dnf) echo gnome-keyring ;;
             esac
             ;;
-        xfdesktop) echo xfdesktop4 ;;
-        mate-terminal) echo mate-terminal ;;
-        xfce4-terminal) echo xfce4-terminal ;;
-        qterminal) echo qterminal ;;
-        foot) echo foot ;;
-        alacritty) echo alacritty ;;
-        swaybg) echo swaybg ;;
-        swaylock) echo swaylock ;;
-        swaync)
+        kgx)
             case "$package_manager" in
-                apt) echo sway-notification-center ;;
-                dnf) echo sway-notification-center ;;
-                apk) echo swaync ;;
+                apk) echo kgx ;;
+                apt) echo gnome-console ;;
+                dnf) echo gnome-console ;;
             esac
             ;;
         mako)
@@ -230,22 +224,15 @@ package_for_command()
                 *) echo mako ;;
             esac
             ;;
-        yambar) echo yambar ;;
-        waybar) echo waybar ;;
-        grim) echo grim ;;
-        synapse) echo synapse ;;
-        wofi) echo wofi ;;
-        bemenu) echo bemenu ;;
-        gnome-keyring-daemon)
+        none|"") return 0 ;;
+        swaync)
             case "$package_manager" in
-                apt) echo gnome-keyring ;;
-                dnf) echo gnome-keyring ;;
-                apk) echo gnome-keyring ;;
+                apk) echo swaync ;;
+                apt) echo sway-notification-center ;;
+                dnf) echo sway-notification-center ;;
             esac
             ;;
-        /usr/libexec/mate-notification-daemon/mate-notification-daemon)
-            echo mate-notification-daemon
-            ;;
+        xfdesktop) echo xfdesktop4 ;;
         *)
             echo "$command_name"
             ;;
