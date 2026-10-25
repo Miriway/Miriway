@@ -106,7 +106,7 @@ install(PROGRAMS
 )
 
 install(FILES ${CMAKE_SOURCE_DIR}/systemd/usr/lib/systemd/user/miriway-session.target
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/usr/lib/systemd/user/
+    DESTINATION lib/systemd/user/
 )
 if(SDDM)
     configure_file(${CMAKE_SOURCE_DIR}/sddm/miriway.conf.in
