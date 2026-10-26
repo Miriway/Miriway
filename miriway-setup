@@ -1068,6 +1068,7 @@ main()
         echo
         echo "Miriway setup complete."
         echo "Configuration written under: $config_dir"
+        echo "==> Restart your session to use the new configuration. <=="
     fi
 }
 
