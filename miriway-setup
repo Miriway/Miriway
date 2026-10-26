@@ -10,6 +10,7 @@ force=0
 backup=1
 install_mode=ask
 interactive=1
+if_first_run=0
 
 terminal=""
 launcher=""
@@ -49,6 +50,7 @@ Options:
   --backup                Back up existing files before replacing them [default]
   --no-backup             Do not create backups
   --force                 Replace existing files without prompting
+  --if-first-run          Exit immediately if miriway-shell.config already exists
   --dry-run               Print what would be written without changing files
   -h, --help              Show this help
 
@@ -936,6 +938,10 @@ parse_args()
                 interactive=0
                 shift
                 ;;
+            --if-first-run)
+                if_first_run=1
+                shift
+                ;;
             --dry-run)
                 dry_run=1
                 shift
@@ -978,6 +984,12 @@ main()
     local command_name
 
     parse_args "$@"
+
+    if [ "$if_first_run" -eq 1 ] && [ -e "$config_dir/miriway-shell.config" ]; then
+        echo "Existing configuration found: $config_dir/miriway-shell.config"
+        echo "First-run setup skipped."
+        exit 0
+    fi
 
     if [ -z "$profile" ]; then
         interactive_setup
