@@ -198,6 +198,7 @@ parts:
       - libtllist-dev
       - libwayland-dev
       - libjpeg-dev
+      - libpixman-1-dev
       - wayland-protocols
     stage-packages:
       - libwayland-client0
