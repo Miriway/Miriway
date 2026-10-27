@@ -1,20 +1,35 @@
 name: miriway
 adopt-info: miriway
-summary: "Miriway: a graphical shell to configure for your desktop environment"
+summary: "Miriway: a Wayland compositor for your desktop environment"
 description: |
-  Miriway isn’t a full featured desktop environment by itself, but it could be
-  used to build one. To provide a starting point here are some setup scripts:  
+  Miriway is a generic Wayland compositor implementing a traditional floating window management
+  policy. It handles native Wayland extensions, supports legacy X11 applications via Xwayland, and
+  leverages the robust Mir display server library to bring dynamic workspaces, hybrid graphics, and
+  remote desktop support to your environment.
 
-  * /snap/miriway/current/example-configs/LXQT.bash
-  * /snap/miriway/current/example-configs/MATE.bash
-  * /snap/miriway/current/example-configs/SWAY.bash
-  * /snap/miriway/current/example-configs/XFCE.bash
-  * /snap/miriway/current/example-configs/alan_g.bash
+  ***Getting Started***
+
+  Miriway is highly configurable. When you run this snap, it looks for configuration components in
+  `~/.config`.
   
-  These are provided on a "best effort" basis as they rely on the current level 
-  of Wayland support from the corresponding components on the host OS. 
+  To get you up and running the first time, will run `miriway.setup`, an interactive script, to help
+  setup lightweight desktop environments. You can re-run this script at any time or simply edit the
+  configuration files `~/.config`.
   
-  Miriway is based on Mir: https://mir-server.io/
+  You can easily test these configurations and/or use them as a blueprint for your own custom setup.
+  Note that these are provided on a "best effort" basis as they rely on the corresponding components
+  on the host OS and we cannot test everything everywhere.
+  
+  Detailed setup instructions, example scripts, and configuration guides are available in our
+  documentation:  https://github.com/Miriway/Miriway/
+  
+  ***Perfect for Desktop Migrations***
+  
+  Miriway acts as a production-ready, off-the-shelf compositor designed to help modular,
+  resource-light desktop environments (like Budgie, LXQt, and Xfce) transition away from X11 without
+  having to develop a compositor from scratch. To provide a starting point try `miriway.setup`.
+
+  Miriway is based on Mir: https://canonical.com/mir/
 
 website: https://github.com/Miriway
 contact: [https://github.com/Miriway/Miriway/discussions, https://matrix.to/#/#miriway:matrix.org]
@@ -236,26 +251,16 @@ parts:
       - usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libLLVM.so.*
 
   xdg-desktop-portal-wlr:
-    plugin: meson
-    source: https://github.com/emersion/xdg-desktop-portal-wlr.git
-    source-tag: v0.5.0
+    plugin: nil
     build-attributes:
       - enable-patchelf
-    build-packages:
-      - meson
-      - ninja-build
-      - libpipewire-0.3-dev
-      - libwayland-dev
-      - libinih-dev
-      - libpixman-1-dev
-      - libsystemd-dev
-      - wayland-protocols
     stage-packages:
-      - slurp
-      - libinih1
-      - libwayland-cursor0
-      - libcairo2
-      - libpixman-1-0
+      - xdg-desktop-portal-wlr
+    stage:
+      # The libgallium* library needs no-patchelf, so it comes from the mesa-unpatched part
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libgallium*
+      # The libLLVM.so* library needs no-patchelf, so it comes from the mesa-unpatched part
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libLLVM.so*
 
   wayvnc:
     plugin: nil
