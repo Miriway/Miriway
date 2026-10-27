@@ -72,6 +72,13 @@ apps:
     command: usr/bin/miriway-run
     environment: *_environment
 
+  setup:
+    command-chain:
+      - bin/miriway-unconfine
+      - usr/bin/miriway-unsnap
+    command: usr/bin/miriway-setup
+    environment: *_environment
+
 parts:
   miriway:
     build-attributes:

@@ -22,8 +22,9 @@ ctrl-alt=t:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/miriway-te
 shell-component=wbg -s /snap/${SNAP_INSTANCE_NAME}/current/usr/share/backgrounds/miriway.png
 shell-component=yambar --config="${yambar_config}"
 shell-component=swaync
-shell-component=/snap/${SNAP_INSTANCE_NAME}/usr/libexec/polkit-mate-authentication-agent-1
+shell-component=/snap/${SNAP_INSTANCE_NAME}/current/usr/libexec/polkit-mate-authentication-agent-1
 shell-component=miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse --startup
+shell-component=miriway-terminal -e miriway-unsnap miriway.setup --if-first-run
 shell-meta=a:miriway-unsnap /snap/${SNAP_INSTANCE_NAME}/current/usr/bin/synapse
 
 meta=Left:@dock-left

@@ -68,6 +68,10 @@ add_custom_target(miriway-background ALL
     cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-background ${CMAKE_BINARY_DIR}
 )
 
+add_custom_target(miriway-setup ALL
+    cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-setup ${CMAKE_BINARY_DIR}
+)
+
 install(PROGRAMS
     ${CMAKE_BINARY_DIR}/miriway
     ${CMAKE_BINARY_DIR}/miriway-run
@@ -77,6 +81,7 @@ install(PROGRAMS
     ${CMAKE_BINARY_DIR}/miriway-terminal
     ${CMAKE_BINARY_DIR}/miriway-unsnap
     ${CMAKE_BINARY_DIR}/miriway-background
+    ${CMAKE_BINARY_DIR}/miriway-setup
     DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
@@ -101,7 +106,7 @@ install(PROGRAMS
 )
 
 install(FILES ${CMAKE_SOURCE_DIR}/systemd/usr/lib/systemd/user/miriway-session.target
-    DESTINATION /usr/lib/systemd/user/
+    DESTINATION lib/systemd/user/
 )
 if(SDDM)
     configure_file(${CMAKE_SOURCE_DIR}/sddm/miriway.conf.in
