@@ -312,7 +312,8 @@ void miriway::WorkspaceManager::advise_new_window(WindowInfo const& window_info)
     }
     else
     {
-        tools_.add_tree_to_workspace(window_info.window(), active_workspace());
+        if (window_info.depth_layer() == mir_depth_layer_application)
+            tools_.add_tree_to_workspace(window_info.window(), active_workspace());
     }
 }
 
