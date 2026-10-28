@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 cmake_policy(SET CMP0015 NEW)
 cmake_policy(SET CMP0022 NEW)
+cmake_policy(SET CMP0167 NEW)
 
 project(miriway)
 
@@ -20,6 +21,7 @@ option(SDDM "Install configuration for SDDM?" OFF)
 pkg_check_modules(MIRAL miral>=5.5 REQUIRED IMPORTED_TARGET)
 pkg_check_modules(MIRWAYLAND mirwayland REQUIRED IMPORTED_TARGET)
 pkg_check_modules(XKBCOMMON xkbcommon REQUIRED IMPORTED_TARGET)
+find_package(Boost REQUIRED)
 
 add_compile_definitions(MIR_LOG_COMPONENT="miriway")
 
