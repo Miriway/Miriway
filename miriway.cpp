@@ -429,7 +429,8 @@ int main(int argc, char const* argv[])
         WaylandExtensions::zxdg_output_manager_v1,
         "zwp_idle_inhibit_manager_v1",
         "zwp_pointer_constraints_v1",
-        "zwp_relative_pointer_manager_v1"})
+        "zwp_relative_pointer_manager_v1",
+        "xdg_wm_dialog_v1"})
     {
         extensions.conditionally_enable(protocol, [&](WaylandExtensions::EnableInfo const& info)
             {

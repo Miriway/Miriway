@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 cmake_policy(SET CMP0015 NEW)
 cmake_policy(SET CMP0022 NEW)
+cmake_policy(SET CMP0167 NEW)
 
 project(miriway)
 
@@ -20,6 +21,7 @@ option(SDDM "Install configuration for SDDM?" OFF)
 pkg_check_modules(MIRAL miral>=5.5 REQUIRED IMPORTED_TARGET)
 pkg_check_modules(MIRWAYLAND mirwayland REQUIRED IMPORTED_TARGET)
 pkg_check_modules(XKBCOMMON xkbcommon REQUIRED IMPORTED_TARGET)
+find_package(Boost REQUIRED)
 
 add_compile_definitions(MIR_LOG_COMPONENT="miriway")
 
@@ -68,6 +70,10 @@ add_custom_target(miriway-background ALL
     cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-background ${CMAKE_BINARY_DIR}
 )
 
+add_custom_target(miriway-setup ALL
+    cp ${CMAKE_CURRENT_SOURCE_DIR}/miriway-setup ${CMAKE_BINARY_DIR}
+)
+
 install(PROGRAMS
     ${CMAKE_BINARY_DIR}/miriway
     ${CMAKE_BINARY_DIR}/miriway-run
@@ -77,6 +83,7 @@ install(PROGRAMS
     ${CMAKE_BINARY_DIR}/miriway-terminal
     ${CMAKE_BINARY_DIR}/miriway-unsnap
     ${CMAKE_BINARY_DIR}/miriway-background
+    ${CMAKE_BINARY_DIR}/miriway-setup
     DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
@@ -101,7 +108,7 @@ install(PROGRAMS
 )
 
 install(FILES ${CMAKE_SOURCE_DIR}/systemd/usr/lib/systemd/user/miriway-session.target
-    DESTINATION /usr/lib/systemd/user/
+    DESTINATION lib/systemd/user/
 )
 if(SDDM)
     configure_file(${CMAKE_SOURCE_DIR}/sddm/miriway.conf.in
