@@ -18,6 +18,7 @@ window#waybar.hidden {
     opacity: 0.2;
 }
 
+#custom-start,
 #clock,
 #battery,
 #cpu,

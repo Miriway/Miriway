@@ -214,6 +214,7 @@ parts:
     source: waybar
     organize:
       config: waybar/config
+      snap-config: waybar/snap-config
       style.css: waybar/style.css
 
   snap-utils:

@@ -43,9 +43,6 @@ EOT
 ###################################################################
 # Ensure we have a waybar config file with the fixed options
 mkdir -p -m 755 "$(dirname "${waybar_config}")"
-# Expand @CPU_ICONS@ to one {icon<n>} per thread on this machine
-threads=$(grep -c '^cpu[0-9]' /proc/stat)
-cpu_icons=$(printf '{icon%s}' $(seq 0 $((threads - 1))))
-sed "s|@CPU_ICONS@|${cpu_icons}|" "$SNAP"/waybar/config > "${waybar_config}"
+sed "s|@SNAP_INSTANCE_NAME@|${SNAP_INSTANCE_NAME}|g" "$SNAP"/waybar/snap-config > "${waybar_config}"
 cp "$SNAP"/waybar/style.css "${waybar_style}"
 ###################################################################
