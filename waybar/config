@@ -1,0 +1,58 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 21,
+    "modules-left": ["cpu", "memory"],
+    "modules-center": ["clock"],
+    "modules-right": ["network", "temperature", "battery", "tray"],
+    "tray": {
+        "spacing": 10
+    },
+    "clock": {
+        "format": "{:%y-%m-%d %H:%M}",
+        "tooltip-format": "{:%y-%m-%d | %H:%M}",
+        "format-alt": "{:%H:%M}"
+    },
+    "cpu": {
+        // @CPU_ICONS@ is expanded to one {icon<n>} per thread by the install scripts
+        "interval": 1,
+        "format": "@CPU_ICONS@ {usage}%",
+        "format-icons": [
+            "<span foreground='#00ff00'>▁</span>",
+            "<span foreground='#00ff00'>▂</span>",
+            "<span foreground='#00ff00'>▃</span>",
+            "▄",
+            "▅",
+            "<span foreground='#ffa600'>▆</span>",
+            "<span foreground='#ffa600'>▇</span>",
+            "<span foreground='#ff0000'>█</span>"
+        ],
+        "tooltip": false
+    },
+    "memory": {
+        "format": "Mem: {}%"
+    },
+    "temperature": {
+        "critical-threshold": 80,
+        "format": "{icon} {temperatureC}°C",
+        "format-icons": ["", "", ""]
+    },
+    "battery": {
+        "states": {
+            "warning": 30,
+            "critical": 15
+        },
+        "format-alt": "{capacity}% {icon}",
+        "format-charging": " {capacity}% ({time})",
+        "format-plugged": " {capacity}%",
+        "format": "{icon} {capacity}% ({time})",
+        "format-icons": ["", "", "", "", ""]
+    },
+    "network": {
+        "format-wifi": " {essid} ({signalStrength}%)",
+        "format-ethernet": " {ifname}: {ipaddr}/{cidr}",
+        "format-linked": " {ifname} (No IP)",
+        "format-disconnected": " Disconnected",
+        "format-alt": "{ifname}: {ipaddr}/{cidr}"
+    }
+}

@@ -1,0 +1,33 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 21,
+    "modules-left": ["custom/start"],
+    "modules-center": ["clock"],
+    "modules-right": ["network", "battery"],
+    "custom/start": {
+        "format": " start",
+        "on-click": "miriway-unsnap /snap/@SNAP_INSTANCE_NAME@/current/usr/bin/synapse",
+        "tooltip": false
+    },
+    "clock": {
+        "format": "{:%y-%m-%d %H:%M}",
+        "tooltip-format": "{:%y-%m-%d | %H:%M}",
+        "format-alt": "{:%H:%M}"
+    },
+    "network": {
+        "interface": "wl*",
+        "format": "",
+        "format-disconnected": ""
+    },
+    "battery": {
+        "states": {
+            "warning": 30,
+            "critical": 15
+        },
+        "format-charging": " {capacity}% ({time})",
+        "format-plugged": " {capacity}%",
+        "format": "{icon} {capacity}% ({time})",
+        "format-icons": ["", "", "", "", ""]
+    }
+}
