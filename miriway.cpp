@@ -663,5 +663,8 @@ int main(int argc, char const* argv[])
             hover_click,
             magnifier,
             app_switcher,
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(6, 2, 0)
+            decoration_style,
+#endif
         });
 }
