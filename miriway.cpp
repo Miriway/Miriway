@@ -520,16 +520,16 @@ int main(int argc, char const* argv[])
         using State = DecorationStyle::State;
         using Metric = DecorationStyle::Metric;
 
-        decoration_style.set_color(Element::title, State::focused, 0x00, 0x00, 0x00);
-        decoration_style.set_color(Element::title, State::unfocused, 0x00, 0x00, 0x00, 0xef);
-        decoration_style.set_color(Element::background, State::focused, 0xaf, 0xaf, 0xaf);
-        decoration_style.set_color(Element::background, State::unfocused, 0xcf, 0xcf, 0xcf, 0xef);
-        decoration_style.set_color(Element::button, State::normal,  0xaf, 0xaf, 0xaf);
-        decoration_style.set_color(Element::button, State::hovered, 0xbf, 0xcf, 0xbf);
-        decoration_style.set_color(Element::button, State::unfocused, 0xcf, 0xcf, 0xcf, 0xef);
-        decoration_style.set_color(Element::close_button, State::normal, 0xaf, 0xaf, 0xaf);
-        decoration_style.set_color(Element::close_button, State::hovered, 0xef, 0xbf, 0xbf);
-        decoration_style.set_color(Element::close_button, State::unfocused, 0xcf, 0xcf, 0xcf, 0xef);
+        decoration_style.set_color(Element::title, State::focused,          0x00, 0x00, 0x00);
+        decoration_style.set_color(Element::title, State::unfocused,        0x00, 0x00, 0x00, 0xef);
+        decoration_style.set_color(Element::background, State::focused,     0xff, 0xff, 0xff);
+        decoration_style.set_color(Element::background, State::unfocused,   0xfa, 0xfa, 0xfa, 0xef);
+        decoration_style.set_color(Element::button, State::normal,          0xff, 0xff, 0xff);
+        decoration_style.set_color(Element::button, State::hovered,         0xdf, 0xff, 0xff);
+        decoration_style.set_color(Element::button, State::unfocused,       0xfa, 0xfa, 0xfa, 0xef);
+        decoration_style.set_color(Element::close_button, State::normal,    0xff, 0xff, 0xff);
+        decoration_style.set_color(Element::close_button, State::hovered,   0xff, 0xdf, 0xdf);
+        decoration_style.set_color(Element::close_button, State::unfocused, 0xfa, 0xfa, 0xfa, 0xef);
         decoration_style.set_metric(Metric::side_border_width, 4);
         decoration_style.set_metric(Metric::bottom_border_height, 4);
         decoration_style.set_metric(Metric::corner_radius, 6);
