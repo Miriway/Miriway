@@ -52,6 +52,10 @@
 #include <miral/wayland_tools.h>
 #include <miral/x11_support.h>
 
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(6, 2, 0)
+#include <miral/decoration_style.h>
+#endif
+
 #include <mir/log.h>
 
 #include <cstring>
@@ -509,6 +513,29 @@ int main(int argc, char const* argv[])
     StickyKeys sticky_keys{*settings_store};
     HoverClick hover_click{*settings_store};
 
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(6, 2, 0)
+    DecorationStyle decoration_style{config_store};
+    {
+        using Element = DecorationStyle::Element;
+        using State = DecorationStyle::State;
+        using Metric = DecorationStyle::Metric;
+
+        decoration_style.set_color(Element::title, State::focused,          0x00, 0x00, 0x00);
+        decoration_style.set_color(Element::title, State::unfocused,        0x00, 0x00, 0x00, 0xef);
+        decoration_style.set_color(Element::background, State::focused,     0xff, 0xff, 0xff);
+        decoration_style.set_color(Element::background, State::unfocused,   0xfa, 0xfa, 0xfa, 0xef);
+        decoration_style.set_color(Element::button, State::normal,          0xff, 0xff, 0xff);
+        decoration_style.set_color(Element::button, State::hovered,         0xdf, 0xff, 0xff);
+        decoration_style.set_color(Element::button, State::unfocused,       0xfa, 0xfa, 0xfa, 0xef);
+        decoration_style.set_color(Element::close_button, State::normal,    0xff, 0xff, 0xff);
+        decoration_style.set_color(Element::close_button, State::hovered,   0xff, 0xdf, 0xdf);
+        decoration_style.set_color(Element::close_button, State::unfocused, 0xfa, 0xfa, 0xfa, 0xef);
+        decoration_style.set_metric(Metric::side_border_width, 4);
+        decoration_style.set_metric(Metric::bottom_border_height, 4);
+        decoration_style.set_metric(Metric::corner_radius, 6);
+    }
+#endif
+
     // Register shell command options with the settings store
     // corresponding configuration options. These processes are added to `shell_pids`
     CommandIndex shell_meta{
@@ -636,5 +663,8 @@ int main(int argc, char const* argv[])
             hover_click,
             magnifier,
             app_switcher,
+#if MIRAL_VERSION >= MIR_VERSION_NUMBER(6, 2, 0)
+            decoration_style,
+#endif
         });
 }
