@@ -172,19 +172,21 @@ public:
         live_config::Store& store,
         std::string const& option,
         std::string const& description,
-        std::function<void(std::vector<std::string> const&)> launch) :
+        std::function<void(std::vector<std::string> const&)> launch,
+        std::optional<std::span<std::string const>> preset = std::nullopt) :
         launch{std::move(launch)}
     {
         auto settings_key = option;
         std::replace(settings_key.begin(), settings_key.end(), '-', '_');
-        store.add_strings_attribute(
-            live_config::Key{{"command", settings_key}},
-            "command " + description,
-            [this](live_config::Key const&, std::optional<std::span<std::string const>> value)
+        auto handler = [this](live_config::Key const&, std::optional<std::span<std::string const>> value)
             {
                 commands.clear();
                 if (value) populate(std::vector<std::string>(value->begin(), value->end()));
-            });
+            };
+        if (preset)
+            store.add_strings_attribute(live_config::Key{{"command", settings_key}}, "command " + description, *preset, handler);
+        else
+            store.add_strings_attribute(live_config::Key{{"command", settings_key}}, "command " + description, handler);
     }
 
     bool try_command_for(xkb_keysym_t key_code, bool with_shift, ShellCommands* cmd) const
@@ -531,17 +533,33 @@ int main(int argc, char const* argv[])
 
     // `meta`, `alt` and `ctrl_alt` provide a lookup to execute the commands configured by the corresponding
     // configuration options. These processes are NOT added to `shell_pids`
+    std::string const meta_presets[] = {
+        "Left:@dock-left",
+        "Right:@dock-right",
+        "Space:@toggle-maximized",
+        "Home:@workspace-begin",
+        "End:@workspace-end",
+        "Page_Up:@workspace-up",
+        "Page_Down:@workspace-down",
+    };
+    std::string const ctrl_alt_presets[] = {
+        "t:miriway-terminal",
+        "BackSpace:@exit"
+    };
+
     CommandIndex meta{
         *settings_store,
         "meta",
         "meta <key>:<command> shortcut (may be specified multiple times)",
-        [&](auto cmd) { child_control.run_app(cmd); }};
+        [&](auto cmd) { child_control.run_app(cmd); },
+        meta_presets};
 
     CommandIndex ctrl_alt{
         *settings_store,
         "ctrl-alt",
         "ctrl-alt <key>:<command> shortcut (may be specified multiple times)",
-        [&](auto cmd) { child_control.run_app(cmd); }};
+        [&](auto cmd) { child_control.run_app(cmd); },
+        ctrl_alt_presets};
 
     CommandIndex alt{
         *settings_store,
